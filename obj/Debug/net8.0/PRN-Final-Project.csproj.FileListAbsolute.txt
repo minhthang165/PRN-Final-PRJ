@@ -31,9 +31,13 @@
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Microsoft.Extensions.Logging.Abstractions.dll
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Microsoft.Extensions.Options.dll
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Microsoft.Extensions.Primitives.dll
+/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Microsoft.OpenApi.dll
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Mono.TextTemplating.dll
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/MySqlConnector.dll
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Pomelo.EntityFrameworkCore.MySql.dll
+/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Swashbuckle.AspNetCore.Swagger.dll
+/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerGen.dll
+/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerUI.dll
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/System.CodeDom.dll
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/System.Composition.AttributedModel.dll
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/System.Composition.Convention.dll
@@ -101,9 +105,11 @@
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.AssemblyInfoInputs.cache
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.AssemblyInfo.cs
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.csproj.CoreCompileInputs.cache
+/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.MvcApplicationPartsAssemblyInfo.cs
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.MvcApplicationPartsAssemblyInfo.cache
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.RazorAssemblyInfo.cache
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.RazorAssemblyInfo.cs
+/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.sourcelink.json
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/staticwebassets.build.json
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/staticwebassets.development.json
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/staticwebassets/msbuild.PRN-Final-Project.Microsoft.AspNetCore.StaticWebAssets.props
@@ -120,9 +126,3 @@
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.pdb
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.genruntimeconfig.cache
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/ref/PRN-Final-Project.dll
-/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Microsoft.OpenApi.dll
-/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Swashbuckle.AspNetCore.Swagger.dll
-/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerGen.dll
-/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerUI.dll
-/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.MvcApplicationPartsAssemblyInfo.cs
-/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.sourcelink.json
