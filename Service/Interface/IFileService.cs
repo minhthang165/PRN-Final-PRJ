@@ -7,10 +7,8 @@ using PRN_Final_Project.Service.Common;
 
 namespace PRN_Final_Project.Service.Interface
 {
-    public interface IClassService : ICommonService<Class>
+    public interface IFileService : ICommonService<UserFile>
     {
-        Task AssignTrainerToClassAsync(int classId, int trainerId);
-        Task AssignTraineeToClassAsync(int classId, int traineeId);
-
+        Task<UserFile> UploadPdf(IFormFile file);
     }
 }
