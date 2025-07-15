@@ -6,7 +6,9 @@
 # dotenv files
 .env
 
-appsettings.json
+# Ignore build output folders
+bin/
+obj/
 
 # User-specific files
 *.rsuser
