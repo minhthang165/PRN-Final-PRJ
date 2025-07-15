@@ -47,5 +47,10 @@ namespace PRN_Final_Project.Service
         {
             await _repository.DeleteAsync(id);
         }
+
+        public async Task AssignTrainerToClassAsync(int classId, int trainerId)
+        {
+            await _repository.AssignTrainerToClassAsync(classId, trainerId);
+        }
     }
 }

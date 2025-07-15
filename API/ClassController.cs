@@ -79,5 +79,19 @@ namespace PRN_Final_Project.API
             await _classService.DeleteAsync(id);
             return NoContent();
         }
+
+        [HttpPost("assign-trainer")]
+        public async Task<IActionResult> AssignTrainer(int classId, int trainerId)
+        {
+            try
+            {
+                await _classService.AssignTrainerToClassAsync(classId, trainerId);
+                return Ok("Trainer assigned successfully.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

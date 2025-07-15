@@ -73,5 +73,33 @@ namespace PRN_Final_Project.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task AssignTrainerToClassAsync(int classId, int trainerId)
+        {
+            var trainer = await _context.users.FindAsync(trainerId);
+            if (trainer == null || (trainer.role != "EMPLOYEE"))
+                throw new Exception("User is not a valid trainer");
+
+            var classObj = await _context.Classes.FindAsync(classId);
+            if (classObj == null)
+                throw new Exception("Class not found");
+
+            classObj.mentor_id = trainerId;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task AssignTraineeToClassAsync(int classId, int traineeId)
+        {
+            var trainer = await _context.users.FindAsync(traineeId);
+            if (trainer == null || (trainer.role != "INTERN"))
+                throw new Exception("User is not a valid trainee");
+
+            var classObj = await _context.Classes.FindAsync(classId);
+            if (classObj == null)
+                throw new Exception("Class not found");
+
+            classObj.mentor_id = traineeId;
+            await _context.SaveChangesAsync();
+        }
     }
 }

@@ -9,6 +9,6 @@ namespace PRN_Final_Project.Service.Interface
 {
     public interface IClassService : ICommonService<Class>
     {
-        
+         Task AssignTrainerToClassAsync(int classId, int trainerId);
     }
 }
