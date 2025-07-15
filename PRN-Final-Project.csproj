@@ -12,5 +12,10 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.18" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.7" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\Admin\" />
+    <Folder Include="Views\Employee\" />
+    <Folder Include="Views\Intern\" />
+  </ItemGroup>
 
 </Project>

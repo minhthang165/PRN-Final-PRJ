@@ -1,0 +1,1521 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+}
+
+.search-bar {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+}
+
+.filter-btn {
+    border: 1px solid #e67e22;
+    color: #e67e22;
+    background-color: transparent;
+    border-radius: 20px;
+    padding: 4px 12px;
+    margin-right: 8px;
+    font-size: 14px;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    background-color: #e67e22;
+    color: white;
+}
+
+.card {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
+}
+
+.sidebar-card {
+    background-color: #f0f2f5;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sidebar-card:hover {
+    background-color: #e9ecef;
+}
+
+.sidebar-card.active {
+    background-color: #e9ecef;
+    border-left: 3px solid #e67e22;
+}
+
+.gamma-header {
+    color: #e67e22;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.content-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    height: 100%;
+}
+
+.main-content {
+    height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+
+.error-tag {
+    background-color: #fff2e6;
+    color: #e67e22;
+    border: 1px solid #e67e22;
+    border-radius: 15px;
+    padding: 2px 10px;
+    font-size: 12px;
+    display: inline-block;
+}
+
+.chat-box {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    height: 100%;
+    position: relative;
+    background-color: white;
+}
+
+.green-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: green;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.student-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.student-list li {
+    margin-bottom: 8px;
+}
+
+.date-picker {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 6px 12px;
+    background-color: white;
+}
+
+.chat-message {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.chat-container {
+    padding: 15px;
+    height: calc(100% - 60px);
+    overflow-y: auto;
+}
+
+.chat-input {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 15px;
+    background-color: white;
+}
+
+.filters-container {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 10px;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.filters-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.filters-container {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.detail-placeholder {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    font-size: 18px;
+}
+
+.red-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: red;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.yellow-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #ffb700;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.student-badge {
+    display: inline-block;
+    padding: 8px 15px;
+    border-radius: 50px;
+    border: 1px solid #20c997;
+    background-color: #fff;
+    color: #333;
+    font-size: 14px;
+    white-space: nowrap;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5); /* Làm nền tối hơn */
+    backdrop-filter: blur(8px); /* Làm mờ nền */
+    display: none;
+}
+.modal {
+    backdrop-filter: blur(8px); /* Làm mờ nền phía sau */
+    background: rgba(0, 0, 0, 0.2); /* Thêm một lớp tối nhẹ */
+}
+.modal-content{
+    margin-top: 150px;
+}
+
+
+.task-item {
+    position: relative;
+    padding: 18px 22px;
+    border-radius: 10px;
+    background-color: #ffffff;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    transition: all 0.3s ease-in-out;
+    border-left: 5px solid #ff923a; /* Mặc định màu xanh */
+}
+
+/* Hiệu ứng khi di chuột vào */
+.task-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Chỉnh màu sắc theo độ ưu tiên */
+.task-item.high {
+    border-left-color: #e74c3c;
+    background-color: #ffebee;
+}
+
+.task-item.medium {
+    border-left-color: #f1c40f;
+    background-color: #fff8e1;
+}
+
+.task-item.low {
+    border-left-color: #2ecc71;
+    background-color: #e8f5e9;
+}
+
+/* Tiêu đề task */
+.task-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+/* Nội dung mô tả */
+.task-description {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+/* Footer của task */
+.task-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #999;
+}
+
+/* Nút hành động */
+.task-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.task-actions button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.2s ease-in-out;
+}
+
+.task-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+/* Tiêu đề danh sách công việc */
+.task-list-header h5 {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+}
+
+/* Nút Thêm Công Việc */
+.add-task-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background-color: #ff790e;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+.add-task-btn i {
+    font-size: 16px;
+}
+
+/* Hiệu ứng hover */
+.add-task-btn:hover {
+    background-color: #ffae6b;
+    transform: translateY(-2px);
+}
+
+/* Hiệu ứng khi bấm vào */
+.add-task-btn:active {
+    background-color: #1a5f8c;
+    transform: scale(0.98);
+}
+
+
+/* Custom scrollbar styles for better UX */
+.student-container::-webkit-scrollbar,
+.task-list::-webkit-scrollbar,
+.content-card::-webkit-scrollbar {
+    width: 6px;
+}
+
+.student-container::-webkit-scrollbar-track,
+.task-list::-webkit-scrollbar-track,
+.content-card::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.student-container::-webkit-scrollbar-thumb,
+.task-list::-webkit-scrollbar-thumb,
+.content-card::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.student-container::-webkit-scrollbar-thumb:hover,
+.task-list::-webkit-scrollbar-thumb:hover,
+.content-card::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+
+/* Nền mờ khi mở modal */
+.task-detail-modal {
+    display: none; /* Ẩn mặc định */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Mờ nền */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Nội dung modal */
+
+/* Hiệu ứng mở modal */
+@keyframes fadeIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Nút đóng modal */
+.task-detail-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #333;
+}
+
+.task-detail-close:hover {
+    color: red;
+}
+
+/* Header của modal */
+.task-detail-header {
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+/* Phần thân modal */
+.task-detail-body {
+    font-size: 16px;
+}
+
+/* Danh sách bài nộp */
+.submission-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+    background: #f9f9f9;
+}
+.task-list {
+    border-radius: 8px;
+    overflow-y: auto; /* Cho phép cuộn dọc */
+    padding: 10px 15px; /* Thêm padding cho đẹp */
+    flex-grow: 1;
+    max-height: 800px; /* Đặt chiều cao tối đa cho task list */
+    background-color: #f9f9f9; /* Thêm màu nền */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Thêm bóng nhẹ */
+}
+
+
+
+/* Task item styles */
+/* Thêm CSS cho phần chứa danh sách task */
+.task-list {
+    max-height: 500px; /* Giới hạn chiều cao của danh sách task */
+    overflow-y: auto;  /* Cho phép cuộn dọc */
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Thêm bóng nhẹ cho task list */
+}
+
+/* Đảm bảo rằng task item có thể kéo ra ngoài và không bị đè lên nhau */
+.task-item {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 3px solid #e67e22; /* Mặc định màu vàng */
+    transition: all 0.3s ease-in-out;
+}
+
+/* Hiệu ứng hover cho task item */
+.task-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Mức độ ưu tiên của task */
+.task-item.high {
+    border-left-color: #e74c3c;
+    background-color: #ffebee;
+}
+
+.task-item.medium {
+    border-left-color: #f1c40f;
+    background-color: #fff8e1;
+}
+
+.task-item.low {
+    border-left-color: #2ecc71;
+    background-color: #e8f5e9;
+}
+
+/* Khi cuộn đến cuối cùng, task cuối cùng sẽ được hiển thị */
+.task-list:after {
+    content: '';
+    display: block;
+    height: 1px;
+    width: 100%;
+    background-color: transparent;
+}
+
+/* Tăng cường khả năng cuộn mượt mà */
+.task-list {
+    scroll-behavior: smooth; /* Cuộn mượt mà */
+}
+
+.student-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+    max-height: 150px; /* Limit height to enable scrolling */
+    overflow-y: auto; /* Enable vertical scrolling */
+    padding: 5px;
+    border-radius: 8px;
+}
+
+.modal-backdrop{
+    display: none;
+}
+
+.detail-placeholder {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    font-size: 18px;
+}
+
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+}
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+}
+
+.search-bar {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+}
+
+.filter-btn {
+    border: 1px solid #e67e22;
+    color: #e67e22;
+    background-color: transparent;
+    border-radius: 20px;
+    padding: 4px 12px;
+    margin-right: 8px;
+    font-size: 14px;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    background-color: #e67e22;
+    color: white;
+}
+
+.card {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
+}
+
+.sidebar-card {
+    background-color: #f0f2f5;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sidebar-card:hover {
+    background-color: #e9ecef;
+}
+
+.sidebar-card.active {
+    background-color: #e9ecef;
+    border-left: 3px solid #e67e22;
+}
+
+.gamma-header {
+    color: #e67e22;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.content-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    max-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 50px); /* Mở rộng tối đa */
+    overflow: hidden; /* Loại bỏ scroll từ container */
+}
+
+.main-content {
+    max-height: calc(100vh - 50px);
+    min-height: 100%;
+    overflow-y: auto;
+}
+
+.error-tag {
+    background-color: #fff2e6;
+    color: #e67e22;
+    border: 1px solid #e67e22;
+    border-radius: 15px;
+    padding: 2px 10px;
+    font-size: 12px;
+    display: inline-block;
+}
+
+.chat-box {
+    border-left: 1px solid #eee;
+    height: 100%;
+    position: relative;
+}
+
+.student-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.student-list li {
+    margin-bottom: 8px;
+}
+
+.date-picker {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 6px 12px;
+    background-color: white;
+}
+
+.chat-message {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.chat-container {
+    padding: 15px;
+    height: 80vh;
+    overflow-y: auto;
+}
+
+.chat-input {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 15px;
+    background-color: white;
+}
+
+.filters-container {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 10px;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.filters-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.filters-container {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.student-card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.student-card:hover {
+    transform: scale(1.03);
+}
+
+.bi-check-circle-fill::before {
+    content: "\f26a";
+    color: green;
+}
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+}
+
+.search-bar {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+}
+
+.filter-btn {
+    border: 1px solid #e67e22;
+    color: #e67e22;
+    background-color: transparent;
+    border-radius: 20px;
+    padding: 4px 12px;
+    margin-right: 8px;
+    font-size: 14px;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    background-color: #e67e22;
+    color: white;
+}
+
+.card {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
+}
+
+.sidebar-card {
+    background-color: #f0f2f5;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sidebar-card:hover {
+    background-color: #e9ecef;
+}
+
+.sidebar-card.active {
+    background-color: #e9ecef;
+    border-left: 3px solid #e67e22;
+}
+
+.gamma-header {
+    color: #e67e22;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.content-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    max-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 50px); /* Mở rộng tối đa */
+    overflow: hidden; /* Loại bỏ scroll từ container */
+}
+
+.main-content {
+    height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+
+.error-tag {
+    background-color: #fff2e6;
+    color: #e67e22;
+    border: 1px solid #e67e22;
+    border-radius: 15px;
+    padding: 2px 10px;
+    font-size: 12px;
+    display: inline-block;
+}
+
+.chat-box {
+    border-left: 1px solid #eee;
+    height: 100%;
+    position: relative;
+}
+
+.student-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.student-list li {
+    margin-bottom: 8px;
+}
+
+.date-picker {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 6px 12px;
+    background-color: white;
+}
+
+.chat-message {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.chat-container {
+    padding: 15px;
+    height: 80vh;
+    overflow-y: auto;
+}
+
+.chat-input {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 15px;
+    background-color: white;
+}
+
+.filters-container {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 10px;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.filters-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.filters-container {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.detail-placeholder {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    font-size: 18px;
+}
+
+/* Global alert container - MOVED TO TOP RIGHT */
+#globalAlertContainer {
+    position: fixed;
+    top: 20px; /* Changed from bottom to top */
+    right: 20px;
+    padding: 15px;
+    z-index: 2000;
+    max-width: 400px;
+    width: 100%;
+    margin-top: 60px;
+}
+
+#globalAlertContainer .alert {
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    margin-bottom: 10px;
+    animation: alert-in 0.3s ease forwards;
+    border-left: 4px solid;
+}
+
+#globalAlertContainer .alert-danger {
+    border-left-color: #dc3545;
+}
+
+#globalAlertContainer .alert-warning {
+    border-left-color: #ffc107;
+}
+
+#globalAlertContainer .alert-success {
+    border-left-color: #28a745;
+}
+
+#globalAlertContainer .alert-info {
+    border-left-color: #17a2b8;
+}
+
+@keyframes alert-in {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Toast container - MOVED TO TOP RIGHT */
+#toast-container {
+    position: fixed;
+    top: 20px; /* Changed from bottom to top */
+    right: 20px;
+    padding: 15px;
+    z-index: 1055;
+}
+
+#toast-container .toast {
+    min-width: 250px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    z-index: 2000;
+}
+
+/* Unified Modal Styles */
+.modal-content {
+    width: 120%;
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    overflow: hidden;
+}
+
+.modal-header {
+    background-color: #fff8f0;
+    border-bottom: 2px solid #e67e22;
+    padding: 15px 20px;
+}
+
+.modal-title {
+    color: #e67e22;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    border-top: 1px solid #eee;
+    padding: 15px 20px;
+    background-color: #f9f9f9;
+}
+
+.btn-primary {
+    background-color: #e67e22;
+    border-color: #e67e22;
+}
+
+.btn-primary:hover {
+    background-color: #d35400;
+    border-color: #d35400;
+}
+
+.btn-primary:focus {
+    box-shadow: 0 0 0 0.25rem rgba(230, 126, 34, 0.25);
+}
+
+/* Comment modal styles */
+.active-submission {
+    background-color: #fff8f0 !important;
+    border-left: 3px solid #e67e22 !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15) !important;
+}
+
+#commentText {
+    resize: vertical;
+    min-height: 100px;
+    border-color: #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+#commentText:focus {
+    border-color: #e67e22;
+    box-shadow: 0 0 0 0.25rem rgba(230, 126, 34, 0.25);
+}
+
+.submission-item:hover {
+    background-color: #f8f9fa;
+}
+
+@keyframes toast-in {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes comment-updated {
+    0% { background-color: #fff8f0; }
+    50% { background-color: #d4edda; }
+    100% { background-color: #fff; }
+}
+
+.task-list:after {
+    content: '';
+    display: block;
+    height: 1px;
+    width: 100%;
+    background-color: transparent;
+}
+
+/* Fix task list container */
+#task-list:after, .task-list:after {
+    content: "";
+    display: block;
+    height: 30px; /* Extra space after the last item */
+    width: 100%;
+    clear: both;
+}
+
+.add-comment-btn {
+    background-color: #e67e22;
+    border-color: #e67e22;
+    transition: all 0.2s ease;
+}
+
+.add-comment-btn:hover {
+    background-color: #d35400;
+    border-color: #d35400;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Task list styling */
+.task-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.add-task-btn {
+    background-color: #e67e22;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.add-task-btn:hover {
+    background-color: #d35400;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.task-item {
+    background-color: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border-left: 3px solid #e67e22;
+    transition: all 0.2s;
+    position: relative;
+    cursor: pointer;
+}
+
+.task-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.task-title {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.task-description {
+    color: #666;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.task-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #888;
+}
+
+.task-deadline {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Task completion indicator - CHANGED TO TEXT */
+.task-completed-text {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    background-color: #2ecc71;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Task Detail Modal */
+#taskDetailModal .modal-dialog {
+    max-width: 800px;
+}
+
+/* Form validation styles */
+.form-control.is-invalid {
+    border-color: #dc3545;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.invalid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #dc3545;
+}
+
+.was-validated .form-control:invalid ~ .invalid-feedback,
+.form-control.is-invalid ~ .invalid-feedback {
+    display: block;
+}
+
+/* Task detail section */
+.task-detail-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.task-detail-header {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #e67e22;
+}
+
+.task-detail-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.task-detail-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background-color: #f0f2f5;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.task-detail-meta-item i {
+    color: #e67e22;
+}
+
+/* Custom scrollbar for task list */
+.task-list {
+    border-radius: 8px;
+    overflow-y: auto; /* Cho phép cuộn dọc */
+    padding: 10px 15px; /* Thêm padding cho đẹp */
+    flex-grow: 1;
+    max-height: 800px; /* Đặt chiều cao tối đa cho task list */
+    background-color: #f9f9f9; /* Thêm màu nền */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.task-list {
+    max-height: 500px; /* Giới hạn chiều cao của danh sách task */
+    overflow-y: auto;  /* Cho phép cuộn dọc */
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Thêm bóng nhẹ cho task list */
+}
+
+.task-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.task-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.task-list::-webkit-scrollbar-thumb {
+    background: #e67e22;
+    border-radius: 10px;
+}
+
+.task-list::-webkit-scrollbar-thumb:hover {
+    background: #d35400;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .content-card {
+        max-height: none;
+        height: auto;
+    }
+
+    .task-detail-meta {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    #taskDetailModal .modal-dialog {
+        max-width: 95%;
+        margin: 10px auto;
+    }
+}
+
+/* Additional styles from the snippet */
+.green-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: green;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.red-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: red;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.yellow-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #ffb700;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.student-badge {
+    display: inline-block;
+    padding: 8px 15px;
+    border-radius: 50px;
+    border: 1px solid #20c997;
+    background-color: #fff;
+    color: #333;
+    font-size: 14px;
+    white-space: nowrap;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+}
+
+.modal {
+    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.student-card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.student-card:hover {
+    transform: scale(1.03);
+}
+
+.student-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 5px;
+    border-radius: 8px;
+}
+/* Add this to your CSS to ensure modals are properly stacked */
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
+.modal {
+    z-index: 1060 !important;
+}
+
+#noSubmissionsModal {
+    z-index: 1070 !important; /* Higher than regular modals */
+}
+
+#noSubmissionsModal .modal-dialog {
+    max-width: 500px;
+    margin: 1.75rem auto;
+    position: relative;
+    pointer-events: auto;
+}
+
+/* Fix for modal content being obscured */
+.modal-open {
+    overflow: hidden;
+    padding-right: 0 !important;
+}
+
+/* Ensure modal content is above other elements */
+.modal-content {
+    width: 120%;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+/* Task Detail Styles */
+/* Task Detail Styles */
+.task-detail-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.task-detail-header {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #e67e22;
+}
+
+.task-detail-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.task-detail-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #6c757d;
+}
+
+.task-detail-content {
+    padding: 10px;
+    background-color: white;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+}
+
+/* Modal Header Styles */
+.modal-header {
+    display: flex;
+    align-items: center;
+}
+
+.modal-title {
+    font-weight: bold;
+    color: #e67e22;
+    font-size: 1.25rem;
+    text-align: center;
+}
+
+/* Make the modal larger */
+.modal-lg {
+    max-width: 200%; /* Increase from default 800px to 90% of viewport width */
+    margin: 1.75rem auto;
+}
+
+/* Horizontal Table Styles */
+.submission-table-container {
+    overflow-x: auto;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.submission-table {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+/* Update grid template columns to include the new update time column */
+.submission-table-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.5fr 1.5fr 2fr 0.8fr; /* Adjusted column widths */
+    font-weight: bold;
+    border-bottom: 2px solid #dee2e6;
+    padding: 0.5rem 0;
+    background-color: #f8f9fa;
+}
+
+.submission-table-body {
+    display: table-row-group;
+}
+
+/* Update the submission row to match the header columns */
+.submission-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.5fr 1.5fr 2fr 0.8fr; /* Must match header */
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.5rem 0;
+    cursor: pointer;
+}
+
+.submission-row:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.submission-row:hover {
+    background-color: #e9ecef;
+}
+
+.submission-cell {
+    text-align: center;
+    padding: 8px 12px;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.header-cell {
+    background-color: #e9ecef;
+    color: #495057;
+    font-weight: bold;
+    text-align: center;
+}
+
+.submission-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    width: 100%;
+    grid-column: 1 / -1; /* Span all columns */
+}
+
+.status-submitted {
+    color: #198754;
+    font-weight: bold;
+}
+
+.status-not-submitted {
+    color: #dc3545;
+}
+
+.mark-graded {
+    font-weight: bold;
+    color: #198754;
+    text-align: center;
+}
+
+.mark-not-graded {
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+}
+
+/* Add styles for the update time cell */
+.update-time {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Pagination styles */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    grid-column: 1 / -1; /* Span all columns */
+}
+
+.pagination {
+    margin: 0;
+}
+
+.page-item .page-link {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    color: #007bff;
+}
+
+.page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+/* Make the table responsive */
+@media (max-width: 992px) {
+    .submission-table-container {
+        overflow-x: auto;
+    }
+
+    .submission-table-header,
+    .submission-row {
+        min-width: 800px; /* Ensure minimum width for scrolling on small screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .task-detail-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .modal-lg {
+        max-width: 95%;
+        margin: 0.5rem auto;
+    }
+}

@@ -1,8 +1,95 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "FIntern";
+    Layout = null;
 }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+    <link rel="shortcut icon" type="image/x-icon" href="~/img/logo/logo-fpt-small.svg" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/bootstrap.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/meanmenu.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/animate.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/metisMenu.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/swiper-bundle.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/slick.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/backtotop.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/magnific-popup.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/flaticon_expovent.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/fontawesome-pro.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/spacing.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/main.css" asp-append-version="true" />
+</head>
+
+<body>
+
+    <div id="preloader">
+        <div class="sk-three-bounce">
+            <div class="sk-child sk-bounce1"></div>
+            <div class="sk-child sk-bounce2"></div>
+            <div class="sk-child sk-bounce3"></div>
+        </div>
+    </div>
+
+    <!-- signin area start -->
+    <section class="signin__area">
+        <div class="sign__main-wrapper">
+            <div class="sign__left">
+                <div class="sign__header">
+                    <div class="sign__logo">
+                        <a href="dashboard.html">
+                            <img class="logo-black" src="~/img/sign/FPT_logo_2010.svg" alt="image not found" asp-append-version="true" />
+                        </a>
+                    </div>
+                    <div class="sign__title-wrapper mb-40">
+                        <h3 class="sign__title">Welcome To FPT Software</h3>
+                        <p>Start with you</p>
+                    </div>
+                </div>
+                <div class="sign__center-wrapper text-center mt-90">
+                    <div class="sign__input-form text-center">
+                        <div class="sing__button mb-20">
+                            <h3> SIGN IN </h3>
+                            <p>
+                                <a href="oauth2/authorization/google" class="oauth2_btn">
+                                    <img src="img/sign/google-icon.svg" alt="Google sign-in" class="google-icon">
+                                    <span class="gamil__sign-btn">Login with Google</span>
+                                    <!-- Add text next to the icon -->
+                                </a>
+
+                            </p>
+                        </div>
+                        <div class="if__account mt-85">
+                            <p>Giới thiệu || Liên Hệ</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="sign__right">
+                <div class="sign__input-thumb" data-background="img/sign/logintheme.jpg"></div>
+            </div>
+        </div>
+    </section>
+
+    <script src="~/js/jquery-3.6.0.min.js" asp-append-version="true"></script>
+    <script src="~/js/waypoints.min.js" asp-append-version="true"></script>
+    <script src="~/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+    <script src="~/js/metisMenu.min.js" asp-append-version="true"></script>
+    <script src="~/js/meanmenu.min.js" asp-append-version="true"></script>
+    <script src="~/js/swiper-bundle.min.js" asp-append-version="true"></script>
+    <script src="~/js/slick.min.js" asp-append-version="true"></script>
+    <script src="~/js/magnific-popup.min.js" asp-append-version="true"></script>
+    <script src="~/js/backtotop.js" asp-append-version="true"></script>
+    <script src="~/js/counterup.js" asp-append-version="true"></script>
+    <script src="~/js/wow.min.js" asp-append-version="true"></script>
+    <script src="~/js/countdown.js" asp-append-version="true"></script>
+    <script src="~/js/smooth-scrollbar.js" asp-append-version="true"></script>
+    <script src="~/js/ajax-form.js" asp-append-version="true"></script>
+    <script src="~/js/custom.js" asp-append-version="true"></script>
+    <script src="~/js/main.js" asp-append-version="true"></script>
+
+</body>
+</html>

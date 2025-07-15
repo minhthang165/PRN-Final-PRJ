@@ -1,0 +1,663 @@
+/*css pagination*/
+/* Records selector styling */
+.records-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6b7280;
+}
+
+.records-per-page {
+    height: 2.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid #e5e7eb;
+    background-color: #fff;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.table-footer {
+    justify-content: space-between;
+    display: flex;
+    margin-top: 16px;
+}
+
+.records-per-page:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+/* Pagination container */
+.pagination-container {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.pagination-list {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Pagination items */
+.pagination-item {
+    display: inline-block;
+}
+
+.pagination-link {
+    display: inline-flex;
+    height: 2.25rem;
+    min-width: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    border: 1px solid #e5e7eb;
+    background-color: #fff;
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+    padding: 0 0.5rem;
+}
+
+.pagination-link:hover {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+/* Active page */
+.pagination-item.active .pagination-link {
+    background-color: #f38321;
+    color: white;
+    border-color: #f38321;
+}
+
+.pagination-item.active .pagination-link:hover {
+    background-color: #f38321;
+}
+
+/* Disabled pagination items */
+.pagination-item.disabled .pagination-link {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Arrow icons */
+.pagination-arrow {
+    font-weight: bold;
+}
+
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+th {
+    background-color: #f4f4f4;
+}
+
+.search__bar input {
+    margin-right: auto;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 500px;
+}
+.breadcrum__button{
+    display: flex;
+    padding-left: 25px;
+}
+.search__bar input {
+    border: 1px solid #ccc;
+    border-radius: 15px;
+    width: 400px;
+    height: fit-content;
+}
+
+/* Toast Notification Styles */
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: white;
+    color: #333;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    display: none;
+    min-width: 300px;
+    border-left: 4px solid #ff6600;
+    animation: slideIn 0.3s, fadeOut 0.5s 2.5s forwards;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+}
+
+.toast-icon {
+    color: #ff6600;
+    font-size: 22px;
+    margin-right: 15px;
+}
+
+.toast-message {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+        display: none;
+    }
+}
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6); /* Tối màu nền hơn */
+}
+
+.records-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6b7280;
+}
+
+.table-footer {
+    justify-content: space-between;
+    display: flex;
+    margin-top: 16px;
+}
+
+.modal-content {
+    background-color: #ffffff;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 16px;
+    width: 80%;
+    max-width: 900px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes modalopen {
+    from {opacity: 0; transform: translate(-50%, -60%);}
+    to {opacity: 1; transform: translate(-50%, -50%);}
+}
+
+.close-modal {
+    position: absolute;
+    right: 5px;
+    top: 0;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-modal:hover {
+    color: #ff6600;
+}
+
+.requirement-row {
+    cursor: pointer;
+}
+
+.requirement-row:hover {
+    background-color: #f8f9fa;
+}
+
+/* Additional styles for content inside modal */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.search-bar {
+    display: flex;
+    gap: 10px;
+}
+
+.search-input {
+    padding: 8px 15px;
+    border: 1px solid #ddd;
+    border-radius: 50px;
+    width: 300px;
+}
+
+.btn-primary {
+    background-color: #ff6600;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 50px;
+    cursor: pointer;
+}
+
+.skills-container {
+    max-height: none;
+    overflow-y: visible;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-right: 0;
+}
+
+.skill-pill {
+    background-color: rgba(255, 102, 0, 0.1);
+    color: #ff6600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin-bottom: 3px;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.gpa {
+    font-weight: bold;
+    color: #333;
+}
+
+.gpa-high {
+    color: #28a745;
+}
+
+.gpa-medium {
+    color: #fd7e14;
+}
+
+.gpa-low {
+    color: #dc3545;
+}
+
+/* Button styling */
+button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    cursor: pointer;
+    outline: inherit;
+}
+
+.action-icons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.pagination-list {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.pagination-item {
+    display: inline-block;
+}
+
+.pagination-link {
+    display: inline-flex;
+    height: 2.25rem;
+    min-width: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    border: 1px solid #e5e7eb;
+    background-color: #fff;
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+    padding: 0 0.5rem;
+}
+
+.pagination-link:hover {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+/* Active page */
+.pagination-item.active .pagination-link {
+    background-color: #f38321;
+    color: white;
+    border-color: #f38321;
+}
+
+.pagination-item.active .pagination-link:hover {
+    background-color: #f38321;
+}
+
+/* Disabled pagination items */
+.pagination-item.disabled .pagination-link {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Arrow icons */
+.pagination-arrow {
+    font-weight: bold;
+}
+
+.action-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid;
+    font-size: 14px;
+}
+
+.check-icon {
+    color: #28a745;
+    border-color: #28a745;
+    background-color: white;
+}
+
+.check-icon:hover {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.x-icon {
+    color: #dc3545;
+    border-color: #dc3545;
+    background-color: white;
+}
+
+/* Hover styles */
+.action-icon:hover {
+    transform: translateY(-2px);
+}
+
+/* Shadow effect for sidebar when modal is open */
+.modal-open .sidebar {
+    pointer-events: none;
+}
+
+.modal-open .app__slide-wrapper {
+    pointer-events: none;
+}
+
+/* Modal table styling */
+.modal .table {
+    margin-bottom: 0;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.modal .table th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    font-weight: 600;
+    background-color: #f8f9fa;
+    border-top: none;
+
+}
+
+.modal .table-container {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    max-height: 65vh;
+    overflow-y: auto;
+}
+
+.pagination-container {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.pagination .page-item .page-link {
+    color: #ff6600;
+    border-color: #ddd;
+    background-color: #fff;
+    transition: all 0.2s ease;
+}
+
+.pagination .page-item.active .page-link {
+    color: #fff;
+    background-color: #ff6600;
+    border-color: #ff6600;
+}
+
+.pagination .page-item .page-link:hover {
+    background-color: #f8f9fa;
+    color: #ff6600;
+    border-color: #ddd;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #ddd;
+}
+
+/* Điều chỉnh padding các thành phần trong modal */
+.modal .card {
+    margin-top: 10px;
+}
+
+.modal .header {
+    margin-bottom: 10px;
+}
+
+.modal h3 {
+    font-size: 1.4rem;
+    margin-bottom: 0;
+}
+
+.modal .table th,
+.modal .table td {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+}
+
+.search-input {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    padding: 6px 15px;
+    font-size: 0.9rem;
+}
+
+.skill-pill {
+    padding: 2px 8px;
+    font-size: 0.8rem;
+}
+
+.action-icon {
+    width: 30px;
+    height: 30px;
+}
+
+/* Điều chỉnh độ rộng các cột */
+.modal .table th:nth-child(1),
+.modal .table td:nth-child(1) {
+    width: 18%;
+}
+
+.modal .table th:nth-child(2),
+.modal .table td:nth-child(2) {
+    width: 8%;
+}
+
+.modal .table th:nth-child(3),
+.modal .table td:nth-child(3) {
+    width: 20%;
+}
+
+.modal .table th:nth-child(4),
+.modal .table td:nth-child(4) {
+    width: 34%;  /* Thêm chiều rộng cho cột skills */
+}
+
+.modal .table th:nth-child(5),
+.modal .table td:nth-child(5) {
+    width: 10%;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.modal .table th:nth-child(6),
+.modal .table td:nth-child(6) {
+    width: 12%;
+    text-align: center;
+}
+
+/* Tối ưu hiển thị text dài */
+.modal .table td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* Làm cho phân trang nhỏ gọn hơn */
+.pagination-container {
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+.pagination .page-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* Điều chỉnh chiều cao của các hàng */
+.modal .table tr {
+    min-height: 60px;
+}
+
+/* Cải thiện hiển thị skills */
+.modal .table td:nth-child(4) {
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.skills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+}
+
+.skill-pill {
+    background-color: rgba(255, 102, 0, 0.1);
+    color: #ff6600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    display: inline-block;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.skill-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.x-icon:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.modal-backdrop {
+    display: none;
+}
+/* Additional styles for the requirement form */
+#requirementForm label {
+    font-weight: 500;
+    margin-bottom: 5px;
+    display: block;
+}
+
+#requirementForm .form-control {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    width: 100%;
+}
+
+#requirementForm .form-control:focus {
+    border-color: #ff6600;
+    box-shadow: 0 0 0 0.2rem rgba(255, 102, 0, 0.25);
+}
+
+/* Make sure the modal is on top of everything */
+#addRequirementModal {
+    z-index: 10000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #addRequirementModal .modal-content {
+        width: 90%;
+    }
+}
+
+/* Spinner for loading state */
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
