@@ -1,0 +1,1553 @@
+    var currentlySelectedId = null;
+    var user_id = document.getElementById("user_id").value;
+    var membersOfClass;
+    let cachedClassrooms = [];
+    
+    document.addEventListener("DOMContentLoaded", () => {
+        // Get mentor ID from the data attribute
+        const classroomList = document.getElementById("classroomList");
+        const mentorId = classroomList.getAttribute("data-mentor-id");
+    
+        if (mentorId) {
+            fetchClassrooms(mentorId);
+        } else {
+            showError("Mentor ID is missing!");
+        }
+    
+        // Add event listener for the save task button
+        document.getElementById("saveTaskBtn").addEventListener("click", handleSaveTask);
+    
+        // Gắn sự kiện click cho nút ⋮ để mở modal
+        const studentMenuButton = document.querySelector("#student-menu-btn");
+        if (studentMenuButton) {
+            studentMenuButton.addEventListener("click", openStudentModal);
+        }
+    });
+    
+    function openStudentModal() {
+        // Kiểm tra xem đã có dữ liệu sinh viên trong `membersOfClass` chưa
+        if (membersOfClass && membersOfClass.length > 0) {
+            displayUsers(membersOfClass); // Hiển thị danh sách sinh viên trong modal
+        } else {
+            // Nếu không có dữ liệu, hiển thị thông báo loading
+            const studentContainer = document.getElementById("student-list");
+            if (studentContainer) {
+                studentContainer.innerHTML = "<div class='spinner-border spinner-border-sm text-warning' role='status'><span class='visually-hidden'>Loading...</span></div>";
+            }
+        }
+    
+        // Mở modal
+        const modal = new bootstrap.Modal(document.getElementById("studentModal"));
+        modal.show();
+    }
+    
+    async function fetchClassrooms(mentorId) {
+        try {
+            // Show loading indicator
+            document.getElementById("loading-indicator").style.display = "block";
+            document.getElementById("error-message").style.display = "none";
+    
+            // Fetch classroom data from API
+            const response = await fetch(`/api/class/mentor/${mentorId}`);
+    
+            // Check if the request was successful
+            if (!response.ok) {
+                throw new Error(`Failed to fetch classrooms: ${response.status} ${response.statusText}`);
+            }
+    
+            // Parse the JSON response
+            const classrooms = await response.json();
+            console.log("API Response:", classrooms); // Debug log
+    
+            // Check if we got valid data
+            if (!Array.isArray(classrooms)) {
+                throw new Error("Invalid data format: Expected an array of classrooms");
+            }
+    
+            // Render the classroom cards
+            renderClassroomCards(classrooms);
+            cachedClassrooms = classrooms;
+    
+            // Hide loading indicator
+            document.getElementById("loading-indicator").style.display = "none";
+    
+            // Log success
+            console.log(`Successfully loaded ${classrooms.length} classrooms`);
+    
+        } catch (error) {
+            // Hide loading indicator and show error message
+            document.getElementById("loading-indicator").style.display = "none";
+            showError(error.message);
+            console.error("Error fetching classrooms:", error);
+        }
+    }
+    
+    function showError(message) {
+        const errorElement = document.getElementById("error-message");
+        errorElement.textContent = message;
+        errorElement.style.display = "block";
+    }
+    
+    function renderClassroomCards(classrooms) {
+        const classroomList = document.getElementById("classroomList");
+        const template = document.getElementById("classroom-card-template");
+    
+        // Clear any existing content except loading and error elements
+        const loadingIndicator = document.getElementById("loading-indicator");
+        const errorMessage = document.getElementById("error-message");
+        classroomList.innerHTML = "";
+        classroomList.appendChild(loadingIndicator);
+        classroomList.appendChild(errorMessage);
+    
+        // If no classrooms, show a message
+        if (classrooms.length === 0) {
+            const noDataElement = document.createElement("div");
+            noDataElement.className = "text-center py-4";
+            noDataElement.textContent = "Không có lớp học nào";
+            classroomList.appendChild(noDataElement);
+            return;
+        }
+    
+        // Log the entire classrooms array to inspect the data
+        console.log("Classrooms data:", classrooms);
+    
+        // Create and append classroom cards
+        classrooms.forEach(classroom => {
+            try {
+                // Clone the template
+                const card = template.content.cloneNode(true).querySelector(".sidebar-card");
+    
+                // Set data attributes
+                card.setAttribute("data-id", classroom.id);
+                card.setAttribute("data-class", classroom.className);
+    
+                // Handle manager data correctly based on API response structure
+                let managerName = "";
+                if (classroom.manager) {
+                    if (typeof classroom.manager === 'object') {
+                        // If manager is an object with first_name and last_name
+                        managerName = `${classroom.manager.first_name || ''} ${classroom.manager.last_name || ''}`.trim();
+                    } else {
+                        // If manager is just a string
+                        managerName = classroom.manager;
+                    }
+                }
+    
+                card.setAttribute("data-user", managerName);
+    
+                // Format date and time
+                let formattedTime = "";
+                let formattedDate = "";
+    
+                if (classroom.createdAt) {
+                    try {
+                        const createdAt = new Date(classroom.createdAt);
+                        formattedTime = createdAt.toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                        formattedDate = createdAt.toLocaleDateString("vi-VN", { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    } catch (e) {
+                        console.error("Error formatting date:", e);
+                        formattedTime = "Invalid date";
+                        formattedDate = "Invalid date";
+                    }
+                }
+    
+                card.setAttribute("data-time", formattedTime);
+                card.setAttribute("data-date", formattedDate);
+    
+                // Log description and status to debug
+                console.log("Classroom ID:", classroom.id);
+                console.log("Description:", classroom.description);
+                console.log("Status:", classroom.status);
+    
+                // Fill in the content
+                card.querySelector(".card-date").textContent = formattedDate;
+                card.querySelector(".card-name").textContent = classroom.className || "Unnamed Class";
+                card.querySelector(".card-description").textContent = classroom.classDescription || "Không có mô tả";
+    
+                const statusElement = card.querySelector(".card-status");
+                statusElement.textContent = getStatusText(classroom.status);
+    
+                // Log the status text and dot class for further debugging
+                console.log("Status Text:", getStatusText(classroom.status));
+                console.log("Status Dot Class:", getStatusDotClass(classroom.status));
+    
+                // Set status dot color
+                const statusDot = card.querySelector(".status-dot");
+                statusDot.className = "status-dot " + getStatusDotClass(classroom.status);
+    
+                // Add click event
+                card.addEventListener("click", function() {
+                    handleCardClick(this);
+                });
+    
+                // Append the card to the list
+                classroomList.appendChild(card);
+            } catch (error) {
+                console.error("Error rendering classroom card:", error, classroom);
+            }
+        });
+    }
+    
+    function getStatusDotClass(status) {
+        switch (status) {
+            case "ON_GOING": return "green-dot";
+            case "ENDED": return "red-dot";
+            case "NOT_STARTED": return "yellow-dot";
+            default: return "blue-dot";
+        }
+    }
+    
+    function getStatusText(status) {
+        switch (status) {
+            case "ON_GOING": return "Ongoing";
+            case "ENDED": return "Ended";
+            case "NOT_STARTED": return "Not Started";
+            default: return "Unknown";
+        }
+    }
+    
+    function handleCardClick(card) {
+        const classId = card.getAttribute("data-id");
+        const className = card.getAttribute("data-class");
+        const username = card.getAttribute("data-user");
+        const time = card.getAttribute("data-time");
+        const date = card.getAttribute("data-date");
+    
+        // Check if this card is already selected
+        if (currentlySelectedId === classId) {
+            // If already selected, deselect it and hide details
+            card.classList.remove("active");
+            hideDetails();
+            currentlySelectedId = null;
+        } else {
+            // If not selected, select it and show details
+            const allCards = document.querySelectorAll(".sidebar-card");
+            allCards.forEach(c => c.classList.remove("active"));
+            card.classList.add("active");
+            currentlySelectedId = classId;
+    
+            // Only load details if we have a class name
+            if (className) {
+                loadClassroomDetails(classId, className, username, time, date);
+            }
+        }
+    }
+    
+    function hideDetails() {
+        // Reset details container to placeholder
+        document.getElementById("detailsContainer").innerHTML = `
+                <div class="detail-placeholder">
+                    <p>Chọn một lớp học để xem chi tiết</p>
+                </div>
+            `;
+    
+        // Clear chat container
+        document.getElementById("chatContainer").innerHTML = "";
+    }
+    
+    async function loadClassroomDetails(classId, className, username, time, date) {
+        try {
+            // Show loading state in details container
+            document.getElementById("detailsContainer").innerHTML = `
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                `;
+    
+            // Get template
+            const template = document.getElementById("detailsTemplate").content.cloneNode(true);
+    
+            // Set class name and time
+            template.querySelector(".card-name").textContent = className;
+            template.querySelector(".card-time").textContent = `${date} - ${time}`;
+    
+            // Load details
+            const detailsContainer = document.getElementById("detailsContainer");
+            detailsContainer.innerHTML = "";
+            detailsContainer.appendChild(template);
+    
+            // Set up the "Add Task" button click event
+            const addTaskButton = detailsContainer.querySelector("#addTaskBtn");
+            addTaskButton.addEventListener("click", function() {
+                openAddTaskModal(classId);
+            });
+    
+            const studentMenuButton = detailsContainer.querySelector("#student-menu-btn");
+            studentMenuButton.addEventListener("click", function() {
+                openStudentModal(); // Mở modal và hiển thị danh sách sinh viên
+            });
+    
+            // Load users for this classroom
+            await loadUsers(classId);
+    
+            // Load tasks for this classroom
+            await fetchTasks(classId);
+    
+            // Load conversation for this classroom
+            await loadClassroomConversation(classId, className);
+    
+        } catch (error) {
+            console.error("Error loading classroom details:", error);
+            document.getElementById("detailsContainer").innerHTML = `
+                    <div class="alert alert-danger">
+                        Không thể tải chi tiết lớp học. Vui lòng thử lại sau.
+                    </div>
+                `;
+        }
+    }
+    
+    async function loadClassroomConversation(classId, className) {
+        try {
+            // Fetch class details to get conversation_id
+            const classResponse = await fetch(`/api/class/${classId}`);
+            if (!classResponse.ok) {
+                throw new Error("Failed to fetch class details");
+            }
+            const classData = await classResponse.json();
+    
+            // Get chat container
+            const chatContainer = document.getElementById("chatContainer");
+    
+            // Set up chat container with header and message area
+            chatContainer.innerHTML = `
+                    <div class="chat-box">
+                        <!-- Chat Header -->
+                        <div class="chat-header p-3 border-bottom">
+                            <h5 class="mb-0">${className}</h5>
+                        </div>
+    
+                        <!-- Chat Messages -->
+                        <div class="chat-container" id="chat">
+                            <div class="text-center p-4">
+                                <div class="spinner-border text-warning" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <!-- Chat Input -->
+                        <div class="chat-input">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="message" placeholder="Nhập tin nhắn...">
+                                <button class="btn btn-warning" onclick="sendMessage()">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+    
+            // Set conversation ID and name
+            conversationId = classData.conversation.id;
+            conversationName = className;
+    
+            await loadMember(conversationId);
+            // Load existing messages
+            await loadMessages(conversationId);
+    
+            // Set up message input and send button
+            const messageInput = chatContainer.querySelector('#message');
+            const sendButton = chatContainer.querySelector('.btn-warning');
+    
+            // Add event listeners
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        } catch (error) {
+            console.error("Error loading classroom conversation:", error);
+            document.getElementById("chatContainer").innerHTML = `
+                    <div class="alert alert-bg-1">
+                        Không có người dùng trong lớp này
+                    </div>
+                `;
+        }
+    }
+    
+    function loadUsers(classId) {
+        const studentContainer = document.getElementById("student-container");
+        if (!studentContainer) return;
+    
+        studentContainer.innerHTML = `
+                <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+                <span>Đang tải danh sách sinh viên...</span>
+            `;
+    
+        fetch(`/api/class/${classId}/users`)
+            .then(response => {
+                if (!response.ok) throw new Error(`Failed to fetch users: ${response.status}`);
+                return response.json();
+            })
+            .then(users => {
+                membersOfClass = users;
+                displayUsers(users);
+            })
+            .catch(error => {
+                console.log(classId)
+                console.error("Error fetching users:", error);
+                studentContainer.innerHTML = '<div class="text-warning">Không thể tải danh sách sinh viên</div>';
+            });
+    }
+    
+    function openStudentModal() {
+        if (membersOfClass && membersOfClass.length > 0) {
+            displayUsers(membersOfClass, "modal");
+        } else {
+            const studentContainer = document.getElementById("student-list");
+            if (studentContainer) {
+                studentContainer.innerHTML = "<div class='spinner-border spinner-border-sm text-warning' role='status'><span class='visually-hidden'>Loading...</span></div>";
+            }
+        }
+        const modal = new bootstrap.Modal(document.getElementById("studentModal"));
+        modal.show();
+    }
+    
+    function displayUsers(users, displayType = "badge") {
+        let studentContainer;
+    
+        if (displayType === "badge") {
+            studentContainer = document.getElementById("student-container");
+        } else if (displayType === "modal") {
+            studentContainer = document.getElementById("student-list");
+        }
+    
+        if (!studentContainer) return;
+    
+        studentContainer.innerHTML = "";
+    
+        if (!users || users.length === 0) {
+            studentContainer.innerHTML = "<div class='text-muted'>Không có sinh viên nào trong lớp.</div>";
+            return;
+        }
+        users.forEach(user => {
+            let studentElement;
+            if (displayType === "badge") {
+                studentElement = document.createElement("div");
+                studentElement.className = "student-badge";
+                studentElement.style.display = "inline-block";
+                studentElement.style.padding = "8px 15px";
+                studentElement.style.borderRadius = "50px";
+                studentElement.style.border = "1px solid #20c997";
+                studentElement.style.backgroundColor = "#fff";
+                studentElement.style.color = "#333";
+                studentElement.style.fontSize = "14px";
+                studentElement.style.whiteSpace = "nowrap";
+                studentElement.style.marginRight = "10px";
+                studentElement.style.marginBottom = "10px";
+    
+                const studentName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+                studentElement.textContent = studentName;
+            } else if (displayType === "modal") {
+                studentElement = document.createElement("div");
+                studentElement.classList.add("student-card");
+                studentElement.style.padding = "10px";
+                studentElement.style.marginBottom = "10px";
+                studentElement.style.border = "1px solid #20c997";
+                studentElement.style.borderRadius = "5px";
+    
+                const studentName = `${user.first_name} ${user.last_name}`;
+                const studentEmail = user.email;
+                const studentPhone = user.phone_number || "Intern not add Phone number yet";
+                const studentPicture = user.picture || "assets/img/users/default-avatar.png";
+                const studentGender = user.gender || "OTHER";
+    
+                studentElement.innerHTML = `
+                    <div style="display: flex; align-items: center;">
+                        <img src="${studentPicture}" alt="Student Picture" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
+                        <div>
+                            <strong>${studentName}</strong><br>
+                            Email: ${studentEmail}<br>
+                            Phone: ${studentPhone}<br>
+                            Gender: ${studentGender}
+                        </div>
+                    </div>
+                `;
+            }
+    
+            studentContainer.appendChild(studentElement);
+        });
+    }
+    
+    async function fetchTasks(classId) {
+        try {
+            // Show loading indicator in the task list
+            const taskListElement = document.getElementById("task-list");
+            taskListElement.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm text-warning me-2" role="status"></div>
+                    <span>Đang tải danh sách task...</span>
+                </div>
+            `;
+    
+            // Fetch tasks from API
+            const response = await fetch(`/api/class/task/${classId}`);
+    
+            // Check if the request was successful
+            if (!response.ok) {
+                throw new Error(`Failed to fetch tasks: ${response.status} ${response.statusText}`);
+            }
+    
+            // Parse the JSON response
+            const tasks = await response.json();
+            console.log("Tasks API Response:", tasks);
+    
+            // If no tasks found
+            if (tasks.length === 0) {
+                taskListElement.innerHTML = `
+                    <div class="alert alert-info">
+                        Không có bài tập nào cho lớp này.
+                    </div>
+                `;
+                return;
+            }
+    
+            // Render the tasks with the new design
+            renderTasksNewDesign(tasks);
+    
+        } catch (error) {
+            // Show error message if API call fails
+            document.getElementById("task-list").innerHTML = `
+                <div class="alert alert-danger">
+                    Không thể tải danh sách task. Vui lòng thử lại sau.
+                </div>
+            `;
+            console.error("Error fetching tasks:", error);
+        }
+    }
+    
+    function renderTasksNewDesign(tasks) {
+        const taskListElement = document.getElementById("task-list");
+    
+        // Clear the task list
+        taskListElement.innerHTML = "";
+    
+        // If no tasks, show a message
+        if (!tasks || tasks.length === 0) {
+            taskListElement.innerHTML = '<div class="text-muted">Không có công việc nào</div>';
+            return;
+        }
+    
+        // Get current time for comparison
+        const now = new Date();
+    
+        // Add each task with the new design
+        tasks.forEach(task => {
+            // Format dates
+            const startTime = new Date(task.startTime);
+            const endTime = new Date(task.endTime);
+    
+            const formattedEndTime = endTime.toLocaleString("vi-VN", {
+                hour: '2-digit',
+                minute: '2-digit',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+    
+            // Create task element
+            const taskElement = document.createElement("div");
+            taskElement.className = "task-item";
+            taskElement.style.cursor = "pointer";
+    
+            // Store task data as attributes
+            taskElement.setAttribute("data-task-id", task.id);
+            taskElement.setAttribute("data-class-id", task.classId || task.classroom?.id);
+            taskElement.setAttribute("data-task-name", task.taskName);
+            taskElement.setAttribute("data-description", task.description || '');
+            taskElement.setAttribute("data-start-time", task.startTime);
+            taskElement.setAttribute("data-end-time", task.endTime);
+    
+            // Check if task is completed or past due
+            const isPastDue = endTime <= now;
+    
+            // Add completion indicator - CHANGED FROM ICON TO TEXT
+            const completionIndicator = isPastDue ?
+                `<div class="task-completed-text">It is overdue</div>` : '';
+    
+            taskElement.innerHTML = `
+                    ${completionIndicator}
+                    <div class="task-title">${task.taskName}</div>
+                    <div class="task-description">${task.description || 'description sẽ được hiển thị ở đây'}</div>
+                    <div class="task-meta">
+                        <div class="task-deadline">
+                            <span>Hạn nộp Task: ${formattedEndTime}</span>
+                        </div>
+                    </div>
+                `;
+    
+            // Add click event to open task detail modal
+            taskElement.addEventListener("click", () => {
+                openTaskDetailModal({
+                    taskId: task.id,
+                    classId: task.classId || task.classroom?.id,
+                    taskName: task.taskName,
+                    description: task.description,
+                    startTime: task.startTime,
+                    endTime: task.endTime
+                });
+            });
+    
+            taskListElement.appendChild(taskElement);
+        });
+    }
+    
+    function openAddTaskModal() {
+        // Reset form and validation state
+        const form = document.getElementById("addTaskForm");
+        form.classList.remove('was-validated');
+        form.reset();
+    
+        // Clear all validation messages
+        const invalidFeedbacks = form.querySelectorAll('.invalid-feedback');
+        invalidFeedbacks.forEach(feedback => {
+            feedback.style.display = 'none';
+        });
+    
+        // Clear form fields
+        const inputs = form.querySelectorAll('input, textarea');
+        inputs.forEach(input => {
+            input.classList.remove('is-invalid');
+        });
+    
+        // Xóa giá trị classId cũ
+        document.getElementById("classId").value = "";
+    
+        // Gọi lại để hiển thị danh sách checkbox lớp học từ cachedClassrooms
+        renderClassCheckboxes();
+    
+        // Mở modal
+        const modal = new bootstrap.Modal(document.getElementById("addTaskModal"));
+        modal.show();
+    }
+    
+    async function handleSaveTask() {
+        // Get form and validate it
+        const form = document.getElementById("addTaskForm");
+        form.classList.add('was-validated');
+    
+        // Get form values
+        const taskName = document.getElementById("taskName").value;
+        const taskDescription = document.getElementById("taskDescription").value;
+        const startTime = document.getElementById("startTime").value;
+        const endTime = document.getElementById("endTime").value;
+        const fileInput = document.getElementById("fileData");
+        const saveButton = document.getElementById("saveTaskBtn");
+        const originalText = saveButton.textContent;
+    
+        // Get selected classes
+        const selectedClassIds = Array.from(document.querySelectorAll("#classCheckboxList input:checked")).map(
+            (input) => input.value
+        );
+    
+        // Validate input data
+        let isValid = true;
+    
+        // Check task name
+        if (!taskName) {
+            document.getElementById("taskName").classList.add("is-invalid");
+            isValid = false;
+        } else {
+            document.getElementById("taskName").classList.remove("is-invalid");
+        }
+    
+        // Check start time
+        if (!startTime) {
+            document.getElementById("startTime").classList.add("is-invalid");
+            isValid = false;
+        } else {
+            document.getElementById("startTime").classList.remove("is-invalid");
+        }
+    
+        // Check end time
+        if (!endTime) {
+            document.getElementById("endTime").classList.add("is-invalid");
+            isValid = false;
+        } else {
+            document.getElementById("endTime").classList.remove("is-invalid");
+    
+            // Check if end time is after start time
+            if (startTime && new Date(endTime) <= new Date(startTime)) {
+                document.getElementById("endTime").classList.add("is-invalid");
+                document.getElementById("endTime").nextElementSibling.textContent = "Thời gian kết thúc phải sau thời gian bắt đầu";
+                document.getElementById("endTime").nextElementSibling.style.display = "block";
+                isValid = false;
+            }
+        }
+    
+        // Check if at least one class is selected
+        if (selectedClassIds.length === 0) {
+            document.getElementById("classCheckboxFeedback").style.display = "block";
+            isValid = false;
+        } else {
+            document.getElementById("classCheckboxFeedback").style.display = "none";
+        }
+    
+        // If validation fails, show alert and return
+        if (!isValid) {
+            showCommentAlert("Vui lòng điền đầy đủ thông tin và sửa các lỗi!", "warning");
+            return;
+        }
+    
+        const mentorId = document.getElementById("classroomList")?.getAttribute("data-mentor-id");
+        if (!mentorId || isNaN(mentorId)) {
+            showCommentAlert("Không tìm thấy mentor ID!", "danger");
+            saveButton.disabled = false;
+            saveButton.textContent = originalText;
+            return;
+        }
+    
+        // Check if fileInput exists
+        if (!fileInput) {
+            showCommentAlert("Không tìm thấy phần tử file input!", "danger");
+            saveButton.disabled = false;
+            saveButton.textContent = originalText;
+            return;
+        }
+    
+        // Disable save button
+        saveButton.disabled = true;
+        saveButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang lưu...`;
+    
+        try {
+            let fileUrl = null;
+    
+            console.log("Checking files before upload:", fileInput.files);
+            if (fileInput.files?.length > 0) {
+                console.log("Uploading file:", fileInput.files[0].name);
+                const formData = new FormData();
+                formData.append("file", fileInput.files[0]);
+    
+                const uploadResponse = await fetch("/cloudinary/upload/uploadFile", {
+                    method: "POST",
+                    body: formData,
+                });
+    
+                console.log("Upload response:", uploadResponse.status, uploadResponse.statusText);
+                if (!uploadResponse.ok) {
+                    const errorText = await uploadResponse.text();
+                    console.error("Upload error:", errorText);
+                    throw new Error("Không thể upload file lên Cloudinary");
+                }
+    
+                const uploadData = await uploadResponse.json();
+                console.log("Upload data:", uploadData);
+                fileUrl = uploadData.secure_url;
+                if (!fileUrl) {
+                    throw new Error("Cloudinary response missing secure_url");
+                }
+            } else {
+                console.log("No file selected, fileUrl will be null");
+            }
+    
+            // Create task data
+            const taskData = {
+                taskName,
+                description: taskDescription,
+                status : "PENDING",
+                startTime: new Date(startTime).toISOString(),
+                endTime: new Date(endTime).toISOString(),
+                creator: Number.parseInt(mentorId, 10),
+                fileData: fileUrl || null,
+            };
+            console.log("Task data before submission:", taskData);
+    
+            // Submit task to classes
+            await submitTaskForClasses(taskData, selectedClassIds, saveButton);
+        } catch (error) {
+            console.error("Error in handleSaveTask:", error);
+            showCommentAlert(`Có lỗi xảy ra: ${error.message}`, "danger");
+            saveButton.disabled = false;
+            saveButton.textContent = originalText;
+        }
+    }
+    
+    async function submitTaskForClasses(taskData, classIds, saveButton) {
+        const originalText = saveButton.textContent;
+        try {
+            // Send task for each classId
+            for (const classId of classIds) {
+                const taskDataForClass = {
+                    ...taskData,
+                    classId: parseInt(classId, 10),
+                };
+    
+                console.log("Sending task data for classId:", classId, JSON.stringify(taskDataForClass, null, 2));
+    
+                const response = await fetch('/api/task/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(taskDataForClass),
+                });
+    
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to create task for classId ${classId}: ${response.status} ${response.statusText}. Details: ${errorText}`);
+                }
+    
+                const result = await response.json();
+                console.log("Task created for classId:", classId, result);
+            }
+    
+            // Close modal and reset form
+            const modal = bootstrap.Modal.getInstance(document.getElementById("addTaskModal"));
+            modal.hide();
+            document.getElementById("addTaskForm").reset();
+    
+            // Reload task list for each class
+            classIds.forEach(classId => {
+                fetchTasks(classId);
+            });
+    
+            showCommentAlert("Tất cả các task đã được tạo thành công!", "success");
+        } catch (error) {
+            console.error("Error in submitTaskForClasses:", error);
+            saveButton.disabled = false;
+            saveButton.innerHTML = originalText;
+            throw error;
+        } finally {
+            saveButton.disabled = false;
+            saveButton.innerHTML = originalText;
+        }
+    }
+    
+    async function openTaskDetailModal(task) {
+        console.log("openTaskDetailModal called with task:", JSON.stringify(task, null, 2));
+    
+        // Validate task object
+        if (!task?.taskId || !task?.classId) {
+            console.error("Invalid task object:", task);
+            showCommentAlert("Error: Invalid task or class ID.", "danger");
+            return;
+        }
+    
+        try {
+            // Fetch completed tasks from the API
+            const response = await fetch(`/api/completed-tasks/by-task-and-class/${task.taskId}/${task.classId}`);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch submissions: ${response.status} ${response.statusText}`);
+            }
+            const data = await response.json();
+    
+            // Check if there are no submissions
+            if (!data || data.length === 0) {
+                // Show the no submissions modal
+                const noSubmissionsModal = new bootstrap.Modal(document.getElementById("noSubmissionsModal"));
+                const taskNameElement = document.getElementById("noSubmissionsTaskName");
+                taskNameElement.textContent = task.taskName || "Unnamed Task";
+                noSubmissionsModal.show();
+                return;
+            }
+    
+            // If there are submissions, continue with the normal flow
+            // Set the task name in the modal header
+            const modalLabel = document.getElementById("taskDetailModalLabel");
+            modalLabel.textContent = task.taskName || "Unnamed Task";
+    
+            // Update task details in the modal
+            const taskDetailStartTime = document.getElementById("taskDetailStartTime");
+            const taskDetailEndTime = document.getElementById("taskDetailEndTime");
+            const taskDetailDescription = document.getElementById("taskDetailDescription");
+    
+            // Format dates for display
+            const startTime = new Date(task.startTime);
+            const endTime = new Date(task.endTime);
+    
+            const formattedStartTime = startTime.toLocaleString("vi-VN", {
+                hour: '2-digit',
+                minute: '2-digit',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+    
+            const formattedEndTime = endTime.toLocaleString("vi-VN", {
+                hour: '2-digit',
+                minute: '2-digit',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+    
+            // Update task details
+            taskDetailStartTime.innerHTML = `<i class="bi bi-calendar-check"></i> <span>Bắt đầu: ${formattedStartTime}</span>`;
+            taskDetailEndTime.innerHTML = `<i class="bi bi-calendar-x"></i> <span>Kết thúc: ${formattedEndTime}</span>`;
+            taskDetailDescription.textContent = `Description: ${task.description || "Không có mô tả cho task này."}`;
+    
+            // Get the submission list container
+            const submissionList = document.getElementById("submissionList");
+            if (!submissionList) {
+                console.error("submissionList element not found");
+                return;
+            }
+    
+            // Clear previous submissions
+            submissionList.innerHTML = '<p>Loading submissions...</p>';
+    
+            // Process each submission
+            submissionList.innerHTML = '';
+            for (const [index, submission] of data.entries()) {
+                try {
+                    // Validate submission object
+                    if (!submission?.id?.userId) {
+                        throw new Error("Invalid or missing userId in submission");
+                    }
+    
+                    // Fetch user information
+                    const userResponse = await fetch(`/api/user/${submission.id.userId}`);
+                    if (!userResponse.ok) {
+                        throw new Error(`Failed to fetch user: ${userResponse.status} ${userResponse.statusText}`);
+                    }
+                    const userData = await userResponse.json();
+    
+                    // Create submission item element
+                    const submissionItem = document.createElement('div');
+                    submissionItem.classList.add('submission-item', 'mb-3', 'p-3', 'border', 'rounded');
+    
+                    // Lưu userId vào data-user-id
+                    submissionItem.setAttribute('data-user-id', submission.id.userId);
+                    // Lưu username và comment để sử dụng sau
+                    submissionItem.setAttribute('data-user-name', userData.userName || userData.first_name);
+                    submissionItem.setAttribute('data-comment', submission.comment || '');
+    
+                    // Thiết lập nội dung HTML
+                    submissionItem.innerHTML = `
+                    <p><strong>Username:</strong> ${userData.userName || userData.first_name}</p>
+                    <p><strong>Comment:</strong> ${submission.comment || 'N/A'}</p>
+                    <p><strong>Download:</strong> ${
+                        submission.file
+                            ? `<a href="${submission.file}" download style="color: blue;">Download File</a>`
+                            : 'No attachment file'
+                    }</p>
+                `;
+    
+                    // Thêm nút "Add Comment" để rõ ràng hơn
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'text-end mt-2';
+                    const commentBtn = document.createElement('button');
+                    commentBtn.className = 'btn btn-sm btn-primary add-comment-btn';
+                    commentBtn.innerHTML = 'Add Comment';
+                    buttonContainer.appendChild(commentBtn);
+                    submissionItem.appendChild(buttonContainer);
+    
+                    submissionList.appendChild(submissionItem);
+                } catch (error) {
+                    console.error(`Error processing submission ${index + 1}:`, error);
+                    const submissionItem = document.createElement('div');
+                    submissionItem.classList.add('submission-item', 'mb-3', 'p-3', 'border', 'rounded');
+                    submissionItem.innerHTML = `
+                    <p><strong>Username:</strong> Unknown</p>
+                    <p><strong>Error:</strong> Unable to load submission details</p>
+                `;
+                    submissionList.appendChild(submissionItem);
+                }
+            }
+    
+            // Hiển thị modal
+            const taskDetailModal = new bootstrap.Modal(document.getElementById("taskDetailModal"));
+            taskDetailModal.show();
+        } catch (error) {
+            console.error("Error fetching submissions:", error);
+            showCommentAlert("There hasn't been any submission yet.", "warning");
+        }
+    }
+    
+    function attachTaskEventListeners() {
+        document.querySelectorAll(".task-item").forEach(taskDiv => {
+            taskDiv.addEventListener("click", function () {
+                const task = {
+                    taskName: this.getAttribute("data-task-name") || "Không có tên nhiệm vụ"
+                };
+                openTaskDetailModal(task);
+            });
+        });
+    }
+    
+    function renderClassCheckboxes() {
+        const container = document.getElementById("classCheckboxList");
+        container.innerHTML = "";
+    
+        if (!Array.isArray(cachedClassrooms)) return;
+    
+        cachedClassrooms.forEach(cls => {
+            const col = document.createElement("div");
+            col.className = "col-6";
+    
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = cls.id;
+            checkbox.id = `checkbox-${cls.id}`;
+            checkbox.className = "form-check-input me-1";
+    
+            const label = document.createElement("label");
+            label.htmlFor = checkbox.id;
+            label.className = "form-check-label";
+            label.textContent = cls.className;
+    
+            col.appendChild(checkbox);
+            col.appendChild(label);
+            container.appendChild(col);
+        });
+    }
+    
+    let currentTaskId = null;
+    let currentUserId = null;
+    let currentClassId = null;
+    let currentSubmissionItem = null;
+    let submissionCache = new Map(); // Cache for submission data
+    
+    function showCommentAlert(message, type = 'danger') {
+        const alertContainer = document.getElementById('globalAlertContainer');
+        if (!alertContainer) {
+            console.error('Global alert container not found!');
+            return;
+        }
+    
+        // Generate a unique ID for the alert
+        const alertId = 'alert-' + Date.now();
+    
+        // Set icon based on type
+        let icon = 'bi-exclamation-triangle-fill';
+        if (type === 'success') icon = 'bi-check-circle-fill';
+        else if (type === 'warning') icon = 'bi-exclamation-circle-fill';
+        else if (type === 'info') icon = 'bi-info-circle-fill';
+    
+        // Create the alert HTML
+        const alertHtml = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert" style="border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 4px solid;">
+                    <i class="bi ${icon} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+    
+        // Append the alert to the container
+        alertContainer.innerHTML += alertHtml;
+    
+        // Set border-left color based on type
+        const alertElement = document.getElementById(alertId);
+        if (alertElement) {
+            const borderColor = {
+                'danger': '#dc3545',
+                'warning': '#ffc107',
+                'success': '#28a745',
+                'info': '#17a2b8'
+            }[type] || '#dc3545';
+            alertElement.style.borderLeftColor = borderColor;
+    
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alertElement);
+                bsAlert.close();
+            }, 5000);
+        }
+    
+        // Scroll to the alert
+        alertContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    // Function to modify the existing openTaskDetailModal function
+    function enhanceOpenTaskDetailModal() {
+        // Store the original function
+        const originalOpenTaskDetailModal = window.openTaskDetailModal;
+    
+        // Replace with enhanced version
+        window.openTaskDetailModal = function(task) {
+            console.log("Enhanced openTaskDetailModal called with:", task);
+    
+            // Store task context
+            currentTaskId = task.taskId;
+            currentClassId = task.classId;
+    
+            // Call the original function
+            if (typeof originalOpenTaskDetailModal === 'function') {
+                originalOpenTaskDetailModal(task);
+            }
+    
+            // Add our enhancement after a short delay to ensure the modal content is loaded
+            setTimeout(() => {
+                // Find all submission items and attach click handlers
+                setupSubmissionItemHandlers();
+            }, 1000); // Wait for the original function to complete and render submissions
+        };
+    }
+    
+    // Function to set up click handlers on submission items
+    function setupSubmissionItemHandlers() {
+        console.log("Setting up submission item handlers");
+    
+        // Find all submission items in the task detail modal
+        const submissionList = document.getElementById('submissionList');
+        if (!submissionList) {
+            console.error("Submission list element not found");
+            return;
+        }
+    
+        // First, try to find elements with the submission-item class
+        const submissionItems = submissionList.querySelectorAll('.submission-item');
+    
+        if (submissionItems.length > 0) {
+            console.log(`Found ${submissionItems.length} submission items with class`);
+            submissionItems.forEach((item, index) => {
+                addClickHandlerToSubmissionItem(item, index);
+            });
+        } else {
+            // If no items found with the class, try to find direct children
+            const children = submissionList.children;
+            console.log(`Found ${children.length} children in submissionList`);
+    
+            if (children.length > 0) {
+                Array.from(children).forEach((item, index) => {
+                    // Only add handlers to div or p elements that might be submission items
+                    if (item.tagName === 'DIV' || item.tagName === 'P') {
+                        addClickHandlerToSubmissionItem(item, index);
+                    }
+                });
+            } else {
+                // If still no items, the content might be plain text or not loaded yet
+                console.log("No submission items found, will try again in 1 second");
+                setTimeout(setupSubmissionItemHandlers, 1000);
+            }
+        }
+    }
+    
+    // Function to add click handler to a submission item
+    function addClickHandlerToSubmissionItem(item, index) {
+        console.log(`Adding click handler to submission item ${index}`);
+    
+        // Skip if this item already has our handler
+        if (item.hasAttribute('data-comment-handler-added')) {
+            return;
+        }
+    
+        // Mark this item as having our handler
+        item.setAttribute('data-comment-handler-added', 'true');
+    
+        // Make the item look clickable
+        item.style.cursor = 'pointer';
+        item.style.transition = 'all 0.3s ease';
+        item.style.borderLeft = '3px solid #ddd';
+        item.style.borderRadius = '5px';
+        item.style.padding = item.style.padding || '12px';
+        item.style.marginBottom = item.style.marginBottom || '12px';
+        item.style.backgroundColor = '#fff';
+        item.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+    
+        // Add hover effect
+        item.addEventListener('mouseover', () => {
+            item.style.backgroundColor = '#f8f9fa';
+            item.style.boxShadow = '0 3px 6px rgba(0,0,0,0.15)';
+            item.style.transform = 'translateY(-2px)';
+        });
+    
+        item.addEventListener('mouseout', () => {
+            if (!item.classList.contains('active-submission')) {
+                item.style.backgroundColor = '#fff';
+                item.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                item.style.transform = 'translateY(0)';
+            }
+        });
+    
+        // Extract user ID and other data from the item
+        let userId = extractUserIdFromItem(item);
+        let userName = extractUserNameFromItem(item);
+        let currentComment = extractCommentFromItem(item);
+    
+        // Store data attributes on the element
+        item.setAttribute('data-user-id', userId);
+        if (userName) item.setAttribute('data-user-name', userName);
+        if (currentComment) item.setAttribute('data-comment', currentComment);
+    
+        // Add click handler
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+    
+            // Remove active class from all items
+            document.querySelectorAll('#submissionList > div').forEach(el => {
+                el.classList.remove('active-submission');
+                el.style.backgroundColor = '#fff';
+                el.style.borderLeft = '3px solid #ddd';
+                el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                el.style.transform = 'translateY(0)';
+            });
+    
+            // Add active class to this item
+            item.classList.add('active-submission');
+            item.style.backgroundColor = '#fff8f0';
+            item.style.borderLeft = '3px solid #e67e22';
+            item.style.boxShadow = '0 3px 6px rgba(0,0,0,0.15)';
+    
+            // Store the current user ID and submission item
+            currentUserId = userId;
+            currentSubmissionItem = item;
+    
+            // Open the comment popup
+            openCommentPopup(userId, userName, currentComment);
+        });
+    
+        // Add a comment button for clarity if it doesn't already have one
+        if (!item.querySelector('.add-comment-btn')) {
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'text-end mt-2';
+    
+            const commentBtn = document.createElement('button');
+            commentBtn.className = 'btn btn-sm btn-primary add-comment-btn';
+            commentBtn.innerHTML = '<i class="bi bi-chat-dots me-1"></i> Add Comment';
+            commentBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                item.click(); // Trigger the item's click event
+            });
+    
+            buttonContainer.appendChild(commentBtn);
+            item.appendChild(buttonContainer);
+        }
+    }
+    
+    // Helper function to extract user ID from a submission item
+    function extractUserIdFromItem(item) {
+        // Lấy userId từ data-user-id
+        const userId = item.getAttribute('data-user-id');
+        if (userId) {
+            return userId;
+        }
+    
+        // Nếu không tìm thấy, trả về null và ghi log lỗi
+        console.error("No userId found in submission item:", item);
+        return null;
+    }
+    
+    // Helper function to extract user name from a submission item
+    function extractUserNameFromItem(item) {
+        // Lấy username từ data-user-name
+        const userName = item.getAttribute('data-user-name');
+        return userName || 'Unknown User';
+    }
+    
+    function extractCommentFromItem(item) {
+        // Lấy comment từ data-comment
+        const comment = item.getAttribute('data-comment');
+        return comment || null;
+    }
+    function openCommentPopup(userId, userName, currentComment) {
+        console.log(`Opening comment popup for user ${userId}`)
+    
+        // Update the comment modal with submission details
+        const commentModalUserName = document.getElementById("commentModalUserName")
+        const currentCommentDisplay = document.getElementById("currentCommentDisplay")
+        const currentMarkDisplay = document.getElementById("currentMarkDisplay")
+        const commentText = document.getElementById("commentText")
+        const markInput = document.getElementById("markInput")
+    
+        // Set user name
+        commentModalUserName.textContent = userName || userId
+    
+        // Fetch the latest submission data to get both comment and mark
+        fetchSubmissionData(currentTaskId, userId, currentClassId)
+            .then((data) => {
+                // Set current comment
+                if (data && data.comment) {
+                    currentCommentDisplay.innerHTML = `<div>${data.comment}</div>`
+                } else if (currentComment && currentComment !== "N/A") {
+                    currentCommentDisplay.innerHTML = `<div>${currentComment}</div>`
+                } else {
+                    currentCommentDisplay.innerHTML = `<em class="text-muted">No comment yet</em>`
+                }
+    
+                // Set current mark
+                if (data && data.mark !== null && data.mark !== undefined) {
+                    currentMarkDisplay.innerHTML = `<div>${data.mark}</div>`
+                    // Pre-fill the mark input with the current value
+                    markInput.value = data.mark
+                } else {
+                    currentMarkDisplay.innerHTML = `<em class="text-muted">No mark yet</em>`
+                }
+            })
+            .catch((error) => {
+                console.error("Error fetching submission data:", error)
+    
+                // Fallback to using the data we already have
+                if (currentComment && currentComment !== "N/A") {
+                    currentCommentDisplay.innerHTML = `<div>${currentComment}</div>`
+                } else {
+                    currentCommentDisplay.innerHTML = `<em class="text-muted">No comment yet</em>`
+                }
+    
+                currentMarkDisplay.innerHTML = `<em class="text-muted">No mark yet</em>`
+            })
+    
+        // Clear the comment textarea
+        commentText.value = ""
+        updateCharCount()
+    
+        // Show the modal
+        const commentModal = new bootstrap.Modal(document.getElementById("commentModal"))
+        commentModal.show()
+    
+        // Focus the textarea
+        setTimeout(() => {
+            commentText.focus()
+        }, 500)
+    }
+    
+    // Function to fetch the latest submission data
+    async function fetchSubmissionData(taskId, userId, classId) {
+        try {
+            const response = await fetch(`/api/completed-tasks/${taskId}/${userId}/${classId}`)
+    
+            if (!response.ok) {
+                throw new Error(`Failed to fetch submission: ${response.status} ${response.statusText}`)
+            }
+    
+            return await response.json()
+        } catch (error) {
+            console.error("Error fetching submission data:", error)
+            return null
+        }
+    }
+    
+    // Function to update character count
+    function updateCharCount() {
+        const commentText = document.getElementById('commentText');
+        const charCount = document.getElementById('charCount');
+        const count = commentText.value.length;
+    
+        charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
+    
+        // Change color based on length
+        if (count > 500) {
+            charCount.className = 'form-text text-end mt-1 text-danger';
+        } else if (count > 400) {
+            charCount.className = 'form-text text-end mt-1 text-warning';
+        } else {
+            charCount.className = 'form-text text-end mt-1 text-muted';
+        }
+    }
+    
+    // Function to validate mark input
+    function validateMarkInput(markInput) {
+        const markValue = markInput.value.trim()
+    
+        // If empty, it's valid (no mark entered)
+        if (!markValue) {
+            return true
+        }
+    
+        // Convert to number and check range
+        const mark = Number(markValue)
+    
+        // Check if it's a valid number between 0 and 10
+        if (isNaN(mark) || mark < 0 || mark > 10) {
+            return false
+        }
+    
+        return true
+    }
+    
+    // Function to submit a comment and/or mark
+    async function submitComment() {
+        const commentText = document.getElementById("commentText")
+        const markInput = document.getElementById("markInput")
+        const comment = commentText.value.trim()
+        const mark = markInput.value.trim()
+    
+        // Kiểm tra nếu không có comment và không có mark
+        if (!comment && !mark) {
+            showCommentAlert("Vui lòng nhập bình luận hoặc điểm trước khi gửi.", "warning")
+            commentText.focus()
+            return
+        }
+    
+        // Validate mark input if provided
+        if (mark && !validateMarkInput(markInput)) {
+            showCommentAlert("Điểm phải là số từ 0 đến 10. Vui lòng nhập lại.", "warning")
+            markInput.focus()
+            markInput.select() // Select the text for easy correction
+            return
+        }
+    
+        if (!currentUserId || !currentTaskId || !currentClassId) {
+            console.error("Thiếu dữ liệu để gửi", {
+                currentUserId,
+                currentTaskId,
+                currentClassId,
+            })
+            showCommentAlert("Lỗi: Thiếu dữ liệu cần thiết. Vui lòng thử lại.", "danger")
+            return
+        }
+    
+        const submitBtn = document.getElementById("submitCommentBtn")
+        const originalBtnText = submitBtn.innerHTML
+    
+        submitBtn.disabled = true
+        submitBtn.innerHTML =
+            '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang gửi...'
+    
+        try {
+            let commentResult, markResult
+    
+            // Gửi comment nếu có
+            if (comment) {
+                console.log(`Gửi comment đến /api/completed-tasks/${currentTaskId}/${currentUserId}/${currentClassId}/comment`)
+    
+                const commentResponse = await fetch(
+                    `/api/completed-tasks/${currentTaskId}/${currentUserId}/${currentClassId}/comment`,
+                    {
+                        method: "PATCH",
+                        headers: {
+                            // Sử dụng Content-Type là text/plain để gửi văn bản thuần túy
+                            "Content-Type": "text/plain",
+                        },
+                        // Gửi comment dưới dạng văn bản thuần túy, không sử dụng JSON.stringify
+                        body: comment,
+                    },
+                )
+    
+                if (!commentResponse.ok) {
+                    const errorText = await commentResponse.text()
+                    throw new Error(`Không thể gửi comment (${commentResponse.status}): ${errorText || commentResponse.statusText}`)
+                }
+    
+                try {
+                    commentResult = await commentResponse.json()
+                    console.log("Comment đã được gửi thành công:", commentResult)
+                } catch (e) {
+                    // Nếu response không phải JSON, sử dụng text
+                    const textResult = await commentResponse.text()
+                    console.log("Comment đã được gửi thành công (text):", textResult)
+                    commentResult = { comment: textResult }
+                }
+    
+                // Cập nhật hiển thị comment trong modal ngay lập tức
+                const currentCommentDisplay = document.getElementById("currentCommentDisplay")
+                const safeComment = comment ? document.createTextNode(comment).textContent : null
+                currentCommentDisplay.innerHTML = safeComment || '<em class="text-muted">No comment yet</em>'
+            }
+    
+            // Gửi mark nếu có
+            if (mark) {
+                console.log(`Gửi mark đến /api/completed-tasks/${currentTaskId}/${currentUserId}/${currentClassId}/mark`)
+    
+                const markResponse = await fetch(
+                    `/api/completed-tasks/${currentTaskId}/${currentUserId}/${currentClassId}/mark`,
+                    {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(Number.parseInt(mark)),
+                    },
+                )
+    
+                if (!markResponse.ok) {
+                    const errorText = await markResponse.text()
+                    throw new Error(`Không thể gửi mark (${markResponse.status}): ${errorText || markResponse.statusText}`)
+                }
+    
+                try {
+                    markResult = await markResponse.json()
+                    console.log("Mark đã được gửi thành công:", markResult)
+                } catch (e) {
+                    console.log("Mark đã được gửi thành công, nhưng không thể parse JSON response")
+                    markResult = { mark: mark }
+                }
+    
+                // Cập nhật hiển thị mark trong modal ngay lập tức
+                const currentMarkDisplay = document.getElementById("currentMarkDisplay")
+                const markValue = markResult && markResult.mark !== undefined ? markResult.mark : mark
+                currentMarkDisplay.innerHTML = markValue !== null ? markValue : '<em class="text-muted">No mark yet</em>'
+            }
+    
+            // Cập nhật UI dựa trên kết quả từ server
+            if (currentSubmissionItem) {
+                // Cập nhật comment nếu đã gửi comment mới
+                if (comment) {
+                    // Sử dụng comment gốc thay vì commentResult.comment vì response có thể khác định dạng
+                    currentSubmissionItem.setAttribute("data-comment", comment)
+    
+                    let commentDisplay = currentSubmissionItem.querySelector(".comment-display")
+                    if (!commentDisplay) {
+                        commentDisplay = document.createElement("p")
+                        commentDisplay.className = "comment-display"
+                        currentSubmissionItem.appendChild(commentDisplay)
+                    }
+    
+                    // Hiển thị comment an toàn, tránh XSS
+                    const safeComment = comment ? document.createTextNode(comment).textContent : "Không có bình luận"
+    
+                    commentDisplay.innerHTML = `<strong>Comment:</strong> ${safeComment}`
+                }
+    
+                // Cập nhật mark nếu đã gửi mark mới
+                if (mark) {
+                    const markValue = markResult && markResult.mark !== undefined ? markResult.mark : mark
+                    currentSubmissionItem.setAttribute("data-mark", markValue)
+    
+                    let markDisplay = currentSubmissionItem.querySelector(".mark-display")
+                    if (!markDisplay) {
+                        markDisplay = document.createElement("p")
+                        markDisplay.className = "mark-display"
+                        currentSubmissionItem.appendChild(markDisplay)
+                    }
+    
+                    markDisplay.innerHTML = `<strong>Mark:</strong> ${markValue !== null ? markValue : "Chưa có điểm"}`
+                }
+    
+                currentSubmissionItem.style.animation = "comment-updated 1s ease"
+            }
+    
+            // Hiển thị thông báo thành công
+            let successMessage = ""
+            if (comment && mark) {
+                successMessage = "Bình luận và điểm đã được gửi thành công"
+            } else if (comment) {
+                successMessage = "Bình luận đã được gửi thành công"
+            } else if (mark) {
+                successMessage = "Điểm đã được gửi thành công"
+            }
+    
+            showCommentAlert(successMessage, "success")
+        } catch (error) {
+            console.error("Lỗi khi gửi dữ liệu:", error)
+            showCommentAlert(`Không thể gửi dữ liệu: ${error.message}`, "danger")
+        } finally {
+            submitBtn.disabled = false
+            submitBtn.innerHTML = originalBtnText
+        }
+    }
+    
+    
+    // Initialize everything when the document is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("Initializing enhanced comment popup functionality");
+    
+        // Enhance the original openTaskDetailModal function
+        enhanceOpenTaskDetailModal();
+    
+        // Add event listener for the submit button in the comment modal
+        const submitCommentBtn = document.getElementById('submitCommentBtn');
+        if (submitCommentBtn) {
+            submitCommentBtn.addEventListener('click', submitComment);
+        }
+    
+        // Add event listener for the comment text area to update character count
+        const commentText = document.getElementById('commentText');
+        if (commentText) {
+            commentText.addEventListener('input', updateCharCount);
+            commentText.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault();
+                    submitComment();
+                }
+            });
+        }
+    });
+    
+    // Gọi hàm gán sự kiện khi trang load xong
+    document.addEventListener("DOMContentLoaded", attachTaskEventListeners);

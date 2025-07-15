@@ -15,5 +15,10 @@
     <PackageReference Include="CloudinaryDotNet" Version="1.27.6" />
     <PackageReference Include="dotenv.net" Version="4.0.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\Admin\" />
+    <Folder Include="Views\Employee\" />
+    <Folder Include="Views\Intern\" />
+  </ItemGroup>
 
 </Project>
