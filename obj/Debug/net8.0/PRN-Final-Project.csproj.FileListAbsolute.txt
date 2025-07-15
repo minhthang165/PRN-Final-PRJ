@@ -120,3 +120,9 @@
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.pdb
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.genruntimeconfig.cache
 /Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/ref/PRN-Final-Project.dll
+/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Microsoft.OpenApi.dll
+/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Swashbuckle.AspNetCore.Swagger.dll
+/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerGen.dll
+/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerUI.dll
+/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.MvcApplicationPartsAssemblyInfo.cs
+/Users/thangnm/Documents/Macbook/FPT/SEM7_SUMMER2025/PRN222/PRN-Final-Project/obj/Debug/net8.0/PRN-Final-Project.sourcelink.json

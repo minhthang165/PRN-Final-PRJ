@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PRN-Final-Project")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8c780ae876cc68e5b8cef5b5c7dc882847c29538")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+14349bb4585c7399cf56a6e9b0e388b3554497de")]
 [assembly: System.Reflection.AssemblyProductAttribute("PRN-Final-Project")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PRN-Final-Project")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
