@@ -32,4 +32,10 @@ public partial class Completed_Task
     public int? deleted_by { get; set; }
 
     public bool? is_active { get; set; }
+
+    public virtual Class _class { get; set; } = null!;
+
+    public virtual UserTask task { get; set; } = null!;
+
+    public virtual user user { get; set; } = null!;
 }

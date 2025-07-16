@@ -38,4 +38,14 @@ public partial class Schedule
     public bool? is_active { get; set; }
 
     public int? mentor_id { get; set; }
+
+    public virtual ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
+
+    public virtual Class _class { get; set; } = null!;
+
+    public virtual user? mentor { get; set; }
+
+    public virtual Room room { get; set; } = null!;
+
+    public virtual Subject subject { get; set; } = null!;
 }

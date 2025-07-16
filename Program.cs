@@ -9,6 +9,7 @@ using CloudinaryDotNet.Actions;
 using dotenv.net;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,20 +21,31 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<PRNDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
                      new MySqlServerVersion(new Version(8, 0, 2))));
-
-
-
+                     
+// .env config
 DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
+builder.Configuration["Gemini:ApiKey"] = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
 Cloudinary cloudinary = new Cloudinary(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
 cloudinary.Api.Secure = true;
 builder.Services.AddSingleton(cloudinary);
 
+// Inject service and repository
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IClassRepository, ClassRepository>();
+
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IFileRepository, FileRepository>();
+
+builder.Services.AddScoped<IRecruitmentService, RecruitmentService>();
+builder.Services.AddScoped<IRecruitmentRepository, RecruitmentRepository>();
+
+builder.Services.AddScoped<ICVInfoService, CVInfoService>();
+builder.Services.AddScoped<ICVInfoRepository, CVInfoRepository>();
+
+builder.Services.AddScoped<IAIExtractor, AIExtractorService>();
 
 // Add services to the container.
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -72,6 +84,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Enable Swagger UI for API documentation
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

@@ -26,4 +26,6 @@ public partial class Room
     public int? deleted_by { get; set; }
 
     public bool? is_active { get; set; }
+
+    public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
 }

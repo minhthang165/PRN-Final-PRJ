@@ -7,9 +7,10 @@ using PRN_Final_Project.Repositories.Common;
 
 namespace PRN_Final_Project.Repositories.Interface
 {
-    public interface IClassRepository : ICommonRepository<Class>
+    public interface ICVInfoRepository : ICommonRepository<CV_Info>
     {
-        Task AssignTrainerToClassAsync(int classId, int trainerId);
-        Task AssignTraineeToClassAsync(int classId, int traineeId);
+        Task<List<CV_Info>> FindCvInfoByRecruitmentId(int recruitmentId);
+        Task ApproveCv(int cvId);
+        Task RejectCv(int cvId);
     }
 }

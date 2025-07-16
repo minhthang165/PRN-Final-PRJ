@@ -26,4 +26,8 @@ public partial class UserFile
     public int? deleted_by { get; set; }
 
     public bool? is_active { get; set; }
+
+    public virtual ICollection<CV_Info> CV_Infos { get; set; } = new List<CV_Info>();
+
+    public virtual user submitter { get; set; } = null!;
 }

@@ -26,4 +26,8 @@ public partial class Conversation
     public int? deleted_by { get; set; }
 
     public bool? is_active { get; set; }
+
+    public virtual ICollection<Conversation_user> Conversation_users { get; set; } = new List<Conversation_user>();
+
+    public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 }
