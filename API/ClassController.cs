@@ -93,5 +93,19 @@ namespace PRN_Final_Project.API
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpPost("assign-trainee")]
+        public async Task<IActionResult> AssignTrainee(int classId, int traineeId)
+        {
+            try
+            {
+                await _classService.AssignTraineeToClassAsync(classId, traineeId);
+                return Ok("Trainee assigned successfully.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

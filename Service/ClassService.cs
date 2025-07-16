@@ -52,5 +52,10 @@ namespace PRN_Final_Project.Service
         {
             await _repository.AssignTrainerToClassAsync(classId, trainerId);
         }
+
+        public async Task AssignTraineeToClassAsync(int classId, int traineeId)
+        {
+            await _repository.AssignTraineeToClassAsync(classId, traineeId);
+        }
     }
 }
