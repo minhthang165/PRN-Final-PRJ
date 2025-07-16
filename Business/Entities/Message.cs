@@ -28,4 +28,6 @@ public partial class Message
     public int? deleted_by { get; set; }
 
     public bool? is_active { get; set; }
+
+    public virtual Conversation? conversation { get; set; }
 }

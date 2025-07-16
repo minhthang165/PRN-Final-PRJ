@@ -24,4 +24,8 @@ public partial class Conversation_user
     public int? deleted_by { get; set; }
 
     public bool? is_active { get; set; }
+
+    public virtual Conversation conversation { get; set; } = null!;
+
+    public virtual user user { get; set; } = null!;
 }

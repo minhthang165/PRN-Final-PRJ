@@ -7,9 +7,8 @@ using PRN_Final_Project.Service.Common;
 
 namespace PRN_Final_Project.Service.Interface
 {
-    public interface IClassService : ICommonService<Class>
+    public interface IRecruitmentService : ICommonService<Recruitment>
     {
-        Task AssignTrainerToClassAsync(int classId, int trainerId);
-        Task AssignTraineeToClassAsync(int classId, int traineeId);
+        
     }
 }

@@ -38,4 +38,18 @@ public partial class user
     public int? deleted_by { get; set; }
 
     public bool? is_active { get; set; }
+
+    public virtual ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
+
+    public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
+
+    public virtual ICollection<Conversation_user> Conversation_users { get; set; } = new List<Conversation_user>();
+
+    public virtual ICollection<Notification_recipient> Notification_recipients { get; set; } = new List<Notification_recipient>();
+
+    public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
+
+    public virtual ICollection<UserFile> UserFiles { get; set; } = new List<UserFile>();
+
+    public virtual ICollection<UserTask> UserTasks { get; set; } = new List<UserTask>();
 }

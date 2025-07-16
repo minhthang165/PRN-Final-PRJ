@@ -13,10 +13,12 @@ namespace PRN_Final_Project.API
     public class FileController : ControllerBase
     {
         private readonly IFileService _service;
+        private readonly IAIExtractor _extractor;
 
-        public FileController(IFileService service)
+        public FileController(IFileService service, IAIExtractor extractor)
         {
             _service = service;
+            _extractor = extractor;
         }
 
         [HttpPost]

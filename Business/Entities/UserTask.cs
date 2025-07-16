@@ -34,4 +34,8 @@ public partial class UserTask
     public int? deleted_by { get; set; }
 
     public bool? is_active { get; set; }
+
+    public virtual Class _class { get; set; } = null!;
+
+    public virtual user created_byNavigation { get; set; } = null!;
 }

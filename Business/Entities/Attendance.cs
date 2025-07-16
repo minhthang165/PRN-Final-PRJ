@@ -26,4 +26,8 @@ public partial class Attendance
     public int? deleted_by { get; set; }
 
     public bool? is_active { get; set; }
+
+    public virtual Schedule schedule { get; set; } = null!;
+
+    public virtual user user { get; set; } = null!;
 }

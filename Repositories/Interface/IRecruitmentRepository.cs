@@ -7,9 +7,8 @@ using PRN_Final_Project.Repositories.Common;
 
 namespace PRN_Final_Project.Repositories.Interface
 {
-    public interface IClassRepository : ICommonRepository<Class>
+    public interface IRecruitmentRepository : ICommonRepository<Recruitment>
     {
-        Task AssignTrainerToClassAsync(int classId, int trainerId);
-        Task AssignTraineeToClassAsync(int classId, int traineeId);
+
     }
 }

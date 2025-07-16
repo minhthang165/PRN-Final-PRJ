@@ -1,0 +1,17 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using PRN_Final_Project.Business.Entities;
+using PRN_Final_Project.Service.Common;
+
+namespace PRN_Final_Project.Service.Interface
+{
+    public interface ICVInfoService : ICommonService<CV_Info>
+    {
+        Task<CV_Info> UploadCv(IFormFile file, int recruitmentId);
+        Task<List<CV_Info>> FindCvInfoByRecruitmentId(int recruitmentId);
+        Task ApproveCv(int cvId);
+        Task RejectCv(int cvId);
+    }
+}

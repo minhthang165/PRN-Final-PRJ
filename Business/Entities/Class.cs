@@ -15,7 +15,7 @@ public partial class Class
 
     public string? status { get; set; }
 
-    public int mentor_id { get; set; }
+    public int? mentor_id { get; set; }
 
     public DateTime created_at { get; set; }
 
@@ -32,4 +32,12 @@ public partial class Class
     public bool? is_active { get; set; }
 
     public int? conversation_id { get; set; }
+
+    public virtual ICollection<Recruitment> Recruitments { get; set; } = new List<Recruitment>();
+
+    public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
+
+    public virtual ICollection<UserTask> UserTasks { get; set; } = new List<UserTask>();
+
+    public virtual user mentor { get; set; } = null!;
 }

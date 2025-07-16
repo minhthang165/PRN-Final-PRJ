@@ -58,17 +58,35 @@ public partial class PRNDbContext : DbContext
 
             entity.ToTable("Attendance");
 
+            entity.HasIndex(e => e.schedule_id, "FK_Attendance_Schedule");
+
+            entity.HasIndex(e => e.user_id, "FK_Attendance_User");
+
             entity.Property(e => e.created_at).HasColumnType("datetime");
             entity.Property(e => e.deleted_at).HasColumnType("datetime");
             entity.Property(e => e.status).HasMaxLength(50);
             entity.Property(e => e.updated_at).HasColumnType("datetime");
+
+            entity.HasOne(d => d.schedule).WithMany(p => p.Attendances)
+                .HasForeignKey(d => d.schedule_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Attendance_Schedule");
+
+            entity.HasOne(d => d.user).WithMany(p => p.Attendances)
+                .HasForeignKey(d => d.user_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Attendance_User");
         });
 
         modelBuilder.Entity<CV_Info>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("CV_Info");
+            entity.HasKey(e => e.cvInfo_id).HasName("PRIMARY");
+
+            entity.ToTable("CV_Info");
+
+            entity.HasIndex(e => e.recruitment_id, "FK_CVInfo_Recruitment");
+
+            entity.HasIndex(e => e.file_id, "FK_CVInfo_UserFile");
 
             entity.Property(e => e.created_at).HasColumnType("datetime");
             entity.Property(e => e.deleted_at).HasColumnType("datetime");
@@ -76,6 +94,16 @@ public partial class PRNDbContext : DbContext
             entity.Property(e => e.gpa).HasPrecision(2, 1);
             entity.Property(e => e.skill).HasMaxLength(255);
             entity.Property(e => e.updated_at).HasColumnType("datetime");
+
+            entity.HasOne(d => d.file).WithMany(p => p.CV_Infos)
+                .HasForeignKey(d => d.file_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CVInfo_UserFile");
+
+            entity.HasOne(d => d.recruitment).WithMany(p => p.CV_Infos)
+                .HasForeignKey(d => d.recruitment_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CVInfo_Recruitment");
         });
 
         modelBuilder.Entity<Category>(entity =>
@@ -93,17 +121,30 @@ public partial class PRNDbContext : DbContext
 
             entity.ToTable("Class");
 
+            entity.HasIndex(e => e.mentor_id, "FK_Class_Mentor");
+
             entity.Property(e => e.class_description).HasMaxLength(255);
             entity.Property(e => e.class_name).HasMaxLength(255);
             entity.Property(e => e.created_at).HasColumnType("datetime");
             entity.Property(e => e.deleted_at).HasColumnType("datetime");
             entity.Property(e => e.status).HasMaxLength(50);
             entity.Property(e => e.updated_at).HasColumnType("datetime");
+
+            entity.HasOne(d => d.mentor).WithMany(p => p.Classes)
+                .HasForeignKey(d => d.mentor_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Class_Mentor");
         });
 
         modelBuilder.Entity<Completed_Task>(entity =>
         {
             entity.HasNoKey();
+
+            entity.HasIndex(e => e.class_id, "FK_CompletedTasks_Class");
+
+            entity.HasIndex(e => e.task_id, "FK_CompletedTasks_Task");
+
+            entity.HasIndex(e => e.user_id, "FK_CompletedTasks_User");
 
             entity.Property(e => e.comment).HasColumnType("text");
             entity.Property(e => e.created_at).HasColumnType("datetime");
@@ -111,6 +152,21 @@ public partial class PRNDbContext : DbContext
             entity.Property(e => e.file).HasMaxLength(255);
             entity.Property(e => e.status).HasMaxLength(50);
             entity.Property(e => e.updated_at).HasColumnType("datetime");
+
+            entity.HasOne(d => d._class).WithMany()
+                .HasForeignKey(d => d.class_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CompletedTasks_Class");
+
+            entity.HasOne(d => d.task).WithMany()
+                .HasForeignKey(d => d.task_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CompletedTasks_Task");
+
+            entity.HasOne(d => d.user).WithMany()
+                .HasForeignKey(d => d.user_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CompletedTasks_User");
         });
 
         modelBuilder.Entity<Conversation>(entity =>
@@ -135,9 +191,21 @@ public partial class PRNDbContext : DbContext
 
             entity.ToTable("Conversation_user");
 
+            entity.HasIndex(e => e.conversation_id, "FK_ConvUser_Conv");
+
             entity.Property(e => e.created_at).HasColumnType("datetime");
             entity.Property(e => e.deleted_at).HasColumnType("datetime");
             entity.Property(e => e.updated_at).HasColumnType("datetime");
+
+            entity.HasOne(d => d.conversation).WithMany(p => p.Conversation_users)
+                .HasForeignKey(d => d.conversation_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ConvUser_Conv");
+
+            entity.HasOne(d => d.user).WithMany(p => p.Conversation_users)
+                .HasForeignKey(d => d.user_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ConvUser_User");
         });
 
         modelBuilder.Entity<Message>(entity =>
@@ -146,12 +214,18 @@ public partial class PRNDbContext : DbContext
 
             entity.ToTable("Message");
 
+            entity.HasIndex(e => e.conversation_id, "FK_Message_Conversation");
+
             entity.Property(e => e.created_at).HasColumnType("datetime");
             entity.Property(e => e.deleted_at).HasColumnType("datetime");
             entity.Property(e => e.message_content).HasColumnType("text");
             entity.Property(e => e.message_type).HasMaxLength(255);
             entity.Property(e => e.status).HasMaxLength(50);
             entity.Property(e => e.updated_at).HasColumnType("datetime");
+
+            entity.HasOne(d => d.conversation).WithMany(p => p.Messages)
+                .HasForeignKey(d => d.conversation_id)
+                .HasConstraintName("FK_Message_Conversation");
         });
 
         modelBuilder.Entity<Notification>(entity =>
@@ -174,9 +248,21 @@ public partial class PRNDbContext : DbContext
 
             entity.ToTable("Notification_recipient");
 
+            entity.HasIndex(e => e.notification_id, "FK_NotiRec_Notification");
+
+            entity.HasIndex(e => e.recipient_id, "FK_NotiRec_Recipient");
+
             entity.Property(e => e.created_at).HasColumnType("datetime");
             entity.Property(e => e.deleted_at).HasColumnType("datetime");
             entity.Property(e => e.updated_at).HasColumnType("datetime");
+
+            entity.HasOne(d => d.notification).WithMany(p => p.Notification_recipients)
+                .HasForeignKey(d => d.notification_id)
+                .HasConstraintName("FK_NotiRec_Notification");
+
+            entity.HasOne(d => d.recipient).WithMany(p => p.Notification_recipients)
+                .HasForeignKey(d => d.recipient_id)
+                .HasConstraintName("FK_NotiRec_Recipient");
         });
 
         modelBuilder.Entity<Recruitment>(entity =>
@@ -184,6 +270,8 @@ public partial class PRNDbContext : DbContext
             entity.HasKey(e => e.id).HasName("PRIMARY");
 
             entity.ToTable("Recruitment");
+
+            entity.HasIndex(e => e.class_id, "FK_Recruitment_Class");
 
             entity.Property(e => e.created_at).HasColumnType("datetime");
             entity.Property(e => e.deleted_at).HasColumnType("datetime");
@@ -195,6 +283,11 @@ public partial class PRNDbContext : DbContext
             entity.Property(e => e.name).HasMaxLength(255);
             entity.Property(e => e.position).HasMaxLength(255);
             entity.Property(e => e.updated_at).HasColumnType("datetime");
+
+            entity.HasOne(d => d._class).WithMany(p => p.Recruitments)
+                .HasForeignKey(d => d.class_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Recruitment_Class");
         });
 
         modelBuilder.Entity<Room>(entity =>
@@ -216,12 +309,39 @@ public partial class PRNDbContext : DbContext
 
             entity.ToTable("Schedule");
 
+            entity.HasIndex(e => e.class_id, "FK_Schedule_Class");
+
+            entity.HasIndex(e => e.mentor_id, "FK_Schedule_Mentor");
+
+            entity.HasIndex(e => e.room_id, "FK_Schedule_Room");
+
+            entity.HasIndex(e => e.subject_id, "FK_Schedule_Subject");
+
             entity.Property(e => e.created_at).HasColumnType("datetime");
             entity.Property(e => e.day_of_week).HasMaxLength(10);
             entity.Property(e => e.deleted_at).HasColumnType("datetime");
             entity.Property(e => e.end_time).HasColumnType("time");
             entity.Property(e => e.start_time).HasColumnType("time");
             entity.Property(e => e.updated_at).HasColumnType("datetime");
+
+            entity.HasOne(d => d._class).WithMany(p => p.Schedules)
+                .HasForeignKey(d => d.class_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Schedule_Class");
+
+            entity.HasOne(d => d.mentor).WithMany(p => p.Schedules)
+                .HasForeignKey(d => d.mentor_id)
+                .HasConstraintName("FK_Schedule_Mentor");
+
+            entity.HasOne(d => d.room).WithMany(p => p.Schedules)
+                .HasForeignKey(d => d.room_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Schedule_Room");
+
+            entity.HasOne(d => d.subject).WithMany(p => p.Schedules)
+                .HasForeignKey(d => d.subject_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Schedule_Subject");
         });
 
         modelBuilder.Entity<Subject>(entity =>
@@ -243,6 +363,8 @@ public partial class PRNDbContext : DbContext
 
             entity.ToTable("UserFile");
 
+            entity.HasIndex(e => e.submitter_id, "FK_UserFile_Submitter");
+
             entity.HasIndex(e => new { e.id, e.submitter_id }, "uq_submitter_file").IsUnique();
 
             entity.Property(e => e.created_at).HasColumnType("datetime");
@@ -250,11 +372,20 @@ public partial class PRNDbContext : DbContext
             entity.Property(e => e.display_name).HasMaxLength(255);
             entity.Property(e => e.path).HasMaxLength(255);
             entity.Property(e => e.updated_at).HasColumnType("datetime");
+
+            entity.HasOne(d => d.submitter).WithMany(p => p.UserFiles)
+                .HasForeignKey(d => d.submitter_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_UserFile_Submitter");
         });
 
         modelBuilder.Entity<UserTask>(entity =>
         {
             entity.HasKey(e => e.id).HasName("PRIMARY");
+
+            entity.HasIndex(e => e.class_id, "FK_UserTasks_Class");
+
+            entity.HasIndex(e => e.created_by, "FK_UserTasks_Creator");
 
             entity.Property(e => e.created_at).HasColumnType("datetime");
             entity.Property(e => e.deleted_at).HasColumnType("datetime");
@@ -265,6 +396,16 @@ public partial class PRNDbContext : DbContext
             entity.Property(e => e.status).HasMaxLength(50);
             entity.Property(e => e.task_name).HasMaxLength(255);
             entity.Property(e => e.updated_at).HasColumnType("datetime");
+
+            entity.HasOne(d => d._class).WithMany(p => p.UserTasks)
+                .HasForeignKey(d => d.class_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_UserTasks_Class");
+
+            entity.HasOne(d => d.created_byNavigation).WithMany(p => p.UserTasks)
+                .HasForeignKey(d => d.created_by)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_UserTasks_Creator");
         });
 
         modelBuilder.Entity<user>(entity =>

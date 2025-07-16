@@ -7,6 +7,7 @@ using PRN_Final_Project.Business.Data;
 using PRN_Final_Project.Business.Entities;
 using PRN_Final_Project.Repositories.Common;
 using PRN_Final_Project.Repositories.Interface;
+using PRN_Final_Project.Service.Interface;
 
 namespace PRN_Final_Project.Repositories
 {

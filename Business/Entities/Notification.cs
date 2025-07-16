@@ -28,4 +28,6 @@ public partial class Notification
     public int? deleted_by { get; set; }
 
     public bool? is_active { get; set; }
+
+    public virtual ICollection<Notification_recipient> Notification_recipients { get; set; } = new List<Notification_recipient>();
 }

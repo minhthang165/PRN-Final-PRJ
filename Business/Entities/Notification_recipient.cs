@@ -24,4 +24,8 @@ public partial class Notification_recipient
     public int? deleted_by { get; set; }
 
     public bool? is_active { get; set; }
+
+    public virtual Notification? notification { get; set; }
+
+    public virtual user? recipient { get; set; }
 }
