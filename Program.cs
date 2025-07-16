@@ -21,14 +21,19 @@ builder.Services.AddDbContext<PRNDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
                      new MySqlServerVersion(new Version(8, 0, 2))));
 
+
+
 DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
 Cloudinary cloudinary = new Cloudinary(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
 cloudinary.Api.Secure = true;
+builder.Services.AddSingleton(cloudinary);
 
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IClassRepository, ClassRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IFileRepository, FileRepository>();
 
 // Add services to the container.
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

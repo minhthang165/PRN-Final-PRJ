@@ -87,5 +87,19 @@ namespace PRN_Final_Project.Repositories
             classObj.mentor_id = trainerId;
             await _context.SaveChangesAsync();
         }
+
+        public async Task AssignTraineeToClassAsync(int classId, int traineeId)
+        {
+            var trainee = await _context.users.FindAsync(traineeId);
+            if (trainee == null || (trainee.role != "INTERN"))
+                throw new Exception("User is not a valid trainee");
+
+            var classObj = await _context.Classes.FindAsync(classId);
+            if (classObj == null)
+                throw new Exception("Class not found");
+
+            trainee.class_id = classObj.id;
+            await _context.SaveChangesAsync();
+        }
     }
 }
