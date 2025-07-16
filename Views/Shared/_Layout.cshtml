@@ -6,7 +6,6 @@
     <title>@ViewData["Title"] - PRN_Final_Project</title>
      @RenderSection("Styles", required: false)
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/PRN_Final_Project.styles.css" asp-append-version="true" />
     <link rel="shortcut icon" type="image/x-icon" href="/img/logo/logo-fpt-small.svg">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
@@ -228,13 +227,13 @@
     </audio>
     <script>
         const source = document.getElementById("notification-source");
-        source.src = `${window.location.origin}/audio/notification.mp3`;
+        source.src = '/audio/notification.mp3';
         document.addEventListener('DOMContentLoaded', function() {
-                const user_id_noti = document.getElementById("user_id_header").value;
+                const user_id_noti = @(User.FindFirst("UserId")?.Value ?? "");
                 const userPortfolio = document.getElementById("userportfolio");
                 let userDropdown = document.querySelector(".user-dropdown");
                 if (userDropdown == null) userDropdown = document.querySelector(".user__dropdown");
-
+                console.log(userDropdown + userPortfolio + user_id_noti);
                 userPortfolio.addEventListener("click", function (e) {
                         e.stopPropagation()
                         userDropdown.classList.toggle("show")
