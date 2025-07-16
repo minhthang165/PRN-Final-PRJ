@@ -9,6 +9,6 @@ namespace PRN_Final_Project.Service.Interface
 {
     public interface IUserService : ICommonService<user>
     {
-
+        Task<user> GetByEmail(string email);
     }
 }

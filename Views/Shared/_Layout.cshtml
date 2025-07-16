@@ -7,25 +7,25 @@
      @RenderSection("Styles", required: false)
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/PRN_Final_Project.styles.css" asp-append-version="true" />
-    <link rel="shortcut icon" type="image/x-icon" href="/assets/img/logo/logo-fpt-small.svg">
+    <link rel="shortcut icon" type="image/x-icon" href="/img/logo/logo-fpt-small.svg">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/css/userNavbar.css">
+    <link rel="stylesheet" href="/css/userNavbar.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/css/meanmenu.min.css">
-    <link rel="stylesheet" href="/assets/css/animate.css">
-    <link rel="stylesheet" href="/assets/css/metisMenu.min.css">
-    <link rel="stylesheet" href="/assets/css/swiper-bundle.min.css">
-    <link rel="stylesheet" href="/assets/css/slick.css">
-    <link rel="stylesheet" href="/assets/css/backtotop.css">
-    <link rel="stylesheet" href="/assets/css/magnific-popup.css">
-    <link rel="stylesheet" href="/assets/css/flaticon_expovent.css">
-    <link rel="stylesheet" href="/assets/css/fontawesome-pro.css">
-    <link rel="stylesheet" href="/assets/css/spacing.css">
-    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/meanmenu.min.css">
+    <link rel="stylesheet" href="/css/animate.css">
+    <link rel="stylesheet" href="/css/metisMenu.min.css">
+    <link rel="stylesheet" href="/css/swiper-bundle.min.css">
+    <link rel="stylesheet" href="/css/slick.css">
+    <link rel="stylesheet" href="/css/backtotop.css">
+    <link rel="stylesheet" href="/css/magnific-popup.css">
+    <link rel="stylesheet" href="/css/flaticon_expovent.css">
+    <link rel="stylesheet" href="/css/fontawesome-pro.css">
+    <link rel="stylesheet" href="/css/spacing.css">
+    <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
     <style>
@@ -189,22 +189,28 @@
     </style>
 </head>
 <body>
-    @if (User.IsInRole("Admin"))  
-    {  
-        <partial name="_AdminHeader" />  
-    }  
-    else if (User.IsInRole("Intern"))  
-    {  
-        <partial name="_InternHeader" />  
-    }  
-    else if (User.IsInRole("Employee"))  
-    {  
-        <partial name="_InternHeader" />  
-    }  
-    else  
-    {  
-        <partial name="_UserHeader" /> <!-- Optional for non-authenticated users -->  
-    }
+    @using System.Security.Claims
+
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        var roleClaim = ((ClaimsIdentity)User.Identity).FindFirst(ClaimTypes.Role)?.Value;
+
+        if (roleClaim == "ADMIN")
+        {
+            @Html.Partial("_AdminHeader")
+        }
+        else if (roleClaim == "INTERN")
+        {
+            @Html.Partial("_InternHeader")
+        }
+        else if (roleClaim == "EMPLOYEE")
+        {
+            @Html.Partial("_EmployeeHeader")
+        }
+        else if (roleClaim == "GUEST")
+        {
+            @Html.Partial("_UserHeader")
+        }
     }
     <div class="container">
         <main role="main" class="pb-3">
@@ -217,15 +223,12 @@
             &copy; 2025 - PRN_Final_Project - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
-    <input type="hidden" id="user_id_header" value="@Model.Id" />
-    <input type="hidden" id="user_id" value="@Model.Id" />
-    <input type="hidden" id="user_fullName" value="@($"{Model.LastName}{Model.FirstName}")" />
     <audio id="new-notification" preload="auto">
         <source id="notification-source" type="audio/mpeg">
     </audio>
     <script>
         const source = document.getElementById("notification-source");
-        source.src = `${window.location.origin}/assets/audio/notification.mp3`;
+        source.src = `${window.location.origin}/audio/notification.mp3`;
         document.addEventListener('DOMContentLoaded', function() {
                 const user_id_noti = document.getElementById("user_id_header").value;
                 const userPortfolio = document.getElementById("userportfolio");
@@ -248,28 +251,28 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/assets/js/jquery-3.6.0.min.js"></script>
-    <script src="/assets/js/waypoints.min.js"></script>
-    <script src="/assets/js/bootstrap.bundle.min.js"></script>
-    <script src="/assets/js/metisMenu.min.js"></script>
-    <script src="/assets/js/meanmenu.min.js"></script>
-    <script src="/assets/js/swiper-bundle.min.js"></script>
-    <script src="/assets/js/slick.min.js"></script>
-    <script src="/assets/js/magnific-popup.min.js"></script>
-    <script src="/assets/js/backtotop.js"></script>
-    <script src="/assets/js/counterup.js"></script>
-    <script src="/assets/js/wow.min.js"></script>
-    <script src="/assets/js/countdown.js"></script>
-    <script src="/assets/js/smooth-scrollbar.js"></script>
-    <script src="/assets/js/ajax-form.js"></script>
-    <script src="/assets/js/custom.js"></script>
-    <script src="/assets/js/main.js"></script>
+    <script src="/js/jquery-3.6.0.min.js"></script>
+    <script src="/js/waypoints.min.js"></script>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/metisMenu.min.js"></script>
+    <script src="/js/meanmenu.min.js"></script>
+    <script src="/js/swiper-bundle.min.js"></script>
+    <script src="/js/slick.min.js"></script>
+    <script src="/js/magnific-popup.min.js"></script>
+    <script src="/js/backtotop.js"></script>
+    <script src="/js/counterup.js"></script>
+    <script src="/js/wow.min.js"></script>
+    <script src="/js/countdown.js"></script>
+    <script src="/js/smooth-scrollbar.js"></script>
+    <script src="/js/ajax-form.js"></script>
+    <script src="/js/custom.js"></script>
+    <script src="/js/main.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-    <script src="/assets/js/CallNotification.js"></script>
-    <script src="/assets/js/notification.js"></script>
+    <script src="/js/CallNotification.js"></script>
+    <script src="/js/notification.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/assets/js/notification.js"></script>
+    <script src="/js/notification.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

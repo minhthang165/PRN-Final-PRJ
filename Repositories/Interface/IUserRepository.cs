@@ -9,6 +9,6 @@ namespace PRN_Final_Project.Repositories.Interface
 {
     public interface IUserRepository : ICommonRepository<user>
     {
-        
+        Task<user> GetByEmail(string email);
     }
 }

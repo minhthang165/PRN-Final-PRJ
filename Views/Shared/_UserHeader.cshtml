@@ -1,16 +1,16 @@
-﻿@* @model YourNamespace.Models.User *@
+﻿@using System.Security.Claims
 
-@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
 @{
+    var avatar = User.FindFirst("Avatar")?.Value ?? "/img/default-avatar.png";
+    var firstName = User.FindFirst(ClaimTypes.Name)?.Value?.Split(" ").FirstOrDefault();
+    var fullName = User.FindFirst(ClaimTypes.Name)?.Value;
 }
 
 <header>
     <div class="header-container">
         <div class="logo">
             <a href="/home">
-                <img src="/assets/img/logo/logo-fpt.png" alt="FPT Education" />
+                <img src="/img/logo/logo-fpt.png" alt="FPT Education" />
             </a>
         </div>
 
@@ -28,19 +28,16 @@
                 </button>
 
                 <div id="notification-dropdown" class="notification-dropdown absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg overflow-hidden z-20 border border-gray-200 transition-all duration-300 ease-in-out transform scale-95 opacity-0 pointer-events-none">
-                    <!-- Dropdown Header -->
                     <div class="notification-header px-4 py-3 border-b border-gray-200 bg-gray-50">
                         <div class="flex justify-between items-center">
                             <h4 class="text-sm font-medium text-gray-700">Notifications</h4>
                         </div>
                     </div>
 
-                    <!-- Notification List -->
                     <ul id="notification-list" class="notification-list divide-y divide-gray-200 max-h-96 overflow-y-auto">
                         <!-- Notifications will be inserted here by JavaScript -->
                     </ul>
 
-                    <!-- Dropdown Footer -->
                     <div class="px-4 py-2 bg-gray-50 text-center">
                         <a href="#" class="text-sm text-orange-500 hover:text-orange-700 font-medium">
                             View all notifications
@@ -50,9 +47,9 @@
             </div>
 
             <button id="userportfolio" class="user-account-btn">
-                <img src="@Model.AvatarPath" alt="User Avatar" style="border-radius: 50%; width: 45px;" />
+                <img src="@avatar" alt="User Avatar" style="border-radius: 50%; width: 45px;" />
                 <span style="font-weight: bold; font-size: 15px;">
-                    @($"{Model.FirstName} {Model.LastName}")
+                    @fullName
                 </span>
             </button>
 
@@ -69,7 +66,6 @@
                     </li>
                     <li>
                         <a href="/messenger">
-                            <!-- Messenger SVG here (keep as-is) -->
                             Messenger
                         </a>
                     </li>
@@ -88,4 +84,3 @@
         </div> <!-- End user-account -->
     </div> <!-- End header-container -->
 </header>
-

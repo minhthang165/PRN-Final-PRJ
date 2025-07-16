@@ -54,12 +54,10 @@
                         <div class="sing__button mb-20">
                             <h3> SIGN IN </h3>
                             <p>
-                                <a href="oauth2/authorization/google" class="oauth2_btn">
+                                <a asp-controller="Login" asp-action="Login" asp-route-provider="Google" class="oauth2_btn">
                                     <img src="img/sign/google-icon.svg" alt="Google sign-in" class="google-icon">
                                     <span class="gamil__sign-btn">Login with Google</span>
-                                    <!-- Add text next to the icon -->
                                 </a>
-
                             </p>
                         </div>
                         <div class="if__account mt-85">
