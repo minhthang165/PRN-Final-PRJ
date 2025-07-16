@@ -1,0 +1,243 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    color: #333;
+    line-height: 1.6;
+    background-color: #fff;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Carousel styles */
+.carousel-inner {
+    padding: 20px;
+    background: white;
+}
+
+.carousel-inner img {
+    width: 100%;
+    height: 100%;
+}
+
+.carousel-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    bottom: -50px;
+}
+
+.carousel-indicators .active {
+    opacity: 1;
+    background-color: #cc5500;
+}
+
+.carousel-item img {
+    max-height: 700px;
+    width: 100%;
+    object-fit: contain;
+}
+
+.image-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Event styles */
+.event-content h5 {
+    font-size: 1.5rem;
+    color: #ff6600;
+}
+
+.event-content p {
+    font-size: 1rem;
+    color: #333;
+}
+
+.event-image img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    border-radius: 8px;
+}
+
+.event-info h2 {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.event-info p {
+    font-size: 18px;
+    margin-top: 10px;
+}
+
+.img-fluid {
+    border-radius: 10px;
+}
+
+.custom-control span {
+    filter: invert(1);
+}
+
+/* Recruitment card styles */
+.recruitment-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+}
+
+.recruitment-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(255, 104, 104, 0.2);
+}
+
+.recruitment-image {
+    position: relative;
+    border-radius: 12px 12px 0 0;
+    overflow: hidden;
+}
+
+.recruitment-image img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 12px 12px 0 0;
+    transition: transform 0.3s ease;
+}
+
+.recruitment-image img:hover {
+    transform: scale(1.05);
+}
+
+.badge {
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+.badge.bg-dark {
+    top: 10px;
+    left: 10px;
+}
+
+.badge.bg-primary {
+    top: 50px;
+    left: 10px;
+}
+
+.card-title a {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+    transition: color 0.3s ease;
+}
+
+.card-title a:hover {
+    color: #ff6b6b;
+}
+
+.btn-gradient {
+    background: linear-gradient(45deg, #ff6b6b, #f06595);
+    color: white;
+    border: none;
+    transition: all 0.3s ease-in-out;
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border-radius: 30px;
+    text-transform: uppercase;
+}
+
+.btn-gradient:hover {
+    background: linear-gradient(45deg, #f06595, #ff6b6b);
+    transform: translateY(-2px);
+    box-shadow: 0px 4px 10px rgba(255, 107, 107, 0.5);
+}
+
+/* Footer styles */
+.footer {
+    background-color: #111827;
+    color: white;
+    padding: 48px 0;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+}
+
+@media (min-width: 768px) {
+    .footer-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.footer-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.footer-text {
+    color: #9ca3af;
+}
+
+.footer-links {
+    list-style: none;
+    margin-top: 16px;
+}
+
+.footer-links li {
+    margin-bottom: 8px;
+}
+
+.footer-links a {
+    color: #9ca3af;
+    transition: color 0.3s;
+}
+
+.footer-links a:hover {
+    color: white;
+}
+
+.social-links {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.social-link {
+    color: #9ca3af;
+    transition: color 0.3s;
+}
+
+.social-link:hover {
+    color: white;
+}
+
+.footer-bottom {
+    border-top: 1px solid #374151;
+    margin-top: 40px;
+    padding-top: 24px;
+    text-align: center;
+    color: #6b7280;
+}

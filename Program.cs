@@ -7,6 +7,8 @@ using PRN_Final_Project.Service.Interface;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using dotenv.net;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,10 +30,37 @@ builder.Services.AddSingleton(cloudinary);
 
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IClassRepository, ClassRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IFileRepository, FileRepository>();
 
-
+// Add services to the container.
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Home/Index";
+        options.AccessDeniedPath = "/Home/AccessDenied";
+        options.Cookie.Name = "PRN-Final.AuthCookie";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+    })
+    .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+    {
+        options.ClientId = Environment.GetEnvironmentVariable("CLIENT_ID");
+        options.ClientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
+        options.CallbackPath = "/login/oauth2/code/google";
+        options.SaveTokens = true;
+        options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+    });
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -49,6 +78,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+app.UseSession();
+
+app.UseAuthentication();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 

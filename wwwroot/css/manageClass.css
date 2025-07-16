@@ -1,0 +1,339 @@
+/*css pagination*/
+/* Records selector styling */
+.records-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6b7280;
+}
+
+.records-per-page {
+    height: 2.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid #e5e7eb;
+    background-color: #fff;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.table-footer {
+    justify-content: space-between;
+    display: flex;
+    margin-top: 16px;
+}
+
+.records-per-page:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+/* Pagination container */
+.pagination-container {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.pagination-list {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Pagination items */
+.pagination-item {
+    display: inline-block;
+}
+
+.pagination-link {
+    display: inline-flex;
+    height: 2.25rem;
+    min-width: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    border: 1px solid #e5e7eb;
+    background-color: #fff;
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+    padding: 0 0.5rem;
+}
+
+.pagination-link:hover {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+/* Active page */
+.pagination-item.active .pagination-link {
+    background-color: #f38321;
+    color: white;
+    border-color: #f38321;
+}
+
+.pagination-item.active .pagination-link:hover {
+    background-color: #f38321;
+}
+
+/* Disabled pagination items */
+.pagination-item.disabled .pagination-link {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Arrow icons */
+.pagination-arrow {
+    font-weight: bold;
+}
+
+.arrow-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+/* Ellipsis */
+.ellipsis {
+    display: inline-block;
+    padding: 0 0.25rem;
+}
+
+/*css table*/
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+th {
+    background-color: #f4f4f4;
+}
+.classroom-title {
+    font-size: 32px;
+    font-weight: bold;
+}
+.search__bar input {
+    margin-right: auto;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 500px;
+}
+.breadcrum__button{
+    display: flex;
+    padding-left: 120px;
+}
+.search__bar input {
+    border: 1px solid #ccc;
+    border-radius: 15px;
+    width: 400px;
+    height: fit-content;
+}
+.pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.pagination button {
+    padding: 6px 8px;
+    margin: 0 3px;
+    border: none;
+    cursor: pointer;
+    background-color: #ccc;
+    border-radius: 3px;
+    font-size: 12px;
+}
+.pagination .active {
+    background-color: orange;
+    color: white;
+}
+
+.lock-icon {
+    font-size: 20px;
+    margin-left: 10px;
+    cursor: pointer; /* Biến icon thành nút có thể nhấn */
+}
+
+.active {
+    color: green; /* Màu xanh khi lớp đang hoạt động */
+}
+
+.inactive {
+    color: red; /* Màu đỏ khi lớp bị khóa */
+}
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 30000;
+    width: 100%;
+    height: 100%;
+    outline: 0;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+/* Đảm bảo nội dung modal hiển thị trên cùng */
+.modal-content {
+    position: relative;
+    z-index: 200 !important;
+    background-color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    border: none;
+}
+
+/* Cấu hình backdrop - chỉ hiển thị khi modal mở */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 90;
+    display: none;
+}
+
+/* Ẩn backdrop khi không cần thiết */
+body:not(.modal-open) .modal-backdrop {
+    display: none;
+}
+
+/* Căn giữa modal */
+.modal-dialog {
+    position: relative;
+    width: auto;
+    margin: 1.75rem auto;
+    max-width: 800px;
+}
+
+/* Căn giữa modal theo chiều dọc */
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 3.5rem);
+}
+
+/* Header của modal */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Tiêu đề modal */
+.modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+/* Nút đóng modal */
+.btn-close {
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem auto;
+}
+
+/* Phần thân modal */
+.modal-body {
+    position: relative;
+    flex: 1 1 auto;
+    padding: 1rem;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Hiệu ứng mở modal */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translate(0, -50px);
+}
+
+.modal.show .modal-dialog {
+    transform: translate(0, 0);
+}
+
+/* Đảm bảo nút Search có màu cam giống FPT */
+#userModal #searchUserButton {
+    background-color: #f38321;
+    border-color: #f38321;
+    color: white;
+}
+
+#userModal #searchUserButton:hover {
+    background-color: #e67812;
+    border-color: #e67812;
+}
+
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: white;
+    color: #333;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    display: none;
+    min-width: 300px;
+    border-left: 4px solid #ff6600;
+    animation: slideIn 0.3s, fadeOut 0.5s 2.5s forwards;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+}
+
+.toast-icon {
+    color: #ff6600;
+    font-size: 22px;
+    margin-right: 15px;
+}
+
+.toast-message {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+        display: none;
+    }
+}

@@ -79,7 +79,6 @@ namespace PRN_Final_Project.API
             await _classService.DeleteAsync(id);
             return NoContent();
         }
-
         [HttpPost("assign-trainer")]
         public async Task<IActionResult> AssignTrainer(int classId, int trainerId)
         {

@@ -1,0 +1,73 @@
+﻿@* @model YourNamespace.Models.User *@
+
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+<header>
+    <div class="header-container">
+        <div class="logo">
+            <a href="/home">
+                <img src="/assets/img/logo/logo-fpt.png" alt="FPT Education" />
+            </a>
+        </div>
+
+        <nav>
+            <a href="/manage-user">Dashboard</a>
+            <a href="/messenger">Messenger</a>
+        </nav>
+
+        <div class="user-account flex">
+            <div class="notification-bell relative">
+                <button id="notification-bell" class="relative p-2 text-gray-600 hover:text-orange-500 focus:outline-none transition-colors duration-200" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">0</span>
+                </button>
+
+                <div id="notification-dropdown" class="notification-dropdown absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg overflow-hidden z-20 border border-gray-200 transition-all duration-300 ease-in-out transform scale-95 opacity-0 pointer-events-none">
+                    <div class="notification-header px-4 py-3 border-b border-gray-200 bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-medium text-gray-700">Notifications</h4>
+                        </div>
+                    </div>
+
+                    <ul id="notification-list" class="notification-list divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                        <!-- Notifications will be inserted here by JS -->
+                    </ul>
+
+                    <div class="px-4 py-2 bg-gray-50 text-center">
+                        <a href="#" class="text-sm text-orange-500 hover:text-orange-700 font-medium">
+                            View all notifications
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <button id="userportfolio" class="user-account-btn">
+                <img src="@Model.AvatarPath" alt="User Avatar" style="border-radius: 50%; width: 45px" />
+                <span style="font-weight: bold; font-size: 15px">
+                    @($"{Model.FirstName} {Model.LastName}")
+                </span>
+            </button>
+
+            <div class="user-dropdown">
+                <ul>
+                    <li>
+                        <a href="/messenger">
+                            <!-- Messenger SVG icon here -->
+                            Messenger
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/logout">
+                            <!-- Logout SVG icon here -->
+                            Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</header>

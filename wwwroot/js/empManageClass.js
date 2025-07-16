@@ -1,0 +1,1677 @@
+var currentlySelectedId = null;
+var user_id = document.getElementById("user_id").value;
+var membersOfClass;
+let cachedClassrooms = [];
+let currentTaskData = null; // Biến toàn cục lưu trữ thông tin task
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Get mentor ID from the data attribute
+    const classroomList = document.getElementById("classroomList");
+    const mentorId = classroomList.getAttribute("data-mentor-id");
+
+    if (mentorId) {
+        fetchClassrooms(mentorId);
+    } else {
+        showError("Mentor ID is missing!");
+    }
+
+    // Add event listener for the save task button
+    document.getElementById("saveTaskBtn").addEventListener("click", handleSaveTask);
+
+    // Gắn sự kiện click cho nút ⋮ để mở modal
+    const studentMenuButton = document.querySelector("#student-menu-btn");
+    if (studentMenuButton) {
+        studentMenuButton.addEventListener("click", openStudentModal);
+    }
+});
+
+function openStudentModal() {
+    // Kiểm tra xem đã có dữ liệu sinh viên trong `membersOfClass` chưa
+    if (membersOfClass && membersOfClass.length > 0) {
+        displayUsers(membersOfClass); // Hiển thị danh sách sinh viên trong modal
+    } else {
+        // Nếu không có dữ liệu, hiển thị thông báo loading
+        const studentContainer = document.getElementById("student-list");
+        if (studentContainer) {
+            studentContainer.innerHTML = "<div class='spinner-border spinner-border-sm text-warning' role='status'><span class='visually-hidden'>Loading...</span></div>";
+        }
+    }
+
+    // Mở modal
+    const modal = new bootstrap.Modal(document.getElementById("studentModal"));
+    modal.show();
+}
+
+async function fetchClassrooms(mentorId) {
+    try {
+        // Show loading indicator
+        document.getElementById("loading-indicator").style.display = "block";
+        document.getElementById("error-message").style.display = "none";
+
+        // Fetch classroom data from API
+        const response = await fetch(`/api/class/mentor/${mentorId}`);
+
+        // Check if the request was successful
+        if (!response.ok) {
+            throw new Error(`Failed to fetch classrooms: ${response.status} ${response.statusText}`);
+        }
+
+        // Parse the JSON response
+        const classrooms = await response.json();
+
+        // Check if we got valid data
+        if (!Array.isArray(classrooms)) {
+            throw new Error("Invalid data format: Expected an array of classrooms");
+        }
+
+        // Render the classroom cards
+        renderClassroomCards(classrooms);
+        cachedClassrooms = classrooms;
+
+        // Hide loading indicator
+        document.getElementById("loading-indicator").style.display = "none";
+
+        // Log success
+
+    } catch (error) {
+        // Hide loading indicator and show error message
+        document.getElementById("loading-indicator").style.display = "none";
+        showError(error.message);
+    }
+}
+
+function showError(message) {
+    const errorElement = document.getElementById("error-message");
+    errorElement.textContent = message;
+    errorElement.style.display = "block";
+}
+
+function renderClassroomCards(classrooms) {
+    const classroomList = document.getElementById("classroomList");
+    const template = document.getElementById("classroom-card-template");
+
+    // Clear any existing content except loading and error elements
+    const loadingIndicator = document.getElementById("loading-indicator");
+    const errorMessage = document.getElementById("error-message");
+    classroomList.innerHTML = "";
+    classroomList.appendChild(loadingIndicator);
+    classroomList.appendChild(errorMessage);
+
+    // If no classrooms, show a message
+    if (classrooms.length === 0) {
+        const noDataElement = document.createElement("div");
+        noDataElement.className = "text-center py-4";
+        noDataElement.textContent = "No class here";
+        classroomList.appendChild(noDataElement);
+        return;
+    }
+
+    // Create and append classroom cards
+    classrooms.forEach(classroom => {
+        try {
+            // Clone the template
+            const card = template.content.cloneNode(true).querySelector(".sidebar-card");
+
+            // Set data attributes
+            card.setAttribute("data-id", classroom.id);
+            card.setAttribute("data-class", classroom.className);
+
+            // Handle manager data correctly based on API response structure
+            let managerName = "";
+            if (classroom.manager) {
+                if (typeof classroom.manager === 'object') {
+                    // If manager is an object with first_name and last_name
+                    managerName = `${classroom.manager.first_name || ''} ${classroom.manager.last_name || ''}`.trim();
+                } else {
+                    // If manager is just a string
+                    managerName = classroom.manager;
+                }
+            }
+
+            card.setAttribute("data-user", managerName);
+
+            // Format date and time
+            let formattedTime = "";
+            let formattedDate = "";
+
+            if (classroom.createdAt) {
+                try {
+                    const createdAt = new Date(classroom.createdAt);
+                    formattedTime = createdAt.toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    formattedDate = createdAt.toLocaleDateString("vi-VN", { day: '2-digit', month: '2-digit', year: 'numeric' });
+                } catch (e) {
+                    formattedTime = "Invalid date";
+                    formattedDate = "Invalid date";
+                }
+            }
+
+            card.setAttribute("data-time", formattedTime);
+            card.setAttribute("data-date", formattedDate);
+
+
+            // Fill in the content
+            card.querySelector(".card-date").textContent = formattedDate;
+            card.querySelector(".card-name").textContent = classroom.className || "Unnamed Class";
+            card.querySelector(".card-description").textContent = classroom.classDescription || "Không có mô tả";
+
+            const statusElement = card.querySelector(".card-status");
+            statusElement.textContent = getStatusText(classroom.status);
+
+
+            // Set status dot color
+            const statusDot = card.querySelector(".status-dot");
+            statusDot.className = "status-dot " + getStatusDotClass(classroom.status);
+
+            // Add click event
+            card.addEventListener("click", function() {
+                handleCardClick(this);
+            });
+
+            // Append the card to the list
+            classroomList.appendChild(card);
+        } catch (error) {
+            console.error("Error rendering classroom card:", error, classroom);
+        }
+    });
+}
+
+function getStatusDotClass(status) {
+    switch (status) {
+        case "ON_GOING": return "green-dot";
+        case "ENDED": return "red-dot";
+        case "NOT_STARTED": return "yellow-dot";
+        default: return "blue-dot";
+    }
+}
+
+function getStatusText(status) {
+    switch (status) {
+        case "ON_GOING": return "Ongoing";
+        case "ENDED": return "Ended";
+        case "NOT_STARTED": return "Not Started";
+        default: return "Unknown";
+    }
+}
+
+function handleCardClick(card) {
+    const classId = card.getAttribute("data-id");
+    const className = card.getAttribute("data-class");
+    const username = card.getAttribute("data-user");
+    const time = card.getAttribute("data-time");
+    const date = card.getAttribute("data-date");
+
+    // Check if this card is already selected
+    if (currentlySelectedId === classId) {
+        // If already selected, deselect it and hide details
+        card.classList.remove("active");
+        hideDetails();
+        currentlySelectedId = null;
+    } else {
+        // If not selected, select it and show details
+        const allCards = document.querySelectorAll(".sidebar-card");
+        allCards.forEach(c => c.classList.remove("active"));
+        card.classList.add("active");
+        currentlySelectedId = classId;
+
+        // Only load details if we have a class name
+        if (className) {
+            loadClassroomDetails(classId, className, username, time, date);
+        }
+    }
+}
+
+function hideDetails() {
+    // Reset details container to placeholder
+    document.getElementById("detailsContainer").innerHTML = `
+        <div class="detail-placeholder">
+            <p>Select a classroom to view details</p>
+        </div>
+    `;
+
+    // Clear chat container
+    document.getElementById("chatContainer").innerHTML = "";
+}
+
+async function loadClassroomDetails(classId, className, username, time, date) {
+    try {
+        // Show loading state in details container
+        document.getElementById("detailsContainer").innerHTML = `
+            <div class="d-flex justify-content-center align-items-center h-100">
+                <div class="spinner-border text-warning" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
+
+        // Get template
+        const template = document.getElementById("detailsTemplate").content.cloneNode(true);
+
+        // Set class name and time
+        template.querySelector(".card-name").textContent = className;
+        template.querySelector(".card-time").textContent = `${date} - ${time}`;
+
+        // Load details
+        const detailsContainer = document.getElementById("detailsContainer");
+        detailsContainer.innerHTML = "";
+        detailsContainer.appendChild(template);
+
+        // Set up the "Add Task" button click event
+        const addTaskButton = detailsContainer.querySelector("#addTaskBtn");
+        addTaskButton.addEventListener("click", function() {
+            openAddTaskModal(classId);
+        });
+
+        const studentMenuButton = detailsContainer.querySelector("#student-menu-btn");
+        studentMenuButton.addEventListener("click", function() {
+            openStudentModal(); // Mở modal và hiển thị danh sách sinh viên
+        });
+
+        // Load users for this classroom
+        await loadUsers(classId);
+
+        // Load tasks for this classroom
+        await fetchTasks(classId);
+
+        // Load conversation for this classroom
+        await loadClassroomConversation(classId, className);
+
+    } catch (error) {
+        console.error("Error loading classroom details:", error);
+        document.getElementById("detailsContainer").innerHTML = `
+            <div class="alert alert-danger">
+                Unable loading Classroom details. Please try again later.
+            </div>
+        `;
+    }
+}
+
+async function loadClassroomConversation(classId, className) {
+    try {
+        // Fetch class details to get conversation_id
+        const classResponse = await fetch(`/api/class/${classId}`);
+        if (!classResponse.ok) {
+            throw new Error("Failed to fetch class details");
+        }
+        const classData = await classResponse.json();
+
+        // Get chat container
+        const chatContainer = document.getElementById("chatContainer");
+
+        // Set up chat container with header and message area
+        chatContainer.innerHTML = `
+            <div class="chat-box">
+                <!-- Chat Header -->
+                <div class="chat-header p-3 border-bottom">
+                    <h5 class="mb-0">${className}</h5>
+                </div>
+
+                <!-- Chat Messages -->
+                <div class="chat-container" id="chat">
+                    <div class="text-center p-4">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input -->
+                <div class="chat-input">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="message" placeholder="Nhập tin nhắn...">
+                        <button class="btn btn-warning" onclick="sendMessage()">
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Set conversation ID and name
+        conversationId = classData.conversation.id;
+        conversationName = className;
+
+        await loadMember(conversationId);
+
+        // Load existing messages
+        await loadMessages(conversationId);
+
+        // Set up message input and send button
+        const messageInput = chatContainer.querySelector('#message');
+        const sendButton = chatContainer.querySelector('.btn-warning');
+
+        // Add event listeners
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendButton.addEventListener('click', function() {
+            sendMessage();
+        });
+
+    } catch (error) {
+        console.error("Error loading classroom conversation:", error);
+        document.getElementById("chatContainer").innerHTML = `
+            <div class="alert alert-bg-1">
+                No member in this class
+            </div>
+        `;
+    }
+}
+
+function loadUsers(classId) {
+    const studentContainer = document.getElementById("student-container");
+    if (!studentContainer) return;
+
+    studentContainer.innerHTML = `
+        <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+        <span>Loading Interns list...</span>
+    `;
+
+    fetch(`/api/class/${classId}/users`)
+        .then(response => {
+            if (!response.ok) throw new Error(`Failed to fetch users: ${response.status}`);
+            return response.json();
+        })
+        .then(users => {
+            membersOfClass = users;
+            displayUsers(users);
+        })
+        .catch(error => {
+            console.error("Error fetching users:", error);
+            studentContainer.innerHTML = '<div class="text-warning">Unable to loading Interns list</div>';
+        });
+}
+
+function openStudentModal() {
+    if (membersOfClass && membersOfClass.length > 0) {
+        displayUsers(membersOfClass, "modal");
+    } else {
+        const studentContainer = document.getElementById("student-list");
+        if (studentContainer) {
+            studentContainer.innerHTML = "<div class='spinner-border spinner-border-sm text-warning' role='status'><span class='visually-hidden'>Loading...</span></div>";
+        }
+    }
+    const modal = new bootstrap.Modal(document.getElementById("studentModal"));
+    modal.show();
+}
+
+function displayUsers(users, displayType = "badge") {
+    let studentContainer;
+
+    if (displayType === "badge") {
+        studentContainer = document.getElementById("student-container");
+    } else if (displayType === "modal") {
+        studentContainer = document.getElementById("student-list");
+    }
+
+    if (!studentContainer) return;
+
+    studentContainer.innerHTML = "";
+
+    if (!users || users.length === 0) {
+        studentContainer.innerHTML = "<div class='text-muted'>No Interns in this Classroom</div>";
+        return;
+    }
+    users.forEach(user => {
+        let studentElement;
+        if (displayType === "badge") {
+            studentElement = document.createElement("div");
+            studentElement.className = "student-badge";
+            studentElement.style.display = "inline-block";
+            studentElement.style.padding = "8px 15px";
+            studentElement.style.borderRadius = "50px";
+            studentElement.style.border = "1px solid #20c997";
+            studentElement.style.backgroundColor = "#fff";
+            studentElement.style.color = "#333";
+            studentElement.style.fontSize = "14px";
+            studentElement.style.whiteSpace = "nowrap";
+            studentElement.style.marginRight = "10px";
+            studentElement.style.marginBottom = "10px";
+
+            const studentName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+            studentElement.textContent = studentName;
+        } else if (displayType === "modal") {
+            studentElement = document.createElement("div");
+            studentElement.classList.add("student-card");
+            studentElement.style.padding = "10px";
+            studentElement.style.marginBottom = "10px";
+            studentElement.style.border = "1px solid #20c997";
+            studentElement.style.borderRadius = "5px";
+
+            const studentName = `${user.first_name} ${user.last_name}`;
+            const studentEmail = user.email;
+            const studentPhone = user.phone_number || "Intern not add Phone number yet";
+            const studentPicture = user.picture || "assets/img/users/default-avatar.png";
+            const studentGender = user.gender || "OTHER";
+
+            studentElement.innerHTML = `
+            <div style="display: flex; align-items: center;">
+                <img src="${studentPicture}" alt="Student Picture" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
+                <div>
+                    <strong>${studentName}</strong><br>
+                    Email: ${studentEmail}<br>
+                    Phone: ${studentPhone}<br>
+                    Gender: ${studentGender}
+                </div>
+            </div>
+        `;
+        }
+
+        studentContainer.appendChild(studentElement);
+    });
+}
+
+async function fetchTasks(classId) {
+    try {
+        // Show loading indicator in the task list
+        const taskListElement = document.getElementById("task-list");
+        taskListElement.innerHTML = `
+        <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm text-warning me-2" role="status"></div>
+            <span>Loading Tasks...</span>
+        </div>
+    `;
+
+        // Fetch tasks from API
+        const response = await fetch(`/api/class/task/${classId}`);
+
+        // Check if the request was successful
+        if (!response.ok) {
+            throw new Error(`Failed to fetch tasks: ${response.status} ${response.statusText}`);
+        }
+
+        // Parse the JSON response
+        const tasks = await response.json();
+
+        // If no tasks found
+        if (tasks.length === 0) {
+            taskListElement.innerHTML = `
+            <div class="alert alert-info">
+                There are no Task for this class.
+            </div>
+        `;
+            return;
+        }
+
+        // Render the tasks with the new design
+        renderTasksNewDesign(tasks);
+
+    } catch (error) {
+        // Show error message if API call fails
+        document.getElementById("task-list").innerHTML = `
+        <div class="alert alert-danger">
+           Unable loading Tasks list. Please try again.
+        </div>
+    `;
+        console.error("Error fetching tasks:", error);
+    }
+}
+
+function renderTasksNewDesign(tasks) {
+    const taskListElement = document.getElementById("task-list");
+
+    // Clear the task list
+    taskListElement.innerHTML = "";
+
+    // If no tasks, show a message
+    if (!tasks || tasks.length === 0) {
+        taskListElement.innerHTML = '<div class="text-muted">No Task Available</div>';
+        return;
+    }
+
+    // Get current time for comparison
+    const now = new Date();
+
+    // Add each task with the new design
+    tasks.forEach(task => {
+        // Format dates
+        const startTime = new Date(task.startTime);
+        const endTime = new Date(task.endTime);
+
+        const formattedEndTime = endTime.toLocaleString("vi-VN", {
+            hour: '2-digit',
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+
+        // Create task element
+        const taskElement = document.createElement("div");
+        taskElement.className = "task-item";
+        taskElement.style.cursor = "pointer";
+
+        // Store task data as attributes
+        taskElement.setAttribute("data-task-id", task.id);
+        taskElement.setAttribute("data-class-id", task.classId || task.classroom?.id);
+        taskElement.setAttribute("data-task-name", task.taskName);
+        taskElement.setAttribute("data-description", task.description || '');
+        taskElement.setAttribute("data-start-time", task.startTime);
+        taskElement.setAttribute("data-end-time", task.endTime);
+
+        // Check if task is completed or past due
+        const isPastDue = endTime <= now;
+
+        // Add completion indicator - CHANGED FROM ICON TO TEXT
+        const completionIndicator = isPastDue ?
+            `<div class="task-completed-text">It is overdue</div>` : '';
+
+        taskElement.innerHTML = `
+            ${completionIndicator}
+            <div class="task-title">${task.taskName}</div>
+            <div class="task-description">${task.description || 'Decriptions will display here'}</div>
+            <div class="task-meta">
+                <div class="task-deadline">
+                    <span>DeadLine : ${formattedEndTime}</span>
+                </div>
+            </div>
+        `;
+        taskElement.addEventListener("click", () => {
+            const taskDetails = {
+                taskId: task.id,
+                classId: task.classId || task.classroom?.id,
+                taskName: task.taskName,
+                description: task.description,
+                startTime: task.startTime,
+                endTime: task.endTime
+            };
+
+            // Lưu vào biến toàn cục
+            currentTaskData = taskDetails;
+            openTaskDetailModal(taskDetails);
+        });
+
+        taskListElement.appendChild(taskElement);
+    });
+}
+
+function openAddTaskModal() {
+    // Reset form and validation state
+    const form = document.getElementById("addTaskForm");
+    form.classList.remove('was-validated');
+    form.reset();
+
+    // Clear all validation messages
+    const invalidFeedbacks = form.querySelectorAll('.invalid-feedback');
+    invalidFeedbacks.forEach(feedback => {
+        feedback.style.display = 'none';
+    });
+
+    // Clear form fields
+    const inputs = form.querySelectorAll('input, textarea');
+    inputs.forEach(input => {
+        input.classList.remove('is-invalid');
+    });
+
+    // Xóa giá trị classId cũ
+    document.getElementById("classId").value = "";
+
+    renderClassCheckboxes();
+
+    // Mở modal
+    const modal = new bootstrap.Modal(document.getElementById("addTaskModal"));
+    modal.show();
+}
+
+async function handleSaveTask() {
+    // Get form and validate it
+    const form = document.getElementById("addTaskForm");
+    form.classList.add('was-validated');
+
+    // Get form values
+    const taskName = document.getElementById("taskName").value;
+    const taskDescription = document.getElementById("taskDescription").value;
+    const startTime = document.getElementById("startTime").value;
+    const endTime = document.getElementById("endTime").value;
+    const fileInput = document.getElementById("fileData");
+    const saveButton = document.getElementById("saveTaskBtn");
+    const originalText = saveButton.textContent;
+
+    // Get selected classes
+    const selectedClassIds = Array.from(document.querySelectorAll("#classCheckboxList input:checked")).map(
+        (input) => input.value
+    );
+
+    // Validate input data
+    let isValid = true;
+
+    // Check task name
+    if (!taskName) {
+        document.getElementById("taskName").classList.add("is-invalid");
+        isValid = false;
+    } else {
+        document.getElementById("taskName").classList.remove("is-invalid");
+    }
+
+    // Check start time
+    if (!startTime) {
+        document.getElementById("startTime").classList.add("is-invalid");
+        isValid = false;
+    } else {
+        document.getElementById("startTime").classList.remove("is-invalid");
+    }
+
+    // Check end time
+    if (!endTime) {
+        document.getElementById("endTime").classList.add("is-invalid");
+        isValid = false;
+    } else {
+        document.getElementById("endTime").classList.remove("is-invalid");
+
+        // Check if end time is after start time
+        if (startTime && new Date(endTime) <= new Date(startTime)) {
+            document.getElementById("endTime").classList.add("is-invalid");
+            document.getElementById("endTime").nextElementSibling.textContent = "End Time must be after start Time";
+            document.getElementById("endTime").nextElementSibling.style.display = "block";
+            isValid = false;
+        }
+    }
+
+    // Check if at least one class is selected
+    if (selectedClassIds.length === 0) {
+        document.getElementById("classCheckboxFeedback").style.display = "block";
+        isValid = false;
+    } else {
+        document.getElementById("classCheckboxFeedback").style.display = "none";
+    }
+
+    // If validation fails, show alert and return
+    if (!isValid) {
+        showCommentAlert("Please enter full data!", "warning");
+        return;
+    }
+
+    const mentorId = document.getElementById("classroomList")?.getAttribute("data-mentor-id");
+    if (!mentorId || isNaN(mentorId)) {
+        showCommentAlert("Cannot find your id please Reload the page!", "danger");
+        saveButton.disabled = false;
+        saveButton.textContent = originalText;
+        return;
+    }
+
+    // Check if fileInput exists
+    if (!fileInput) {
+        showCommentAlert("Please input the File!", "danger");
+        saveButton.disabled = false;
+        saveButton.textContent = originalText;
+        return;
+    }
+
+    // Disable save button
+    saveButton.disabled = true;
+    saveButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...`;
+
+    try {
+        let fileUrl = null;
+
+        if (fileInput.files?.length > 0) {
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            const uploadResponse = await fetch("/cloudinary/upload/uploadFile", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!uploadResponse.ok) {
+                const errorText = await uploadResponse.text();
+                console.error("Upload error:", errorText);
+                throw new Error("Cannot upload File ");
+            }
+
+            const uploadData = await uploadResponse.json();
+            fileUrl = uploadData.secure_url;
+            if (!fileUrl) {
+                throw new Error("Cloudinary response missing secure_url");
+            }
+        } else {
+            console.log("No file selected, fileUrl will be null");
+        }
+
+        // Create task data
+        const taskData = {
+            taskName,
+            description: taskDescription,
+            status : "PENDING",
+            startTime: new Date(startTime).toISOString(),
+            endTime: new Date(endTime).toISOString(),
+            creator: Number.parseInt(mentorId, 10),
+            fileData: fileUrl || null,
+        };
+
+        // Submit task to classes
+        await submitTaskForClasses(taskData, selectedClassIds, saveButton);
+    } catch (error) {
+        console.error("Error in handleSaveTask:", error);
+        showCommentAlert(`Has some error: ${error.message}`, "danger");
+        saveButton.disabled = false;
+        saveButton.textContent = originalText;
+    }
+}
+
+async function submitTaskForClasses(taskData, classIds, saveButton) {
+    const originalText = saveButton.textContent;
+    try {
+        // Send task for each classId
+        for (const classId of classIds) {
+            const taskDataForClass = {
+                ...taskData,
+                classId: parseInt(classId, 10),
+            };
+
+
+            const response = await fetch('/api/task/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(taskDataForClass),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to create task for classId ${classId}: ${response.status} ${response.statusText}. Details: ${errorText}`);
+            }
+
+            const result = await response.json();
+        }
+
+        // Close modal and reset form
+        const modal = bootstrap.Modal.getInstance(document.getElementById("addTaskModal"));
+        modal.hide();
+        document.getElementById("addTaskForm").reset();
+
+        // Reload task list for each class
+        classIds.forEach(classId => {
+            fetchTasks(classId);
+        });
+
+        showCommentAlert("All the task has been created successfully!", "success");
+    } catch (error) {
+        console.error("Error in submitTaskForClasses:", error);
+        saveButton.disabled = false;
+        saveButton.innerHTML = originalText;
+        throw error;
+    } finally {
+        saveButton.disabled = false;
+        saveButton.innerHTML = originalText;
+    }
+}
+async function openTaskDetailModal(task) {
+
+    // Validate task object
+    if (!task?.taskId || !task?.classId) {
+        console.error("Invalid task object:", task);
+        console.error("task.taskId:", task?.taskId, "task.classId:", task?.classId);
+        showCommentAlert("Error: Invalid task or class ID.", "danger");
+        return;
+    }
+
+    try {
+
+        const taskDetailModalElement = document.getElementById("taskDetailModal");
+        if (!taskDetailModalElement) {
+            console.error("taskDetailModal element not found");
+            showCommentAlert("Error: Modal element not found.", "danger");
+            return;
+        }
+        const taskDetailModal = new bootstrap.Modal(taskDetailModalElement);
+
+
+        const modalLabel = document.getElementById("taskDetailModalLabel");
+        if (modalLabel) {
+            modalLabel.textContent = task.taskName || "Unnamed Task";
+        } else {
+            console.error("modalLabel element not found");
+        }
+
+
+        const taskDetailStartTime = document.getElementById("taskDetailStartTime");
+        const taskDetailEndTime = document.getElementById("taskDetailEndTime");
+        const taskDetailDescription = document.getElementById("taskDetailDescription");
+
+        if (!taskDetailStartTime || !taskDetailEndTime || !taskDetailDescription) {
+            console.error("One or more task detail elements not found:", {
+                taskDetailStartTime: !!taskDetailStartTime,
+                taskDetailEndTime: !!taskDetailEndTime,
+                taskDetailDescription: !!taskDetailDescription,
+            });
+        } else {
+            const startTime = new Date(task.startTime);
+            const endTime = new Date(task.endTime);
+
+            if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+                console.error("Invalid date(s):", {
+                    startTime: task.startTime,
+                    endTime: task.endTime,
+                });
+            }
+
+            const formattedStartTime = startTime.toLocaleString("vi-VN", {
+                hour: "2-digit",
+                minute: "2-digit",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            });
+            const formattedEndTime = endTime.toLocaleString("vi-VN", {
+                hour: "2-digit",
+                minute: "2-digit",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            });
+
+            taskDetailStartTime.innerHTML = `<i class="bi bi-calendar-check"></i> <span>Start Time: ${formattedStartTime}</span>`;
+            taskDetailEndTime.innerHTML = `<i class="bi bi-calendar-x"></i> <span>End Time: ${formattedEndTime}</span>`;
+            taskDetailDescription.textContent = task.description || "No description for this task.";
+        }
+
+        // Make sure the header has the correct columns
+        const submissionTableHeader = document.querySelector(".submission-table-header");
+        if (submissionTableHeader) {
+            submissionTableHeader.innerHTML = `
+            <div class="submission-cell header-cell">Full Name</div>
+            <div class="submission-cell header-cell">Status</div>
+            <div class="submission-cell header-cell">Submitted at</div>
+            <div class="submission-cell header-cell">Updated at</div>
+            <div class="submission-cell header-cell">Comment</div>
+            <div class="submission-cell header-cell">Score</div>
+        `;
+        }
+
+        // Show loading for submission rows
+        const submissionRows = document.getElementById("submissionRows");
+        if (!submissionRows) {
+            console.error("submissionRows element not found");
+            showCommentAlert("Error: Submission rows element not found.", "danger");
+            return;
+        }
+
+        submissionRows.innerHTML = `
+        <div class="submission-loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading...</p>
+        </div>
+    `;
+
+        // Show modal immediately
+        taskDetailModal.show();
+
+        // Fetch user-task data from new API
+        const response = await fetch(`/api/completed-tasks/class/${task.classId}/task/${task.taskId}`);
+
+        if (!response.ok) {
+            console.error("Failed to fetch user-task data. Status:", response.status, "StatusText:", response.statusText);
+            submissionRows.innerHTML = '<div class="text-danger p-3">Can not Load the Student list.</div>';
+            throw new Error(`Failed to fetch user-task data: ${response.status} ${response.statusText}`);
+        }
+        const userTasks = await response.json();
+
+        // Check if no data is returned
+        if (!userTasks || userTasks.length === 0) {
+            console.warn("No user-task data found for classId:", task.classId, "taskId:", task.taskId);
+            submissionRows.innerHTML = '<div class="text-warning p-3">no student in this class.</div>';
+            return;
+        }
+
+        // Pagination
+        const itemsPerPage = 10;
+        const totalPages = Math.ceil(userTasks.length / itemsPerPage);
+        let currentPage = 1;
+
+        // Function to render users for the current page
+        async function renderPage(page) {
+            submissionRows.innerHTML = `
+            <div class="submission-loading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p>Loading ${page}...</p>
+            </div>
+        `;
+
+            const start = (page - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageUserTasks = userTasks.slice(start, end);
+
+            submissionRows.innerHTML = ""; // Clear loading
+
+            // Process user-tasks in the current page
+            for (const [index, userTask] of pageUserTasks.entries()) {
+                try {
+                    // Validate user object
+                    const user = userTask.user;
+                    if (!user?.id || !user?.first_name || !user?.last_name) {
+                        console.error(`Invalid user data at index ${start + index + 1}:`, {
+                            id: user?.id,
+                            first_name: user?.first_name,
+                            last_name: user?.last_name,
+                        });
+                        throw new Error("Invalid or missing user data");
+                    }
+
+                    // Create full name
+                    const fullName = `${user.first_name} ${user.last_name}`;
+
+                    // Get submission (completedTask)
+                    const submission = userTask.completedTask;
+
+
+                    // Create submission row
+                    const submissionRow = document.createElement("div");
+                    submissionRow.classList.add("submission-row");
+                    submissionRow.setAttribute("data-user-id", user.id);
+                    submissionRow.setAttribute("data-user-name", fullName);
+
+                    submissionRow.addEventListener("click", () => {
+                        openCommentPopup(user.id, fullName);
+                    });
+
+
+                    // Determine submission status
+                    const hasSubmitted = submission !== null;
+                    const statusText = hasSubmitted ? "Submitted" : "Not Yet";
+                    const statusClass = hasSubmitted ? "status-submitted" : "status-not-submitted";
+
+                    // Format submission date if available
+                    let submissionDate = "N/A";
+                    if (hasSubmitted && submission.createdAt) {
+                        const createdDate = new Date(submission.createdAt);
+                        if (!isNaN(createdDate.getTime())) {
+                            submissionDate = createdDate.toLocaleString("vi-VN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                            });
+                        }
+                    }
+
+                    // Format update date if available (NEW CODE)
+                    let updateDate = "N/A";
+                    if (hasSubmitted && submission.updatedAt) {
+                        const updatedDate = new Date(submission.updatedAt);
+                        if (!isNaN(updatedDate.getTime())) {
+                            updateDate = updatedDate.toLocaleString("vi-VN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                            });
+                        }
+                    }
+
+                    // Determine mark status
+                    const isGraded = submission && submission.mark !== null && submission.mark !== undefined;
+                    const markText = isGraded ? submission.mark : "N/A";
+                    const markClass = isGraded ? "mark-graded" : "mark-not-graded";
+
+                    // Comment text
+                    const commentText = hasSubmitted && submission.comment ? submission.comment : "N/A";
+
+                    // Set HTML for the row - UPDATED to include update time
+                    submissionRow.innerHTML = `
+                    <div class="submission-cell">${fullName}</div>
+                    <div class="submission-cell ${statusClass}">${statusText}</div>
+                    <div class="submission-cell">${submissionDate}</div>
+                    <div class="submission-cell update-time">${updateDate}</div>
+                    <div class="submission-cell">${commentText}</div>
+                    <div class="submission-cell ${markClass}">${markText}</div>
+                `;
+
+                    // Append row to table
+                    submissionRows.appendChild(submissionRow);
+                } catch (error) {
+                    console.error(`Error processing user-task ${start + index + 1}:`, error.message);
+                    const errorRow = document.createElement("div");
+                    errorRow.classList.add("submission-row");
+                    errorRow.innerHTML = `
+                    <div class="submission-cell">Unknown User</div>
+                    <div class="submission-cell status-not-submitted">Error</div>
+                    <div class="submission-cell">N/A</div>
+                    <div class="submission-cell">N/A</div>
+                    <div class="submission-cell">Unable to load user details</div>
+                    <div class="submission-cell">N/A</div>
+                `;
+                    submissionRows.appendChild(errorRow);
+                }
+            }
+
+            // Add pagination controls
+            if (totalPages > 1) {
+                // Create a wrapper div that takes full width
+                const paginationWrapper = document.createElement("div");
+                paginationWrapper.classList.add("d-flex", "justify-content-center", "w-100", "mt-4", "mb-2");
+
+                // Create the pagination container
+                const paginationContainer = document.createElement("div");
+                paginationContainer.classList.add("pagination-container");
+
+                // Create nav container for pagination
+                const paginationNav = document.createElement("nav");
+                paginationNav.setAttribute("aria-label", "Page navigation");
+
+                // Create ul for pagination
+                const paginationUl = document.createElement("ul");
+                paginationUl.classList.add("pagination");
+
+                // Previous button
+                const prevLi = document.createElement("li");
+                prevLi.classList.add("page-item");
+                if (page === 1) prevLi.classList.add("disabled");
+
+                const prevLink = document.createElement("a");
+                prevLink.classList.add("page-link");
+                prevLink.href = "#";
+                prevLink.setAttribute("aria-label", "Previous");
+                prevLink.innerHTML = '<span aria-hidden="true">«</span>';
+
+                prevLink.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderPage(currentPage);
+                    }
+                });
+
+                prevLi.appendChild(prevLink);
+                paginationUl.appendChild(prevLi);
+
+                // Page number buttons
+                const startPage = Math.max(1, page - 2);
+                const endPage = Math.min(totalPages, page + 2);
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageLi = document.createElement("li");
+                    pageLi.classList.add("page-item");
+                    if (i === page) pageLi.classList.add("active");
+
+                    const pageLink = document.createElement("a");
+                    pageLink.classList.add("page-link");
+                    pageLink.href = "#";
+                    pageLink.textContent = i;
+
+                    pageLink.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        currentPage = i;
+                        renderPage(currentPage);
+                    });
+
+                    pageLi.appendChild(pageLink);
+                    paginationUl.appendChild(pageLi);
+                }
+
+                // Next button
+                const nextLi = document.createElement("li");
+                nextLi.classList.add("page-item");
+                if (page === totalPages) nextLi.classList.add("disabled");
+
+                const nextLink = document.createElement("a");
+                nextLink.classList.add("page-link");
+                nextLink.href = "#";
+                nextLink.setAttribute("aria-label", "Next");
+                nextLink.innerHTML = '<span aria-hidden="true">»</span>';
+
+                nextLink.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        renderPage(currentPage);
+                    }
+                });
+
+                nextLi.appendChild(nextLink);
+                paginationUl.appendChild(nextLi);
+
+                // Append to container
+                paginationNav.appendChild(paginationUl);
+                paginationContainer.appendChild(paginationNav);
+                paginationWrapper.appendChild(paginationContainer);
+                submissionRows.appendChild(paginationWrapper);
+            }
+        }
+
+        // Render the first page
+        if (userTasks.length > 0) {
+            await renderPage(currentPage);
+        }
+    } catch (error) {
+        console.error("Error in openTaskDetailModal:", error);
+        console.error("Stack trace:", error.stack);
+        showCommentAlert("Cannot load the student list.", "warning");
+    }
+}
+
+function attachTaskEventListeners() {
+    document.querySelectorAll(".task-item").forEach(taskDiv => {
+        taskDiv.addEventListener("click", function () {
+            const task = {
+                taskName: this.getAttribute("data-task-name") || "Không có tên nhiệm vụ"
+            };
+            openTaskDetailModal(task);
+        });
+    });
+}
+
+function renderClassCheckboxes() {
+    const container = document.getElementById("classCheckboxList");
+    container.innerHTML = "";
+
+    if (!Array.isArray(cachedClassrooms)) return;
+
+    cachedClassrooms.forEach(cls => {
+        const col = document.createElement("div");
+        col.className = "col-6";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = cls.id;
+        checkbox.id = `checkbox-${cls.id}`;
+        checkbox.className = "form-check-input me-1";
+
+        const label = document.createElement("label");
+        label.htmlFor = checkbox.id;
+        label.className = "form-check-label";
+        label.textContent = cls.className;
+
+        col.appendChild(checkbox);
+        col.appendChild(label);
+        container.appendChild(col);
+    });
+}
+
+let currentTaskId = null;
+let currentUserId = null;
+let currentClassId = null;
+let currentSubmissionItem = null;
+let submissionCache = new Map(); // Cache for submission data
+
+function showCommentAlert(message, type = 'danger') {
+    const alertContainer = document.getElementById('globalAlertContainer');
+    if (!alertContainer) {
+        console.error('Global alert container not found!');
+        return;
+    }
+
+    // Generate a unique ID for the alert
+    const alertId = 'alert-' + Date.now();
+
+    // Set icon based on type
+    let icon = 'bi-exclamation-triangle-fill';
+    if (type === 'success') icon = 'bi-check-circle-fill';
+    else if (type === 'warning') icon = 'bi-exclamation-circle-fill';
+    else if (type === 'info') icon = 'bi-info-circle-fill';
+
+    // Create the alert HTML
+    const alertHtml = `
+        <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert" style="border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 4px solid;">
+            <i class="bi ${icon} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+
+    // Append the alert to the container
+    alertContainer.innerHTML += alertHtml;
+
+    // Set border-left color based on type
+    const alertElement = document.getElementById(alertId);
+    if (alertElement) {
+        const borderColor = {
+            'danger': '#dc3545',
+            'warning': '#ffc107',
+            'success': '#28a745',
+            'info': '#17a2b8'
+        }[type] || '#dc3545';
+        alertElement.style.borderLeftColor = borderColor;
+
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alertElement);
+            bsAlert.close();
+        }, 5000);
+    }
+
+    // Scroll to the alert
+    alertContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Function to modify the existing openTaskDetailModal function
+function enhanceOpenTaskDetailModal() {
+    // Store the original function
+    const originalOpenTaskDetailModal = window.openTaskDetailModal;
+
+    // Replace with enhanced version
+    window.openTaskDetailModal = function(task) {
+
+        // Store task context
+        currentTaskId = task.taskId;
+        currentClassId = task.classId;
+
+        // Call the original function
+        if (typeof originalOpenTaskDetailModal === 'function') {
+            originalOpenTaskDetailModal(task);
+        }
+
+        // Add our enhancement after a short delay to ensure the modal content is loaded
+        setTimeout(() => {
+            // Find all submission items and attach click handlers
+            setupSubmissionItemHandlers();
+        }, 1000); // Wait for the original function to complete and render submissions
+    };
+}
+
+// Function to set up click handlers on submission items
+function setupSubmissionItemHandlers() {
+
+    // Find all submission items in the task detail modal
+    const submissionList = document.getElementById('submissionList');
+    if (!submissionList) {
+        console.error("Submission list element not found");
+        return;
+    }
+
+    // First, try to find elements with the submission-item class
+    const submissionItems = submissionList.querySelectorAll('.submission-item');
+
+    if (submissionItems.length > 0) {
+        submissionItems.forEach((item, index) => {
+            addClickHandlerToSubmissionItem(item, index);
+        });
+    } else {
+        // If no items found with the class, try to find direct children
+        const children = submissionList.children;
+
+        if (children.length > 0) {
+            Array.from(children).forEach((item, index) => {
+                // Only add handlers to div or p elements that might be submission items
+                if (item.tagName === 'DIV' || item.tagName === 'P') {
+                    addClickHandlerToSubmissionItem(item, index);
+                }
+            });
+        } else {
+            setTimeout(setupSubmissionItemHandlers, 1000);
+        }
+    }
+}
+
+// Function to add click handler to a submission item
+function addClickHandlerToSubmissionItem(item, index) {
+
+    // Skip if this item already has our handler
+    if (item.hasAttribute('data-comment-handler-added')) {
+        return;
+    }
+
+    // Mark this item as having our handler
+    item.setAttribute('data-comment-handler-added', 'true');
+
+    // Make the item look clickable
+    item.style.cursor = 'pointer';
+    item.style.transition = 'all 0.3s ease';
+    item.style.borderLeft = '3px solid #ddd';
+    item.style.borderRadius = '5px';
+    item.style.padding = item.style.padding || '12px';
+    item.style.marginBottom = item.style.marginBottom || '12px';
+    item.style.backgroundColor = '#fff';
+    item.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+
+    // Add hover effect
+    item.addEventListener('mouseover', () => {
+        item.style.backgroundColor = '#f8f9fa';
+        item.style.boxShadow = '0 3px 6px rgba(0,0,0,0.15)';
+        item.style.transform = 'translateY(-2px)';
+    });
+
+    item.addEventListener('mouseout', () => {
+        if (!item.classList.contains('active-submission')) {
+            item.style.backgroundColor = '#fff';
+            item.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            item.style.transform = 'translateY(0)';
+        }
+    });
+
+    // Extract user ID and other data from the item
+    let userId = extractUserIdFromItem(item);
+    let userName = extractUserNameFromItem(item);
+
+
+    // Store data attributes on the element
+    item.setAttribute('data-user-id', userId);
+    if (userName) item.setAttribute('data-user-name', userName);
+
+
+    // Add click handler
+    item.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Remove active class from all items
+        document.querySelectorAll('#submissionList > div').forEach(el => {
+            el.classList.remove('active-submission');
+            el.style.backgroundColor = '#fff';
+            el.style.borderLeft = '3px solid #ddd';
+            el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            el.style.transform = 'translateY(0)';
+        });
+
+        // Add active class to this item
+        item.classList.add('active-submission');
+        item.style.backgroundColor = '#fff8f0';
+        item.style.borderLeft = '3px solid #e67e22';
+        item.style.boxShadow = '0 3px 6px rgba(0,0,0,0.15)';
+
+        // Store the current user ID and submission item
+        currentUserId = userId;
+        currentSubmissionItem = item;
+
+        // Open the comment popup
+        openCommentPopup(userId, userName);
+    });
+
+    // Add a comment button for clarity if it doesn't already have one
+    if (!item.querySelector('.add-comment-btn')) {
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'text-end mt-2';
+
+        const commentBtn = document.createElement('button');
+        commentBtn.className = 'btn btn-sm btn-primary add-comment-btn';
+        commentBtn.innerHTML = '<i class="bi bi-chat-dots me-1"></i> Add Comment';
+        commentBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            item.click(); // Trigger the item's click event
+        });
+
+        buttonContainer.appendChild(commentBtn);
+        item.appendChild(buttonContainer);
+    }
+}
+
+// Helper function to extract user ID from a submission item
+function extractUserIdFromItem(item) {
+    // Lấy userId từ data-user-id
+    const userId = item.getAttribute('data-user-id');
+    if (userId) {
+        return userId;
+    }
+
+    // Nếu không tìm thấy, trả về null và ghi log lỗi
+    console.error("No userId found in submission item:", item);
+    return null;
+}
+
+// Helper function to extract user name from a submission item
+function extractUserNameFromItem(item) {
+    // Lấy username từ data-user-name
+    const userName = item.getAttribute('data-user-name');
+    return userName || 'Unknown User';
+}
+
+function extractCommentFromItem(item) {
+    // Lấy comment từ data-comment
+    const comment = item.getAttribute('data-comment');
+    return comment || null;
+}
+async function openCommentPopup(userId, fullName) {
+
+    // Cập nhật tên người dùng trong modal
+    const commentModalUserName = document.getElementById("commentModalUserName");
+    if (commentModalUserName) {
+        commentModalUserName.textContent = fullName || "Unknown User";
+    } else {
+        console.error("commentModalUserName element not found");
+    }
+
+    // Cập nhật thông tin tệp đính kèm
+    const commentModalAttachment = document.getElementById("commentModalAttachment");
+    if (!commentModalAttachment) {
+        console.error("commentModalAttachment element not found");
+        return;
+    }
+    currentUserId = userId;
+    try {
+        // Giả sử currentTaskData chứa taskId và classId
+        if (!currentTaskData || !currentTaskData.taskId || !currentTaskData.classId) {
+            throw new Error("currentTaskData không hợp lệ");
+        }
+
+        const submissionResponse = await fetch(`/api/completed-tasks/find/${currentTaskData.taskId}/${currentUserId}/${currentTaskData.classId}`);
+        if (!submissionResponse.ok) {
+            if (submissionResponse.status === 404) {
+                commentModalAttachment.innerHTML = `
+                <i class="bi bi-file-earmark-arrow-down me-1"></i>
+                <span>No attachment</span>
+            `;
+            } else {
+                throw new Error(`Failed to fetch submission: ${submissionResponse.statusText}`);
+            }
+            return;
+        }
+
+        const submission = await submissionResponse.json();
+        // Kiểm tra tệp đính kèm
+        if (submission.file) {
+
+            commentModalAttachment.innerHTML = `
+            <i class="bi bi-file-earmark-arrow-down me-1"></i>
+            <a href="${submission.file}" target="_blank" rel="noopener noreferrer">Attachment File</a>
+        `;
+        } else {
+            commentModalAttachment.innerHTML = `
+            <i class="bi bi-file-earmark-arrow-down me-1"></i>
+            <span>No attachment</span>
+        `;
+        }
+
+        // Hiển thị modal
+        const commentModalElement = document.getElementById("commentModal"); // Giả sử ID của modal
+        if (commentModalElement) {
+            const commentModal = new bootstrap.Modal(commentModalElement);
+            commentModal.show();
+        } else {
+            console.error("commentModal element not found");
+        }
+    } catch (error) {
+        console.error("Error in openCommentPopup:", error);
+        showCommentAlert("Can not load the submission.", "danger");
+        commentModalAttachment.innerHTML = `
+        <i class="bi bi-file-earmark-arrow-down me-1"></i>
+        <span>ERROR</span>
+    `;
+    }
+}
+// Function to update character count
+function updateCharCount() {
+    const commentText = document.getElementById('commentText');
+    const charCount = document.getElementById('charCount');
+    const count = commentText.value.length;
+
+    charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
+
+    // Change color based on length
+    if (count > 500) {
+        charCount.className = 'form-text text-end mt-1 text-danger';
+    } else if (count > 400) {
+        charCount.className = 'form-text text-end mt-1 text-warning';
+    } else {
+        charCount.className = 'form-text text-end mt-1 text-muted';
+    }
+}
+
+// Function to validate mark input
+function validateMarkInput(markInput) {
+    const markValue = markInput.value.trim()
+
+    // If empty, it's valid (no mark entered)
+    if (!markValue) {
+        return true
+    }
+
+    // Convert to number and check range
+    const mark = Number(markValue)
+
+    // Check if it's a valid number between 0 and 10
+    if (isNaN(mark) || mark < 0 || mark > 10) {
+        return false
+    }
+
+    return true
+}
+
+// Function to submit a comment and/or mark
+async function submitComment() {
+    const commentText = document.getElementById("commentText")
+    const markInput = document.getElementById("markInput")
+    const comment = commentText.value.trim()
+    const mark = markInput.value.trim()
+
+    // Kiểm tra nếu không có comment và không có mark
+    if (!comment && !mark) {
+        showCommentAlert("Please enter Comment and Score.", "warning")
+        commentText.focus()
+        return
+    }
+
+    // Validate mark input if provided
+    if (mark && !validateMarkInput(markInput)) {
+        showCommentAlert("Score must be from 0 to 10.", "warning")
+        markInput.focus()
+        markInput.select() // Select the text for easy correction
+        return
+    }
+
+    if (!currentUserId || !currentTaskId || !currentClassId) {
+        console.error("Mising data to Sending", {
+            currentUserId,
+            currentTaskId,
+            currentClassId,
+        })
+        showCommentAlert("Error", "danger")
+        return
+    }
+
+    const submitBtn = document.getElementById("submitCommentBtn")
+    const originalBtnText = submitBtn.innerHTML
+
+    submitBtn.disabled = true
+    submitBtn.innerHTML =
+        '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...'
+
+    try {
+        let commentResult, markResult
+
+        // Gửi comment nếu có
+        if (comment) {
+
+            const commentResponse = await fetch(
+                `/api/completed-tasks/${currentTaskId}/${currentUserId}/${currentClassId}/comment`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "text/plain",
+                    },
+                    body: comment,
+                },
+            )
+
+            if (!commentResponse.ok) {
+                const errorText = await commentResponse.text()
+                throw new Error(`Canot sending Comment (${commentResponse.status}): ${errorText || commentResponse.statusText}`)
+            }
+
+            try {
+                commentResult = await commentResponse.json()
+            } catch (e) {
+                // Nếu response không phải JSON, sử dụng text
+                const textResult = await commentResponse.text()
+                commentResult = { comment: textResult }
+            }
+
+            const safeComment = comment ? document.createTextNode(comment).textContent : null
+
+        }
+
+        // Gửi mark nếu có
+        if (mark) {
+            const markResponse = await fetch(
+                `/api/completed-tasks/${currentTaskId}/${currentUserId}/${currentClassId}/mark`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(Number.parseInt(mark)),
+                },
+            )
+
+            if (!markResponse.ok) {
+                const errorText = await markResponse.text()
+                throw new Error(`Cannot send Score (${markResponse.status}): ${errorText || markResponse.statusText}`)
+            }
+
+            try {
+                markResult = await markResponse.json()
+            } catch (e) {
+                markResult = { mark: mark }
+            }
+
+
+        }
+        // Hiển thị thông báo thành công
+        let successMessage = ""
+        if (comment && mark) {
+            successMessage = "Comments and grades have been submitted successfully"
+        } else if (comment) {
+            successMessage = "Comments have been submitted successfully"
+        } else if (mark) {
+            successMessage = "Grades have been submitted successfully"
+        }
+        openTaskDetailModal(currentTaskData);
+        document.getElementById("commentModal").style.display = "none";
+        showCommentAlert(successMessage, "success")
+
+    } catch (error) {
+        showCommentAlert(`Không thể gửi dữ liệu: ${error.message}`, "danger")
+    } finally {
+        submitBtn.disabled = false
+        submitBtn.innerHTML = originalBtnText
+    }
+}
+
+// Initialize everything when the document is ready
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Enhance the original openTaskDetailModal function
+    enhanceOpenTaskDetailModal();
+
+    // Add event listener for the submit button in the comment modal
+    const submitCommentBtn = document.getElementById('submitCommentBtn');
+    if (submitCommentBtn) {
+        submitCommentBtn.addEventListener('click', submitComment);
+    }
+
+    // Add event listener for the comment text area to update character count
+    const commentText = document.getElementById('commentText');
+    if (commentText) {
+        commentText.addEventListener('input', updateCharCount);
+        commentText.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                submitComment();
+            }
+        });
+    }
+});
+
+// Gọi hàm gán sự kiện khi trang load xong
+document.addEventListener("DOMContentLoaded", attachTaskEventListeners);
