@@ -3,21 +3,23 @@ using PRN_Final_Project.Business.Data;
 using PRN_Final_Project.Business.Entities;
 using PRN_Final_Project.Repositories.Common;
 using PRN_Final_Project.Repositories.Interface;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace PRN_Final_Project.Repositories
 {
     public class UserRepository : IUserRepository
     {
         private readonly PRNDbContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UserRepository(PRNDbContext context)
+
+        public UserRepository(PRNDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
+
+
 
         public async Task AddAsync(user entity)
         {
@@ -44,9 +46,24 @@ namespace PRN_Final_Project.Repositories
             return await _context.users.ToListAsync();
         }
 
-        public Task<Page<user>> GetAllPagingAsync(string? searchKey = "", int page = 1, int pageSize = 10)
+        public async Task<Page<user>> GetAllPagingAsync(string? searchKey = "", int page = 1, int pageSize = 10)
         {
-            throw new NotImplementedException();
+            var query = _context.users.AsQueryable();
+            var totalItems = await query.CountAsync();
+            var items = await query
+                .Where(c => string.IsNullOrEmpty(searchKey) || c.last_name.Contains(searchKey))
+                .OrderBy(c => c.last_name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new Page<user>
+            {
+                Items = items,
+                TotalItems = totalItems,
+                PageSize = pageSize,
+                PageNumber = page,
+            };
         }
 
         public async Task<user?> GetByEmail(string email)
@@ -54,7 +71,8 @@ namespace PRN_Final_Project.Repositories
             try
             {
                 return await _context.users.FirstOrDefaultAsync(u => u.email == email);
-            } catch
+            }
+            catch
             {
                 return null;
             }
@@ -99,6 +117,12 @@ namespace PRN_Final_Project.Repositories
                 throw new KeyNotFoundException($"User with ID {entity.id} not found");
             }
 
+        }
+        public async Task<List<user>> GetTraineeByClassId(int classId)
+        {
+            return await _context.users
+                .Where(u => u.class_id == classId && u.role == "INTERN" && u.is_active == true)
+                .ToListAsync();
         }
     }
 }
