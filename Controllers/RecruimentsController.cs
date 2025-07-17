@@ -19,7 +19,7 @@ namespace PRN_Final_Project.Controllers
             return View();
         }
 
-        // GET: /Recruitment/Detail/5
+        // GET: /recruitments/detail/5
         public async Task<IActionResult> Detail(int id)
         {
             var recruitment = await _recruitmentService.GetByIdAsync(id);

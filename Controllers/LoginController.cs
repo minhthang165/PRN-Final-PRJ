@@ -65,7 +65,7 @@ namespace PRN_Final_Project.Controllers
                 };
 
                 await _userService.AddAsync(newUser);
-                existingUser = newUser;
+                existingUser = await _userService.GetByEmail(email);
             }
 
             // Create your own claims
@@ -76,7 +76,6 @@ namespace PRN_Final_Project.Controllers
         new Claim("Avatar", existingUser.avatar_path ?? "/assets/img/users/default-avatar.png"),
         new Claim(ClaimTypes.Name, existingUser.first_name + " " + existingUser.last_name),
         new Claim(ClaimTypes.Role, existingUser.role),
-        new Claim("UserId", existingUser.id.ToString())
     };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -95,9 +94,9 @@ namespace PRN_Final_Project.Controllers
 
             // Redirect based on role
             if (existingUser.role == "ADMIN")
-                return Redirect("/manage-user");
+                return Redirect("/admin");
             else if (existingUser.role == "EMPLOYEE" || existingUser.role == "INTERN")
-                return Redirect("/manageclass");
+                return Redirect("/employee");
             else
                 return Redirect("/landingpage");
         }

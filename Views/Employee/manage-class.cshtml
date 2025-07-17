@@ -1,0 +1,341 @@
+﻿@{
+    ViewData["Title"] = "Manage Classroom";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="/css/employee-classroom.css">
+}
+
+
+<input type="hidden" id="user_id" value="@ViewBag.UserId">
+<div class="app__slide-wrapper">
+    <div class="breadcrumb__area">
+        <div class="breadcrumb__wrapper mb-35" style="padding: 0px;">
+            <div class="breadcrumb__main">
+                <div class="breadcrumb__inner">
+                    <div class="breadcrumb__icon">
+                        <i class="flaticon-home"></i>
+                    </div>
+                    <div class="breadcrumb__menu">
+                        <nav>
+                            <ul>
+                                <li style="margin-bottom: 20px; margin-top: 20px"><span>Dashboard</span></li>
+                                <li style="margin-bottom: 20px; margin-top: 20px" class="active"><span>Classroom</span></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid py-3">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="main-content pe-2" id="classroomList" data-mentor-id="@ViewBag.UserId">
+                    <!-- Loading indicator -->
+                    <div id="loading-indicator" class="text-center py-4">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading data...</p>
+                    </div>
+
+                    <!-- Error message (initially hidden) -->
+                    <div id="error-message" class="alert alert-danger" style="display: none;">
+                        Unable to load classroom data. Please try again.
+                    </div>
+
+                    <!-- Classroom cards will be inserted here by JavaScript -->
+                </div>
+            </div>
+
+            <div class="col-md-6" id="detailsContainer">
+                <div class="detail-placeholder">
+                    <p>Select a classroom to view details</p>
+                </div>
+            </div>
+
+            <div class="col-md-3" id="chatContainer">
+                <!-- Chat will be loaded here when a classroom is selected -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Template for classroom card -->
+    <template id="classroom-card-template">
+        <div class="card sidebar-card" data-id="">
+            <div class="card-body p-0">
+                <div class="mb-2 card-date"></div>
+                <div class="fw-bold mb-2 card-name"></div>
+                <div class="error-tag mb-2 card-description"></div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted card-manager"></span>
+                    <div>
+                        <span class="card-status"></span>
+                        <span class="status-dot"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Templates for dynamic content -->
+    <template id="detailsTemplate">
+        <div class="content-card">
+            <div>
+                <div class="gamma-header mb-3 card-name"></div>
+                <div class="text-muted mb-4 card-time"></div>
+                <div class="mb-4 d-flex align-items-center">
+                    <strong class="me-2">Students:</strong>
+                    <button class="btn btn-light border-0 p-1" id="student-menu-btn">⋮</button>
+                </div>
+                <div class="student-container" id="student-container">
+                    <div class="spinner-border spinner-border-sm text-warning" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span>Loading student list...</span>
+                </div>
+                <div class="mb-3">
+                    <div class="task-list-header">
+                        <h5 class="mb-0">Task List</h5>
+                        <button class="add-task-btn" id="addTaskBtn">
+                            <i class="bi bi-plus"></i> Add New Task
+                        </button>
+                    </div>
+
+                    <div id="task-list" class="task-list">
+                        <!-- Task list will be displayed here -->
+                        <div class="text-center py-2">
+                            <div class="spinner-border spinner-border-sm text-warning" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <span>Loading task list...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="chatTemplate">
+    </template>
+
+    <!-- Modal for adding a new task -->
+    <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addTaskForm" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="taskName" class="form-label">Task Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="taskName" required>
+                            <div class="invalid-feedback">
+                                Please enter the task name
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskDescription" class="form-label">
+                                Task Description
+                            </label>
+                            <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="fileData" class="form-label">Attachment</label>
+                            <input type="file" class="form-control" id="fileData">
+                            <div class="form-text">Supported formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, ZIP, RAR</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="startTime" class="form-label">Start Time <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" id="startTime" required>
+                            <div class="invalid-feedback">
+                                Please select a start time
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="endTime" class="form-label">End Time <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" id="endTime" required>
+                            <div class="invalid-feedback">
+                                Please select an end time
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Select applicable classes: <span class="text-danger">*</span></label>
+                            <div id="classCheckboxList" class="row">
+                                <!-- JS will populate classes here -->
+                            </div>
+                            <div class="invalid-feedback" id="classCheckboxFeedback">
+                                Please select at least one class
+                            </div>
+                        </div>
+                        <input type="hidden" id="classId" value="">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveTaskBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="taskDetailModal" tabindex="-1" aria-labelledby="taskDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="width: 120%;">
+                <div class="modal-header">
+                    <button type="button" class="btn-close invisible" aria-label="Placeholder"></button>
+                    <h5 class="modal-title text-center flex-grow-1" id="taskDetailModalLabel">Task Name</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Task details section -->
+                    <div class="task-detail-section">
+                        <div class="task-detail-header">
+                            <i class="bi bi-info-circle me-2"></i> Task Details
+                        </div>
+                        <div class="task-detail-meta">
+                            <div class="task-detail-meta-item" id="taskDetailStartTime">
+                                <i class="bi bi-calendar-check"></i>
+                                <span>Start: --/--/---- --:--</span>
+                            </div>
+                            <div class="task-detail-meta-item" id="taskDetailEndTime">
+                                <i class="bi bi-calendar-x"></i>
+                                <span>End: --/--/---- --:--</span>
+                            </div>
+                        </div>
+                        <div class="task-detail-content" id="taskDetailDescription">
+                            Task description will be displayed here...
+                        </div>
+                    </div>
+
+                    <h5 class="mt-4"><i class="bi bi-file-earmark-text me-2"></i>Intern Submissions:</h5>
+
+                    <!-- Horizontal Table for Submissions -->
+                    <div class="submission-table-container">
+                        <div class="submission-table" id="submissionTable">
+                            <!-- Table headers -->
+                            <div class="submission-table-header">
+                                <div class="submission-cell header-cell">Full Name</div>
+                                <div class="submission-cell header-cell">Status</div>
+                                <div class="submission-cell header-cell">Submission Time</div>
+                                <div class="submission-cell header-cell">Updated At</div>
+                                <div class="submission-cell header-cell">Comment</div>
+                                <div class="submission-cell header-cell">Grade</div>
+                            </div>
+                            <!-- Submission rows will be added here -->
+                            <div id="submissionRows" class="submission-table-body">
+                                <!-- Loading placeholder -->
+                                <div class="submission-loading">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p>Loading data...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Student List -->
+    <div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="studentModalLabel">Student List</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="student-list">
+                    <!-- Student list will be displayed here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="commentModalLabel">
+                        <i class="bi bi-chat-square-text me-2"></i>Add Comment & Grade
+                    </h5>f
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="submission-info mb-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="user-avatar me-3">
+                                <i class="bi bi-person-circle" style="font-size: 2rem; color: #e67e22;"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">Student</h6>
+                                <p class="mb-0 text-muted" id="commentModalUserName">Loading...</p>
+                            </div>
+                            <div class="attachment-info me-3">
+                                <p class="mb-0 text-muted" id="commentModalAttachment">
+                                    <i class="bi bi-file-earmark-arrow-down me-1"></i>
+                                    <span>No attachment</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="commentText" class="form-label">
+                            New Comment:
+                        </label>
+                        <textarea class="form-control" id="commentText" rows="4" placeholder="Enter your comment here..."></textarea>
+                        <div class="form-text text-end mt-1" id="charCount">0 characters</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="markInput" class="form-label">
+                            New Grade:
+                        </label>
+                        <input type="number"
+                               class="form-control"
+                               id="markInput"
+                               placeholder="Enter grade (0-10)"
+                               min="0"
+                               max="10"
+                               step="1">
+                        <div class="form-text text-end mt-1">Enter a grade between 0 and 10</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="submitCommentBtn">
+                        <i class="bi bi-send me-1"></i>Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global alert container for showCommentAlert -->
+    <div id="globalAlertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 2000;"></div>
+
+    <!-- Toast container for notifications -->
+    <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1055;"></div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="/js/empManageClass.js"></script>
+}

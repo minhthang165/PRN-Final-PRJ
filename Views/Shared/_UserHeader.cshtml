@@ -1,12 +1,4 @@
-﻿@using System.Security.Claims
-
-@{
-    var avatar = User.FindFirst("Avatar")?.Value ?? "/assets/img/users/default-avatar.png";
-    var firstName = User.FindFirst(ClaimTypes.Name)?.Value?.Split(" ").FirstOrDefault();
-    var fullName = User.FindFirst(ClaimTypes.Name)?.Value;
-}
-
-<header>
+﻿<header>
     <div class="header-container">
         <div class="logo">
             <a href="/landingpage">
@@ -47,9 +39,9 @@
             </div>
 
             <button id="userportfolio" class="user-account-btn">
-                <img src="@avatar" alt="User Avatar" style="border-radius: 50%; width: 45px;" />
+                <img src="@ViewBag.avatar" alt="User Avatar" style="border-radius: 50%; width: 45px;" />
                 <span style="font-weight: bold; font-size: 15px;">
-                    @fullName
+                    @ViewBag.fullName
                 </span>
             </button>
 

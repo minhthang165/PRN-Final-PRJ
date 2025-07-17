@@ -16,14 +16,15 @@ namespace PRN_Final_Project.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            return View(_userService.GetByIdAsync(Convert.ToInt32(userIdClaim)).Result);
         }
         
         [HttpGet]
         public IActionResult Edit()
         {
-            var user = _userService.GetByIdAsync(Convert.ToInt32(User.FindFirst("UserId")?.Value)).Result;
-            return View(user);
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            return View(_userService.GetByIdAsync(Convert.ToInt32(userIdClaim)).Result);
         }
 
         [HttpPost]

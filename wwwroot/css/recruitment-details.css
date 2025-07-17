@@ -17,9 +17,7 @@ body {
     background-color: var(--light-gray);
     color: #333;
     line-height: 1.6;
-    padding: 20px;
     min-height: 100vh;
-    display: flex;
     justify-content: center;
     align-items: center;
 }

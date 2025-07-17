@@ -1,7 +1,7 @@
 ﻿@model PRN_Final_Project.Business.Entities.Recruitment
 @{
     ViewData["Title"] = "Chi tiết Tuyển Dụng";
-    var userId = User.FindFirst("UserId")?.Value;
+    var userId = ViewBag.UserId;
 }
 
 <!DOCTYPE html>
@@ -10,7 +10,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
-    <link rel="stylesheet" href="/css/recruitment-detail.css" />
+    <link rel="stylesheet" href="/css/recruitment-details.css" />
     <style>
         /* Paste your entire <style> content here directly (no changes needed) */
         /* (Keep the same CSS you provided) */
@@ -19,6 +19,7 @@
 <body>
 
     <input type="hidden" id="user_id" value="@userId" />
+    <input type="hidden" id="recruitmentId" value="@Model.id" />
 
     <div class="container" id="mainContainer">
         <div class="header">

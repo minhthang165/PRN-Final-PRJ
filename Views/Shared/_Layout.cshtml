@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="/css/fontawesome-pro.css">
     <link rel="stylesheet" href="/css/spacing.css">
     <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
     <style>
@@ -190,6 +191,19 @@
 <body>
     @using System.Security.Claims
 
+    @{
+        var avatar = User.FindFirst("Avatar")?.Value;
+        var firstName = User.FindFirst(ClaimTypes.Name)?.Value?.Split(" ").FirstOrDefault();
+        var fullName = User.FindFirst(ClaimTypes.Name)?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var phoneNumber = User.FindFirst(ClaimTypes.MobilePhone)?.Value;
+        ViewBag.fullName = fullName;
+        ViewBag.avatar = avatar;
+        ViewBag.UserId = userId;
+        ViewBag.firstName = firstName;
+        ViewBag.phone_number = phoneNumber;
+    }
+
     @if (User.Identity != null && User.Identity.IsAuthenticated)
     {
         var roleClaim = ((ClaimsIdentity)User.Identity).FindFirst(ClaimTypes.Role)?.Value;
@@ -200,11 +214,11 @@
         }
         else if (roleClaim == "INTERN")
         {
-            @Html.Partial("_InternHeader")
+            @Html.Partial("_AdminHeader")
         }
         else if (roleClaim == "EMPLOYEE")
         {
-            @Html.Partial("_EmployeeHeader")
+            @Html.Partial("_AdminHeader")
         }
         else if (roleClaim == "GUEST")
         {
@@ -229,7 +243,7 @@
         const source = document.getElementById("notification-source");
         source.src = '/audio/notification.mp3';
         document.addEventListener('DOMContentLoaded', function() {
-                const user_id_noti = @(User.FindFirst("UserId")?.Value ?? "");
+                const user_id_noti = @(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
                 const userPortfolio = document.getElementById("userportfolio");
                 let userDropdown = document.querySelector(".user-dropdown");
                 if (userDropdown == null) userDropdown = document.querySelector(".user__dropdown");
@@ -272,6 +286,7 @@
     <script src="/js/notification.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/js/notification.js"></script>
+    <script src="/js/sidebar.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

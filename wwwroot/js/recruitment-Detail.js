@@ -1,21 +1,17 @@
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("applyButton").addEventListener("click", applyJob);
     document.getElementById("deleteButton").addEventListener("click", deleteApplication);
+    const recruitmentId = document.getElementById("recruitmentId").value;
     loadCVList();
-});
+}); 
 
-function getIdsFromPath() {
-    let pathSegments = window.location.pathname.split('/');
-    let recruitmentId = pathSegments[pathSegments.length - 1];
-    return { recruitmentId };
-}
+
 
 let appliedFileId = null; // Biến toàn cục để lưu fileId đã ứng tuyển
 
 async function loadCVList() {
     const userId = document.getElementById("user_id").value;
     const cvSelect = document.getElementById("cvSelect");
-    const { recruitmentId } = getIdsFromPath();
 
     try {
         let response = await fetch(`/file/user/${userId}/all`);
