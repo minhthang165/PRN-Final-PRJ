@@ -117,7 +117,7 @@
 }
 
 .sub-menu ul li a {
-    padding: 12px 40px;
+    padding: 12px 5px;
     font-size: 14px;
     color: #b0b0b0;
 }
@@ -125,14 +125,4 @@
     .sub-menu ul li a:hover {
         background: white;
         color: black;
-    }
-
-/* App Content Wrapper */
-.app__slide-wrapper {
-    transition: margin-left 0.3s ease;
-    margin-left: 250px;
-}
-
-    .app__slide-wrapper.sidebar-collapsed {
-        margin-left: 70px;
     }

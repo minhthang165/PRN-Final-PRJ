@@ -189,20 +189,6 @@
     </style>
 </head>
 <body>
-    @using System.Security.Claims
-
-    @{
-        var avatar = User.FindFirst("Avatar")?.Value;
-        var firstName = User.FindFirst(ClaimTypes.Name)?.Value?.Split(" ").FirstOrDefault();
-        var fullName = User.FindFirst(ClaimTypes.Name)?.Value;
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var phoneNumber = User.FindFirst(ClaimTypes.MobilePhone)?.Value;
-        ViewBag.fullName = fullName;
-        ViewBag.avatar = avatar;
-        ViewBag.UserId = userId;
-        ViewBag.firstName = firstName;
-        ViewBag.phone_number = phoneNumber;
-    }
 
     @if (User.Identity != null && User.Identity.IsAuthenticated)
     {

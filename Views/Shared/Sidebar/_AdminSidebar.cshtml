@@ -28,8 +28,13 @@
                     </a>
                     <ul class="sub">
                         <li>
-                            <a asp-action="index" asp-controller="User">
-                                <i class="fa fa-folder-o"></i>User Management
+                            <a asp-action="index" asp-controller="User" asp-route-role="intern">
+                                <i class="fa fa-folder-o"></i>Intern Management
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-action="index" asp-controller="User" asp-route-role="employee">
+                                <i class="fa fa-folder-o"></i>Employee Management
                             </a>
                         </li>
                     </ul>
@@ -41,7 +46,7 @@
                     </a>
                     <ul class="sub">
                         <li>
-                            <a asp-controller="EmployeeClass" asp-action="index">
+                            <a asp-controller="Class" asp-action="index">
                                 <i class="fa fa-folder-o"></i>Class Managerment
                             </a>
                         </li>

@@ -3,11 +3,11 @@ using PRN_Final_Project.Repositories.Interface;
 
 namespace PRN_Final_Project.Controllers
 {
-    public class EmployeeClassController : Controller
+    public class ClassController : Controller
     {
         private readonly IClassRepository _classRepository;
 
-        public EmployeeClassController(IClassRepository classRepository)
+        public ClassController(IClassRepository classRepository)
         {
             _classRepository = classRepository;
         }

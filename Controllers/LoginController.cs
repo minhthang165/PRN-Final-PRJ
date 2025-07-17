@@ -95,8 +95,10 @@ namespace PRN_Final_Project.Controllers
             // Redirect based on role
             if (existingUser.role == "ADMIN")
                 return Redirect("/admin");
-            else if (existingUser.role == "EMPLOYEE" || existingUser.role == "INTERN")
+            else if (existingUser.role == "EMPLOYEE")
                 return Redirect("/employee");
+            else if (existingUser.role == "INTERN")
+                return Redirect("/intern");
             else
                 return Redirect("/landingpage");
         }

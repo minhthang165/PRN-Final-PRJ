@@ -102,7 +102,7 @@ namespace PRN_Final_Project.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public Task GetClassesByMentorId(int userId)
+        public Task<List<Class>> GetClassesByMentorId(int userId)
         {
             var classes = _context.Classes
                 .Where(c => c.mentor_id == userId)

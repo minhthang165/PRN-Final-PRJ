@@ -58,9 +58,9 @@ namespace PRN_Final_Project.Service
             await _repository.AssignTrainerToClassAsync(classId, traineeId);
         }
 
-        public async Task GetClassesByMentorId(int userId)
+        public async Task<List<Class>> GetClassesByMentorId(int userId)
         {
-            await _repository.GetClassesByMentorId(userId);
+            return await _repository.GetClassesByMentorId(userId);
         }
     }
 }
