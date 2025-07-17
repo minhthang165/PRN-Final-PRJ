@@ -101,5 +101,13 @@ namespace PRN_Final_Project.Repositories
             trainee.class_id = classObj.id;
             await _context.SaveChangesAsync();
         }
+
+        public Task GetClassesByMentorId(int userId)
+        {
+            var classes = _context.Classes
+                .Where(c => c.mentor_id == userId)
+                .ToListAsync();
+            return classes;
+        }
     }
 }
