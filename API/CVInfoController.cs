@@ -48,7 +48,7 @@ namespace PRN_Final_Project.API
         }
 
         // GET: api/CVInfo/id/5
-        [HttpGet("id/{id}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var cv = await _service.GetByIdAsync(id);
@@ -83,7 +83,7 @@ namespace PRN_Final_Project.API
             var cvs = await _service.FindCvInfoByRecruitmentId(recruitmentId);
             return Ok(cvs);
         }
-
+        
         [HttpPost("approve-cv")]
         public async Task<IActionResult> ApproveCv(int cvId)
         {

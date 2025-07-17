@@ -52,5 +52,9 @@ namespace PRN_Final_Project.Service
         {
             return await _repository.GetByEmail(email);
         }
+        public async Task<List<user>> GetTraineeByClassId(int classId)
+        {
+            return await _repository.GetTraineeByClassId(classId);
+        }
     }
 }
