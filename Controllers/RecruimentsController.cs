@@ -8,10 +8,12 @@ namespace PRN_Final_Project.Controllers
     public class RecruitmentsController : Controller
     {
         private readonly IRecruitmentService _recruitmentService;
+        private readonly IUserService _userService;
 
-        public RecruitmentsController(IRecruitmentService recruitmentService)
+        public RecruitmentsController(IRecruitmentService recruitmentService, IUserService userService)
         {
             _recruitmentService = recruitmentService;
+            _userService = userService;
         }
 
         // GET: /Recruitment

@@ -1,4 +1,5 @@
 
+using System.Security.Claims;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -14,13 +15,23 @@ namespace PRN_Final_Project.Repositories
     public class FileRepository : IFileRepository
     {
         private readonly Cloudinary _cloudinary;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly PRNDbContext _context;
 
-        public FileRepository(Cloudinary cloudinary, PRNDbContext context)
+
+        public FileRepository(Cloudinary cloudinary, PRNDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _cloudinary = cloudinary;
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
+
+        private int? GetCurrentUserId()
+        {
+            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier);
+            return userIdClaim != null ? int.Parse(userIdClaim.Value) : (int?)null;
+        }
+
         public async Task<UserFile> UploadPdf(IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -40,9 +51,13 @@ namespace PRN_Final_Project.Repositories
             if (uploadResult.Error != null)
                 throw new Exception("Upload error: " + uploadResult.Error.Message);
 
+            var userId = GetCurrentUserId();
+            if (userId == null)
+                throw new Exception("User is not authenticated.");
+
             var saveFile = new UserFile
             {
-                submitter_id = 1, // session/user
+                submitter_id = userId.Value,
                 display_name = file.FileName,
                 path = uploadResult.SecureUrl.AbsoluteUri,
                 created_at = DateTime.Now,
@@ -109,32 +124,11 @@ namespace PRN_Final_Project.Repositories
             }
         }
 
-        public async Task AssignTrainerToClassAsync(int classId, int trainerId)
+        public async Task<List<UserFile>> GetByUserIdAsync(int id)
         {
-            var trainer = await _context.users.FindAsync(trainerId);
-            if (trainer == null || (trainer.role != "EMPLOYEE"))
-                throw new Exception("User is not a valid trainer");
-
-            var classObj = await _context.Classes.FindAsync(classId);
-            if (classObj == null)
-                throw new Exception("Class not found");
-
-            classObj.mentor_id = trainerId;
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task AssignTraineeToClassAsync(int classId, int traineeId)
-        {
-            var trainee = await _context.users.FindAsync(traineeId);
-            if (trainee == null || (trainee.role != "INTERN"))
-                throw new Exception("User is not a valid trainee");
-
-            var classObj = await _context.Classes.FindAsync(classId);
-            if (classObj == null)
-                throw new Exception("Class not found");
-
-            trainee.class_id = classObj.id;
-            await _context.SaveChangesAsync();
+            return await _context.UserFiles
+                .Where(c => c.submitter_id == id && c.is_active == true)
+                .ToListAsync();
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using PRN_Final_Project.API.Dto;
 using PRN_Final_Project.Business.Entities;
 using PRN_Final_Project.Service.Interface;
 
@@ -20,14 +21,29 @@ namespace PRN_Final_Project.API
         }
 
         [HttpPost("upload-cv")]
-        public async Task<IActionResult> UploadCV(IFormFile file, int recruitmentId)
+        public async Task<IActionResult> ApplyCV([FromBody] ApplyCvRequest request)
         {
-            var cvInfo = await _service.UploadCv(file, recruitmentId);
-            // 5. Trả về response
+            CV_Info cvInfo = await _service.ApplyCv(request.FileId, request.RecruitmentId);
+
+            var resultDto = new CVInfoResultDto
+            {
+                Id = cvInfo.cvInfo_id,
+                Gpa = cvInfo.gpa ?? 0,
+                Education = cvInfo.education,
+                Skill = cvInfo.skill,
+                CreatedAt = cvInfo.created_at,
+                File = new UserFileDto
+                {
+                    Id = cvInfo.file_id,
+                    DisplayName = cvInfo.file.display_name,
+                    Path = cvInfo.file.path
+                }
+            };
+
             return Ok(new
             {
                 message = "Upload & extract thành công",
-                data = cvInfo
+                data = resultDto
             });
         }
 
@@ -48,7 +64,7 @@ namespace PRN_Final_Project.API
         }
 
         // GET: api/CVInfo/id/5
-        [HttpGet("id/{id}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var cv = await _service.GetByIdAsync(id);
@@ -103,6 +119,28 @@ namespace PRN_Final_Project.API
             return Ok(new
             {
                 message = "Từ chối cv thành công",
+            });
+        }
+
+        [HttpGet("count-active-cv/{recruitmentId}")]
+        public async Task<IActionResult> CountActiveCVByRecruitmentId(int recruitmentId)
+        {
+            int count = await _service.CountActiveCVByRecruitmentId(recruitmentId);
+            return Ok(new
+            {
+                message = "Count active CVs by recruitment ID",
+                count = count
+            });
+        }
+
+        [HttpGet("exists-by-file-and-recruitment")]
+        public async Task<IActionResult> ExistsByFileIdAndRecruitmentId(int fileId, int recruitmentId)
+        {
+            bool exists = await _service.ExistsByFileIdAndRecruitmentId(fileId, recruitmentId);
+            return Ok(new
+            {
+                message = "Check if CV exists by file and recruitment ID",
+                exists = exists
             });
         }
     }

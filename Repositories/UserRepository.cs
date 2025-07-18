@@ -3,21 +3,23 @@ using PRN_Final_Project.Business.Data;
 using PRN_Final_Project.Business.Entities;
 using PRN_Final_Project.Repositories.Common;
 using PRN_Final_Project.Repositories.Interface;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace PRN_Final_Project.Repositories
 {
     public class UserRepository : IUserRepository
     {
         private readonly PRNDbContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UserRepository(PRNDbContext context)
+
+        public UserRepository(PRNDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
+
+
 
         public async Task AddAsync(user entity)
         {
@@ -45,7 +47,7 @@ namespace PRN_Final_Project.Repositories
                 .ToListAsync();
         }
 
-        public Task<Page<user>> GetAllPagingAsync(string? searchKey = "", int page = 1, int pageSize = 10)
+        public async Task<Page<user>> GetAllPagingAsync(string? searchKey = "", int page = 1, int pageSize = 10)
         {
             var query = _context.users.AsQueryable();
             if (!string.IsNullOrEmpty(searchKey))
@@ -118,6 +120,12 @@ namespace PRN_Final_Project.Repositories
                 throw new KeyNotFoundException($"User with ID {entity.id} not found");
             }
 
+        }
+        public async Task<List<user>> GetTraineeByClassId(int classId)
+        {
+            return await _context.users
+                .Where(u => u.class_id == classId && u.role == "INTERN" && u.is_active == true)
+                .ToListAsync();
         }
     }
 }
