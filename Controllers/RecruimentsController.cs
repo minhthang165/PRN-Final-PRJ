@@ -7,10 +7,12 @@ namespace PRN_Final_Project.Controllers
     public class RecruitmentsController : Controller
     {
         private readonly IRecruitmentService _recruitmentService;
+        private readonly IUserService _userService;
 
-        public RecruitmentsController(IRecruitmentService recruitmentService)
+        public RecruitmentsController(IRecruitmentService recruitmentService, IUserService userService)
         {
             _recruitmentService = recruitmentService;
+            _userService = userService;
         }
 
         // GET: /Recruitment
@@ -23,11 +25,14 @@ namespace PRN_Final_Project.Controllers
         public async Task<IActionResult> Detail(int id)
         {
             var recruitment = await _recruitmentService.GetByIdAsync(id);
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (recruitment == null)
+            if (recruitment == null || userIdClaim == null)
             {
                 return RedirectToAction("Index", "Recruitments");
             }
+
+            ViewBag.UserId = userIdClaim;
 
             return View(recruitment);
         }

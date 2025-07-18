@@ -178,7 +178,7 @@ async function uploadFile(event) {
     }
 
     try {
-        const response = await fetch("/drive/uploadFileToGoogleDrive", {
+        const response = await fetch("/api/File", {
             method: "POST",
             body: formData
         });
@@ -272,7 +272,7 @@ async function uploadFile(event) {
 // Refresh CV list function
 async function refreshCVList(userId) {
     try {
-        const cvResponse = await fetch(`/file/user/${userId}/all`);
+        const cvResponse = await fetch(`/api/File/user/${userId}`);
         if (!cvResponse.ok) {
             throw new Error(`HTTP error! Status: ${cvResponse.status}`);
         }
@@ -293,7 +293,7 @@ async function refreshCVList(userId) {
                 listItem.dataset.fileId = cv.id || ''; // Store file ID for deletion
 
                 const fileIcon = document.createElement("i");
-                const fileExt = cv.displayName.split('.').pop().toLowerCase();
+                const fileExt = cv.display_name ? cv.display_name.split('.').pop().toLowerCase() : '';
                 if (fileExt === 'pdf') {
                     fileIcon.className = "fas fa-file-pdf file-icon";
                     fileIcon.style.color = "#e74c3c";
@@ -306,7 +306,7 @@ async function refreshCVList(userId) {
 
                 const nameSpan = document.createElement("span");
                 nameSpan.className = "file-name";
-                nameSpan.textContent = cv.displayName;
+                nameSpan.textContent = cv.display_name;
 
                 const buttonContainer = document.createElement("div");
                 buttonContainer.style.display = "flex";
@@ -352,7 +352,7 @@ function showDeleteConfirmation(file) {
     const fileNameSpan = document.getElementById('fileToDeleteName');
     const confirmButton = document.getElementById('confirmDeleteButton');
 
-    fileNameSpan.textContent = file.displayName;
+    fileNameSpan.textContent = file.display_name;
     confirmButton.disabled = false;
     confirmButton.textContent = 'Delete';
 
