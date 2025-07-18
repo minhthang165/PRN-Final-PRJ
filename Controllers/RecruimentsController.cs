@@ -24,6 +24,12 @@ namespace PRN_Final_Project.Controllers
             return View();
         }
 
+        public async Task<IActionResult> ManageRecruitment(string role = null, int page = 1, int pageSize = 10)
+        {
+            var recruitmentList = await _recruitmentService.GetAllPagingAsync("ADMIN", page, pageSize: 10);
+            return View("~/Views/Admin/ManageRecruitment.cshtml", recruitmentList);
+        }
+
         // GET: /recruitments/detail/5
         public async Task<IActionResult> Detail(int id)
         {
