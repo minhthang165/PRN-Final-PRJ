@@ -14,9 +14,15 @@ namespace PRN_Final_Project.Controllers
 
         public IActionResult Index()
         {
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            var classes = _classRepository.GetClassesByMentorId(Convert.ToInt32(userIdClaim));
-            return View("~/Views/Employee/manage-class.cshtml", classes);
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+            if (userIdClaim == "EMPLOYEE")
+                return View("~/Views/Employee/manage-class.cshtml");
+            else if (userIdClaim == "INTERN")
+                return View("~/Views/Intern/InternViewClass.cshtml");
+            else if (userIdClaim == "ADMIN")
+                return View("~/Views/Admin/ManageClass.cshtml");
+            else return Redirect("/landingpage");
         }
     }
 }

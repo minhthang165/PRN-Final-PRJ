@@ -94,7 +94,7 @@ namespace PRN_Final_Project.API
             existingUser.updated_by = updatedUser.updated_by;
 
             await _userService.UpdateAsync(existingUser);
-            return NoContent();
+            return Ok(existingUser);
         }
 
         // DELETE: api/user/5
@@ -106,7 +106,7 @@ namespace PRN_Final_Project.API
                 return NotFound();
 
             await _userService.DeleteAsync(id);
-            return NoContent();
+            return Ok(existing);
         }
 
         // PATCH: api/user/activate/5
@@ -119,7 +119,7 @@ namespace PRN_Final_Project.API
 
             user.is_active = true;
             await _userService.UpdateAsync(user);
-            return NoContent();
+            return Ok(user);
         }
 
         // GET: api/user/role/INTERN?page=1&pageSize=10

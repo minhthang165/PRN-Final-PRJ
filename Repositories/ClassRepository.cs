@@ -21,12 +21,12 @@ namespace PRN_Final_Project.Repositories
 
         public async Task<List<Class>> GetAllAsync()
         {
-            return await _context.Classes.ToListAsync();
+            return await _context.Classes.Include(c => c.mentor).ToListAsync();
         }
 
         public async Task<Page<Class>> GetAllPagingAsync(string searchKey = "", int page = 1, int pageSize = 10)
         {
-            var query = _context.Classes.AsQueryable();
+            var query =  _context.Classes.Include(c => c.mentor).AsQueryable();
             var totalItems = await query.CountAsync();
             var items = await query
                 .Where(c => string.IsNullOrEmpty(searchKey) || c.class_name.Contains(searchKey))
@@ -46,7 +46,7 @@ namespace PRN_Final_Project.Repositories
 
         public async Task<Class> GetByIdAsync(int id)
         {
-            return await _context.Classes
+            return await _context.Classes.Include(c => c.mentor)
                 .FirstOrDefaultAsync(c => c.id == id);
         }
 

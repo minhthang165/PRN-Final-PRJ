@@ -24,7 +24,7 @@ namespace PRN_Final_Project.Controllers
 
             if (string.IsNullOrEmpty(userRoleClaim))
             {
-                return RedirectToAction("Login", "Login");
+                return RedirectToAction("Home", "Index");
             }
 
             if (userRoleClaim == "ADMIN")
