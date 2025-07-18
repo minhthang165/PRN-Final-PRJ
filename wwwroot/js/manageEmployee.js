@@ -216,8 +216,8 @@ function updateUser() {
         role: "EMPLOYEE"
     };
 
-    fetch(`/api/user/update/${userId}`, {
-        method: "PATCH",
+    fetch(`/api/user/update/`, {
+        method: "PUT",
         headers: {
             "Content-Type": "application/json"
         },
@@ -225,8 +225,6 @@ function updateUser() {
     })
         .then(response => response.json())
         .then(user => {
-            $('#editUserModal').modal('hide');
-            showToast("Class updated successfully!", "success");
             location.reload();
         })
         .catch(error => showToast("Error Updating user!" + error.message, "warning"));
@@ -436,7 +434,7 @@ function loadPage(page, size) {
             totalPages = data.totalPages;
             currentPage = data.number;
             pageSize = data.size;
-            renderTable(data.content);
+            renderTable(data.items);
             renderPagination();
         })
 }

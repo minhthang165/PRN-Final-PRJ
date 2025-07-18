@@ -65,5 +65,15 @@ namespace PRN_Final_Project.API
             await _service.DeleteAsync(id);
             return NoContent();
         }
+
+        // GET: api/file/user/5
+        [HttpGet("user/{id}")]
+        public async Task<IActionResult> GetByUserId(int id)
+        {
+            var file = await _service.GetByUserIdAsync(id);
+            if (file == null)
+                return NotFound();
+            return Ok(file);
+        }
     }
 }

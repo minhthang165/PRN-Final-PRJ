@@ -1,0 +1,143 @@
+﻿@model PRN_Final_Project.Business.Entities.user;
+
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewData["Title"] = "Profile";
+}
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@error.ErrorMessage</p>
+        }
+    </div>
+}
+@section Styles {
+    <link rel="stylesheet" href="/css/profile.css">
+}
+
+
+<link rel="stylesheet" href="/assets/css/profile.css">
+
+<section class="header-spacing px-4 pb-16">
+    <input type="hidden" id="user_id" value="@Model.id" />
+    <div class="max-w-5xl mx-auto">
+        <div class="profile-card bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+            <div
+                class="bg-gradient-to-r from-orange-500 to-indigo-500 px-8 py-6 text-white flex justify-between items-center">
+                <h2 class="text-2xl font-semibold">Profile Information</h2>
+                <a asp-controller="Profile" asp-action="Edit"
+                    class="bg-white text-indigo-600 px-4 py-2 rounded-lg flex items-center font-medium hover:bg-opacity-90 transition-all">
+                    <i class="fas fa-edit mr-2"></i> Edit Profile
+                </a>
+            </div>
+
+            <div class="p-8">
+                <div class="flex flex-col md:flex-row">
+                    <div class="w-full md:w-2/5 flex flex-col items-center md:items-start mb-8 md:mb-0">
+                        <div class="relative mb-6 group">
+                            <div
+                                class="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full opacity-75 group-hover:opacity-100 transition-opacity -m-1">
+                            </div>
+                            <img src="@Model.avatar_path" alt="Profile Picture"
+                                class="rounded-full w-32 h-32 object-cover border-4 border-white relative" />
+                        </div>
+
+                        <div class="w-full space-y-4 bg-gray-50 p-6 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-user text-indigo-500 w-8"></i>
+                                <div>
+                                    <p class="text-gray-500 text-sm">Full Name</p>
+                                    <p class="font-medium text-gray-800">@Model.first_name @Model.last_name</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center">
+                                <i class="fas fa-envelope text-indigo-500 w-8"></i>
+                                <div>
+                                    <p class="text-gray-500 text-sm">Email Address</p>
+                                    <p class="font-medium text-gray-800">@Model.email</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center">
+                                <i class="fas fa-phone text-indigo-500 w-8"></i>
+                                <div>
+                                    <p class="text-gray-500 text-sm">Phone Number</p>
+                                    <p class="font-medium text-gray-800">@Model.phone_number</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full md:w-3/5 md:pl-8 md:border-l border-gray-200">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-file-alt text-indigo-500 mr-2"></i>
+                            CV Management
+                        </h3>
+
+                        <form id="uploadForm" asp-controller="Profile" asp-action="UploadCv"
+                            enctype="multipart/form-data" method="post">
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-icon">📄</div>
+                                <p class="upload-text">Drag and drop your file here or click to browse</p>
+                                <p class="upload-hint">Supported formats: PDF, DOC, DOCX (Max 10MB)</p>
+                                <div class="file-input-wrapper">
+                                    <label for="fileInput" class="file-input-label">Select File</label>
+                                    <input type="file" id="fileInput" name="cvFile" required />
+                                </div>
+                            </div>
+
+                            <div id="fileName"></div>
+
+                            <div class="progress-container" id="progressContainer">
+                                <div class="progress-bar">
+                                    <div class="progress" id="progressBar"></div>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="uploadButton" disabled>Upload Document</button>
+                            <button type="button" id="deleteButton"> x </button>
+                            <div id="loading">⏳ Uploading...</div>
+                            <div id="message"></div>
+                        </form>
+
+                        <div class="bg-white border border-gray-200 rounded-lg mt-8">
+                            <div class="px-6 py-4 border-b border-gray-200">
+                                <h4 class="font-medium text-gray-700">My CV Documents</h4>
+                            </div>
+                            <ul id="cv_list" class="divide-y divide-gray-200 max-h-60 overflow-y-auto">
+                                <!-- CV items will be populated here via JS -->
+                            </ul>
+                        </div>
+
+                        <iframe id="pdfViewer" frameborder="0"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Delete Confirmation Modal -->
+<div id="confirmDeleteModal" class="confirm-modal">
+    <div class="confirm-modal-content">
+        <div class="confirm-modal-header">
+            <h3><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h3>
+            <button id="closeConfirmModal"
+                style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+        <div class="confirm-modal-body">
+            <p>Are you sure you want to delete <span id="fileToDeleteName" style="font-weight: 500;"></span>?</p>
+            <p style="margin-top: 10px; font-size: 14px; color: var(--gray-600);">This action cannot be undone.</p>
+        </div>
+        <div class="confirm-modal-footer">
+            <button id="cancelDeleteButton" class="cancel-button">Cancel</button>
+            <button id="confirmDeleteButton" class="confirm-delete-button">Delete</button>
+        </div>
+    </div>
+</div>
+<script src="/js/profile.js"></script>

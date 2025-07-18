@@ -12,5 +12,7 @@ namespace PRN_Final_Project.Repositories.Interface
         Task<List<CV_Info>> FindCvInfoByRecruitmentId(int recruitmentId);
         Task ApproveCv(int cvId);
         Task RejectCv(int cvId);
+        Task<int> CountActiveCVByRecruitmentId(int recruitmentId);
+        Task<bool> ExistsByFileIdAndRecruitmentId(int fileId, int recruitmentId);
     }
 }

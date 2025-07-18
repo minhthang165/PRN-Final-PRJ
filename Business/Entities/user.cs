@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace PRN_Final_Project.Business.Entities;
 
@@ -41,6 +42,7 @@ public partial class user
 
     public virtual ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
 
+    [JsonIgnore]
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
     public virtual ICollection<Conversation_user> Conversation_users { get; set; } = new List<Conversation_user>();

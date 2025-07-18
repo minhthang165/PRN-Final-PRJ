@@ -1,0 +1,83 @@
+﻿@using System.Security.Claims
+@model PRN_Final_Project.Business.Entities.Recruitment
+@{
+    ViewData["Title"] = "Chi tiết Tuyển Dụng";
+    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="/css/recruitment-details.css" />
+    <style>
+        /* Paste your entire <style> content here directly (no changes needed) */
+        /* (Keep the same CSS you provided) */
+    </style>
+</head>
+<body>
+
+    <input type="hidden" id="user_id" value="@userId" />
+    <input type="hidden" id="recruitmentId" value="@Model.id" />
+    
+    <div class="container" id="mainContainer">
+        <div class="header">
+            <h1 class="job-title">@Model.position</h1>
+            <a href="/Recruitment">
+                <img src="/assets/img/logo/logoFpt.svg.png" alt="FPT Logo" />
+            </a>
+        </div>
+
+        <div class="job-details">
+            <div class="detail-item">
+                <span class="detail-label">Kinh nghiệm yêu cầu:</span>
+                <span class="detail-value">@Model.experience_requirement</span>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Ngôn ngữ yêu cầu:</span>
+                <span class="detail-value">@Model.language</span>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Số lượng tuyển:</span>
+                <span class="detail-value">@Model.total_slot</span>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Thời gian đóng:</span>
+                <span class="detail-value">@Model.end_time.ToString("dd/MM/yyyy")</span>
+            </div>
+        </div>
+
+        <div class="description-section">
+            <h3 class="description-title">Mô tả công việc:</h3>
+            <div class="description-content">@Model.description</div>
+        </div>
+
+        <div class="cv-select-container">
+            <label for="cvSelect" class="detail-label">Chọn CV của bạn:</label>
+            <select id="cvSelect">
+                <option value="">-- Chọn CV để apply --</option>
+                @* Populate this dynamically with JS or pass Model CVs if available *@
+            </select>
+        </div>
+
+        <div class="btn-container">
+            <a href="/Recruitments" class="btn back-link">Quay lại danh sách</a>
+            <button id="applyButton" class="btn apply-btn">Apply job</button>
+            <button id="deleteButton" class="btn delete-btn">Huỷ apply</button>
+        </div>
+
+        <div id="message"></div>
+    </div>
+
+    @section Scripts {
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+        <script src="/js/recruitment-Detail.js"></script>
+    }
+</body>
+</html>

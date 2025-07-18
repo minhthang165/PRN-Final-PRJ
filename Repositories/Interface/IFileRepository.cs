@@ -11,5 +11,6 @@ namespace PRN_Final_Project.Repositories.Interface
     public interface IFileRepository : ICommonRepository<UserFile>
     {
         Task<UserFile> UploadPdf(IFormFile file);
+        Task<List<UserFile>> GetByUserIdAsync(int id);
     }
 }

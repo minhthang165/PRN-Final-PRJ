@@ -1,23 +1,11 @@
-﻿@* @model YourNamespace.Models.User *@
-
-@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
-
+﻿
 <header>
     <div class="header-container">
         <div class="logo">
-            <a href="/home">
+            <a href="/employee">
                 <img src="/assets/img/logo/logo-fpt.png" alt="FPT Education" />
             </a>
         </div>
-
-        <nav>
-            <a href="/manage-user">Dashboard</a>
-            <a href="/messenger">Messenger</a>
-        </nav>
 
         <div class="user-account flex">
             <div class="notification-bell relative">
@@ -34,7 +22,7 @@
                     </div>
 
                     <ul id="notification-list" class="notification-list divide-y divide-gray-200 max-h-96 overflow-y-auto">
-                        <!-- Notifications will be inserted here by JS -->
+                        <!-- Notifications will be inserted here by JavaScript -->
                     </ul>
 
                     <div class="px-4 py-2 bg-gray-50 text-center">
@@ -46,9 +34,9 @@
             </div>
 
             <button id="userportfolio" class="user-account-btn">
-                <img src="@Model.AvatarPath" alt="User Avatar" style="border-radius: 50%; width: 45px" />
-                <span style="font-weight: bold; font-size: 15px">
-                    @($"{Model.FirstName} {Model.LastName}")
+                <img src="@(User.FindFirst("Avatar")?.Value ?? "/assets/img/users/default-avatar.png")" alt="User Avatar" style="border-radius: 50%; width: 45px;" />
+                <span style="font-weight: bold; font-size: 15px;">
+                    @(User.FindFirst(ClaimTypes.Name)?.Value ?? "User")
                 </span>
             </button>
 
@@ -56,18 +44,37 @@
                 <ul>
                     <li>
                         <a href="/messenger">
-                            <!-- Messenger SVG icon here -->
+                            <svg version="1.1" id="MESSAGE" xmlns="http://www.w3.org/2000/svg"
+                                 xmlns:xlink="http://www.w3.org/1999/xlink" width="18px" height="18px"
+                                 viewBox="0 0 1800 1800" enable-background="new 0 0 18 18"
+                                 xml:space="preserve" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                               stroke-linejoin="round"></g>
+                            <g id="SVGRepo_iconCarrier"> <g> <path fill="#333333"
+                                                                   d="M1768.407,80.034H31.592C14.144,80.034,0,94.178,0,111.627v1247.362c0,17.453,14.144,31.593,31.592,31.593 h174.524v297.79c0,11.292,6.021,21.72,15.796,27.36c4.888,2.821,10.339,4.232,15.796,4.232c5.452,0,10.908-1.411,15.796-4.232 l563.182-325.15h951.721c17.449,0,31.593-14.14,31.593-31.593V111.627C1800,94.178,1785.856,80.034,1768.407,80.034z M1736.815,1327.396H808.22c-5.544,0-10.992,1.464-15.796,4.231l-523.123,302.03v-274.669c0-17.444-14.144-31.593-31.592-31.593 H63.185V143.219h1673.631V1327.396z"></path>
+                            <path fill="#333333"
+                                  d="M246.713,423.688h1287.764c17.448,0,31.592-14.144,31.592-31.593c0-17.449-14.144-31.592-31.592-31.592 H246.713c-17.449,0-31.592,14.143-31.592,31.592C215.121,409.545,229.264,423.688,246.713,423.688z"></path>
+                            <path fill="#333333"
+                                  d="M246.713,667.4h1287.764c17.448,0,31.592-14.143,31.592-31.592s-14.144-31.592-31.592-31.592H246.713 c-17.449,0-31.592,14.143-31.592,31.592S229.264,667.4,246.713,667.4z"></path>
+                            <path fill="#333333"
+                                  d="M246.713,911.109h1287.764c17.448,0,31.592-14.142,31.592-31.59c0-17.449-14.144-31.593-31.592-31.593 H246.713c-17.449,0-31.592,14.144-31.592,31.593C215.121,896.968,229.264,911.109,246.713,911.109z"></path>
+                            <path fill="#333333"
+                                  d="M246.713,1154.82h1287.764c17.448,0,31.592-14.139,31.592-31.592c0-17.444-14.144-31.592-31.592-31.592 H246.713c-17.449,0-31.592,14.147-31.592,31.592C215.121,1140.682,229.264,1154.82,246.713,1154.82z"></path> </g> </g></svg>
                             Messenger
                         </a>
                     </li>
                     <li>
                         <a href="/logout">
-                            <!-- Logout SVG icon here -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
                             Logout
                         </a>
                     </li>
                 </ul>
             </div>
-        </div>
-    </div>
+        </div> <!-- End user-account -->
+    </div> <!-- End header-container -->
 </header>
