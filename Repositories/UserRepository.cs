@@ -100,5 +100,34 @@ namespace PRN_Final_Project.Repositories
             }
 
         }
+
+        public async Task<List<user>> GetUsersByRoleAsync(string role)
+        {
+            return await _context.users
+                .Where(u => u.role == role && u.is_active == true)
+                .ToListAsync();
+        }
+
+        public async Task<Page<user>> GetUsersByRolePagingAsync(string role, string? searchKey = "", int page = 1, int pageSize = 10)
+        {
+            var query = _context.users.Where(u => u.role == role && u.is_active == true);
+
+            if (!string.IsNullOrEmpty(searchKey))
+            {
+                query = query.Where(u => u.user_name.Contains(searchKey) || u.email.Contains(searchKey));
+            }
+
+            var totalItems = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return new Page<user>
+            {
+                SearchTerm = searchKey,
+                Items = items,
+                TotalItems = totalItems,
+                PageSize = pageSize,
+                PageNumber = page
+            };
+        }
     }
 }

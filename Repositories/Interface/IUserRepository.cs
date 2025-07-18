@@ -10,5 +10,7 @@ namespace PRN_Final_Project.Repositories.Interface
     public interface IUserRepository : ICommonRepository<user>
     {
         Task<user> GetByEmail(string email);
+        Task<List<user>> GetUsersByRoleAsync(string role);
+        Task<Page<user>> GetUsersByRolePagingAsync(string role, string? searchKey = "", int page = 1, int pageSize = 10);
     }
 }
