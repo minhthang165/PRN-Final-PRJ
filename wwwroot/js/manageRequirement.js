@@ -1,6 +1,6 @@
 // Function to fetch Classrooms and populate the select
 function populateClassroomSelect() {
-    fetch('/api/class/all') // Fetch từ endpoint /api/classrooms/all
+    fetch('/api/Class') // Fetch từ endpoint /api/classrooms/all
         .then(response => {
             if (!response.ok) {
                 throw new Error('Failed to fetch classrooms');
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Log dữ liệu gửi đi
         console.log('Sending data:', formDataObj);
 
-        fetch('/api/recruitment/create', {
+        fetch('/api/Recruitment', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Make sure DOM is fully loaded before accessing elements
 document.addEventListener('DOMContentLoaded', function () {
-    loadPage(0, 5);
+    loadPage(1, 5);
     // Fix table reference in filter function
     const searchInput = document.getElementById("searchInput");
     if (searchInput) {
@@ -268,7 +268,7 @@ function loadCandidates(recruitmentId) {
     tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading candidates...</td></tr>';
 
     // Call the API to get CV_Info data
-    fetch('/api/cv-info/recruitment/' + recruitmentId)
+    fetch('/api/CVInfo/recruitment/' + recruitmentId)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Failed to fetch candidates: ' + response.status);
@@ -337,7 +337,8 @@ function displayCandidatesPage(page, pageSize, recruitmentId) {
 
         // Name
         const nameCell = document.createElement("td");
-        nameCell.textContent = candidate.name || "Unknown";
+        const fullName = `${candidate.first_name || ''} ${candidate.last_name || ''}`.trim();
+        nameCell.textContent = fullName || "Unknown";
         row.appendChild(nameCell);
 
         // GPA
@@ -393,8 +394,9 @@ function displayCandidatesPage(page, pageSize, recruitmentId) {
         row.appendChild(skillsCell);
 
         // File Path Column
-        const filePathCell = document.createElement("td");
-        filePathCell.innerHTML = `<a href="${candidate.filePath}" target="_blank" class="text-blue-500 hover:text-blue-700">View</a>`;
+         const filePathCell = document.createElement("td");
+        // Sửa lại thuộc tính thành candidate.path
+        filePathCell.innerHTML = `<a href="${candidate.path}" target="_blank" class="text-blue-500 hover:text-blue-700">View</a>`;
         row.appendChild(filePathCell);
 
         // Actions
@@ -438,64 +440,24 @@ function displayCandidatesPage(page, pageSize, recruitmentId) {
     });
 }
 
-function rejectCandidate(fileId, recruitmentId) {
-    // First, get user info by fileId
-    let submiterData;
-    fetch(`/file/${fileId}/user`, {
-        method: 'GET'
+function rejectCandidate(cvId) {
+    fetch(`/api/CVInfo/reject-cv?cvId=${cvId}`, {
+        method: 'POST'
     })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to fetch user information');
-            }
-            return response.json();
-        })
-        .then(userData => {
-            const userEmail = userData.email; // Giả sử User object có field email
-            submiterData = userData;
-            // Call API to reject the candidate
-            return fetch(`/api/cv-info/reject?fileId=${fileId}&recruitmentId=${recruitmentId}`, {
-                method: 'DELETE'
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => {
-                            throw new Error(text || 'Failed to reject candidate');
-                        });
-                    }
-                    return response.text();
-                })
-                .then(async data => {
-                    showToast('Candidate rejected successfully!', 'success');
-                    let notification = {
-                        content: "Your application has been rejected!",
-                        type: "CLASS",
-                        recipientIds: [submiterData.id],
-                        url: `/recruitment/${recruitmentId}`
-                    }
-                    //Websocket
-                    stompClient.send("/app/notification.sendNotification", {}, JSON.stringify(notification));
-
-                    // Reload candidates data
-                    loadCandidates(recruitmentId);
-
-                    // Send email notification after adding to conversation
-                    await fetch("/api/email/send-mail", {
-                        method: "POST",
-                        headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify({
-                            recipient: userEmail,
-                            msgBody: "Cảm ơn bạn đã apply vào công ty chúng tôi, tuy nhiên sau khi xem xét các tiêu chí, chúng tôi thấy bạn chưa phù hợp. Chúc bạn may mắn trong quá trình tìm việc và hi vọng sẽ có cơ hội được hợp tác với bạn trong tương lai.",
-                            subject: "Hồ sơ của bạn đã bị từ chối",
-                            attachment: null
-                        })
-                    });
-                });
-        })
-        .catch(error => {
-            console.error('Error in rejection process:', error);
-            showToast('Error: ' + error.message, 'error');
-        });
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.message || 'Rejection failed') });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data.message);
+        showToast('Candidate rejected successfully!', 'success');
+    })
+    .catch(error => {
+        console.error('Error rejecting candidate:', error);
+        showToast(`Error: ${error.message}`, 'error');
+    });
 }
 
 function createPagination(totalPages, currentPage) {
@@ -589,101 +551,29 @@ function goToPage(page) {
     createPagination(totalPages, page);
 }
 
-function approveCandidate(fileId, recruitmentId) {
-    let approvedUser;
-    // First, get user info by fileId
-    fetch(`/file/${fileId}/user`, {
-        method: 'GET'
+function approveCandidate(cvId) {
+    fetch(`/api/CVInfo/approve-cv?cvId=${cvId}`, {
+        method: 'POST',
+        headers: {
+            // Không cần 'Content-Type' vì không có body
+        }
     })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to fetch user information');
-            }
-            return response.json();
-        })
-        .then(userData => {
-            const userEmail = userData.email;
-
-            // Call API to approve the candidate
-            return fetch(`/api/cv-info/approve?fileId=${fileId}&recruitmentId=${recruitmentId}`, {
-                method: 'POST'
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(data => {
-                            if (data.success === false && data.message === "User has been approved into another class") {
-                                showToast(data.message, 'warning');
-                                throw new Error(data.message);
-                            }
-                            throw new Error(data.error || 'Failed to approve candidate');
-                        });
-                    }
-                    return response.json();
-                })
-                .then(approveData => {
-                    console.log('Approval response:', approveData);
-                    approvedUser = approveData;
-
-                    // Show toast notification for success
-                    showToast('Candidate approved successfully!', 'success');
-
-                    // Remove the approved candidate from the list without reloading
-                    removeApprovedCandidate(fileId);
-
-                    // Add user to conversation if conversation exists
-                    if (approveData.userData && approveData.userData.classroom) {
-                        let notification = {
-                            content: "Your application has been approved!, please check your schedule",
-                            type: "CLASS",
-                            recipientIds: [approveData.userData.id],
-                            url: `/schedule`
-                        }
-                        //Websocket
-                        stompClient.send("/app/notification.sendNotification", {}, JSON.stringify(notification));
-                        return fetch('/api/conversation-user/add-user', {
-                            method: "POST",
-                            headers: {"Content-Type": "application/json"},
-                            body: JSON.stringify({
-                                conversation_id: approveData.userData.classroom.conversation.id,
-                                user_id: approveData.userData.id,
-                                admin: false
-                            })
-                        })
-                            .then(conversationResponse => {
-                                if (!conversationResponse.ok) {
-                                    throw new Error('Failed to add user to conversation');
-                                }
-                                console.log('User added to conversation successfully');
-
-                                // Send email notification after adding to conversation
-                                return fetch("/api/email/send-mail", {
-                                    method: "POST",
-                                    headers: {"Content-Type": "application/json"},
-                                    body: JSON.stringify({
-                                        recipient: userEmail,
-                                        msgBody: "Chào bạn ,chúc mừng bạn đã qua được vòng phỏng vấn xin vui lòng đến công ty vào ngày mai để nhận công việc.Xin cảm ơn..",
-                                        subject: "Hồ sơ của bạn đã được thông qua",
-                                        attachment: null
-                                    })
-                                });
-                            });
-                    } else {
-                        throw new Error('Missing conversation information');
-                    }
-                });
-        })
-        .then(emailResponse => {
-            if (emailResponse && !emailResponse.ok) {
-                throw new Error('Failed to send email');
-            }
-            console.log('Email sent successfully');
-        })
-        .catch(error => {
-            console.error('Error in approval process:', error);
-            if (error.message !== "User has been approved into another class") {
-                showToast('Error: ' + error.message, 'error');
-            }
-        });
+    .then(response => {
+        if (!response.ok) {
+            // Ném lỗi nếu server trả về status không thành công
+            return response.json().then(err => { throw new Error(err.message || 'Approval failed') });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data.message); // Sẽ log ra: "Chấp thuận cv thành công"
+        showToast('Candidate approved successfully!', 'success');
+        // Thêm logic để cập nhật giao diện, ví dụ: xóa ứng viên khỏi danh sách
+    })
+    .catch(error => {
+        console.error('Error approving candidate:', error);
+        showToast(`Error: ${error.message}`, 'error');
+    });
 }
 
 /**
@@ -793,15 +683,17 @@ function renderPagination() {
 }
 
 function loadPage(page, size) {
-    fetch(`/api/recruitment?page=${page}&&size=${size}`)
+    fetch(`/api/Recruitment/paging?page=${page}&&size=${size}`)
         .then(response => response.json())
         .then(data => {
             totalPages = data.totalPages;
-            currentPage = data.number;
-            pageSize = data.size;
-            renderTable(data.content);
+            currentPage = data.pageNumber;
+            pageSize = data.pageSize;
+            renderTable(data.items);
             renderPagination();
         })
+
+
 }
 
 function filterTable() {
@@ -846,14 +738,25 @@ function sortTable(columnIndex) {
 function renderTable(requirements) {
     let tableContent = document.getElementById("table-content");
     tableContent.innerHTML = '';
+    if (!Array.isArray(requirements)) {
+        console.error("Lỗi: renderTable mong đợi một mảng, nhưng nhận được:", requirements);
+        tableContent.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Lỗi tải dữ liệu.</td></tr>';
+        return; 
+    }
+
+    // Nếu là mảng rỗng, hiển thị thông báo
+    if (requirements.length === 0) {
+        tableContent.innerHTML = '<tr><td colspan="7" class="text-center">Không tìm thấy dữ liệu.</td></tr>';
+        return;
+    }
     tableContent.innerHTML = requirements.map(r => `
         <tr class="requirement-row" onclick="openCandidateModal(this)" data-id="${r.id}">
             <td>${r.name}</td>
             <td>${r.position}</td>
-            <td>${r.experienceRequirement}</td>
+            <td>${r.experience_requirement}</td>
             <td>${r.language}</td>
-            <td>${r.minGPA}</td>
-            <td>${new Date(r.endTime).toLocaleDateString('en-GB')}</td>
+            <td>${r.min_GPA}</td>
+            <td>${new Date(r.end_time).toLocaleDateString('en-GB')}</td>
             <td>
                 <a href="#" data-id="${r.id}" class="edit-recruitment-modal"
                    onclick="openEditRecruitmentModal(this, event)">

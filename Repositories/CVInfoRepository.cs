@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CloudinaryDotNet.Actions;
 using Microsoft.EntityFrameworkCore;
+using PRN_Final_Project.API.Dto;
 using PRN_Final_Project.Business.Data;
 using PRN_Final_Project.Business.Entities;
 using PRN_Final_Project.Repositories.Common;
@@ -83,12 +84,25 @@ namespace PRN_Final_Project.Repositories
             }
         }
 
-        public async Task<List<CV_Info>> FindCvInfoByRecruitmentId(int recruitmentId)
+        public async Task<List<CandidateDto>> FindCvInfoByRecruitmentId(int recruitmentId)
         {
-            return await _context.CV_Infos
-                .Where(c => c.is_active == true)
-                .Where(c => c.recruitment_id == recruitmentId)
-                .ToListAsync();
+            var candidates = await _context.CV_Infos
+                .Where(ci => ci.recruitment_id == recruitmentId && ci.is_active == true)
+                .Include(ci => ci.file)
+                    .ThenInclude(f => f.submitter)
+                .Select(ci => new CandidateDto
+                {
+                    first_name = ci.file.submitter.first_name,
+                    last_name = ci.file.submitter.last_name,
+                    gpa = ci.gpa,
+                    education = ci.education,
+                    skill = ci.skill,
+                    path = ci.file.path,
+                    fileId = ci.file_id,
+                    isActive = ci.is_active
+                })
+            .ToListAsync();
+            return candidates;
         }
 
         public async Task ApproveCv(int cvId)
