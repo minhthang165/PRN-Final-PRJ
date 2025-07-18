@@ -164,5 +164,17 @@ namespace PRN_Final_Project.Repositories
             await _emailService.SendRejectEmailAsync(user.id);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<int> CountActiveCVByRecruitmentId(int recruitmentId)
+        {
+            return await _context.CV_Infos
+                .CountAsync(c => c.is_active == true && c.recruitment_id == recruitmentId);
+        }
+
+        public async Task<bool> ExistsByFileIdAndRecruitmentId(int fileId, int recruitmentId)
+        {
+            return await _context.CV_Infos
+                .AnyAsync(c => c.file_id == fileId && c.recruitment_id == recruitmentId && c.is_active == true);
+        }
     }
 }

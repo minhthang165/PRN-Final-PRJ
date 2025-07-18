@@ -1,4 +1,5 @@
 
+using System.Security.Claims;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -27,7 +28,7 @@ namespace PRN_Final_Project.Repositories
 
         private int? GetCurrentUserId()
         {
-            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("UserId");
+            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier);
             return userIdClaim != null ? int.Parse(userIdClaim.Value) : (int?)null;
         }
 
@@ -121,6 +122,13 @@ namespace PRN_Final_Project.Repositories
                 existedFile.is_active = false;
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<List<UserFile>> GetByUserIdAsync(int id)
+        {
+            return await _context.UserFiles
+                .Where(c => c.submitter_id == id && c.is_active == true)
+                .ToListAsync();
         }
     }
 }

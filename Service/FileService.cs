@@ -51,5 +51,9 @@ namespace PRN_Final_Project.Service
         {
             await _repository.DeleteAsync(id);
         }
+        public async Task<List<UserFile>> GetByUserIdAsync(int id)
+        {
+            return await _repository.GetByUserIdAsync(id);
+        }
     }
 }
