@@ -16,7 +16,11 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer(); // Bắt buộc cho Swagger
 builder.Services.AddSwaggerGen();
 
-
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.MaxDepth = 999;
+    });
 
 builder.Services.AddDbContext<PRNDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),

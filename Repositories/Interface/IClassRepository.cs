@@ -11,6 +11,6 @@ namespace PRN_Final_Project.Repositories.Interface
     {
         Task AssignTrainerToClassAsync(int classId, int trainerId);
         Task AssignTraineeToClassAsync(int classId, int traineeId);
-        Task GetClassesByMentorId(int userId);
+        Task<List<Class>> GetClassesByMentorId(int userId);
     }
 }

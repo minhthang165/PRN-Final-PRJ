@@ -34,9 +34,9 @@
             </div>
 
             <button id="userportfolio" class="user-account-btn">
-                <img src="@ViewBag.avatar" alt="User Avatar" style="border-radius: 50%; width: 45px;" />
+                <img src="@(User.FindFirst("Avatar")?.Value ?? "/assets/img/users/default-avatar.png")" alt="User Avatar" style="border-radius: 50%; width: 45px;" />
                 <span style="font-weight: bold; font-size: 15px;">
-                    @ViewBag.fullName
+                    @(User.FindFirst(ClaimTypes.Name)?.Value ?? "User")
                 </span>
             </button>
 

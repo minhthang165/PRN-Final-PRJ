@@ -1,7 +1,7 @@
 ﻿@model PRN_Final_Project.Business.Entities.Recruitment
 @{
     ViewData["Title"] = "Chi tiết Tuyển Dụng";
-    var userId = ViewBag.UserId;
+    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 }
 
 <!DOCTYPE html>
@@ -20,7 +20,7 @@
 
     <input type="hidden" id="user_id" value="@userId" />
     <input type="hidden" id="recruitmentId" value="@Model.id" />
-
+    
     <div class="container" id="mainContainer">
         <div class="header">
             <h1 class="job-title">@Model.position</h1>

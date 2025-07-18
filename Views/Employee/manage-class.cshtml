@@ -2,12 +2,16 @@
     ViewData["Title"] = "Manage Classroom";
 }
 
+@{
+    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+}
+
 @section Styles {
     <link rel="stylesheet" href="/css/employee-classroom.css">
 }
 
-
-<input type="hidden" id="user_id" value="@ViewBag.UserId">
+<input type="hidden" id="user_id" value="@userId">
+@Html.Partial("Sidebar/_AdminSidebar")
 <div class="app__slide-wrapper">
     <div class="breadcrumb__area">
         <div class="breadcrumb__wrapper mb-35" style="padding: 0px;">
@@ -32,7 +36,7 @@
     <div class="container-fluid py-3">
         <div class="row">
             <div class="col-md-3">
-                <div class="main-content pe-2" id="classroomList" data-mentor-id="@ViewBag.UserId">
+                <div class="main-content pe-2" id="classroomList" data-mentor-id="@userId">
                     <!-- Loading indicator -->
                     <div id="loading-indicator" class="text-center py-4">
                         <div class="spinner-border text-warning" role="status">
@@ -333,6 +337,21 @@
     <!-- Toast container for notifications -->
     <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1055;"></div>
 </div>
+
+<style>
+    .container {
+        padding: 0;
+        margin: 0;
+    }
+
+        .container .pb-3 {
+            display: flex;
+        }
+
+    .breadcrumb__area {
+        margin-left: 20px;
+    }
+</style>
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>

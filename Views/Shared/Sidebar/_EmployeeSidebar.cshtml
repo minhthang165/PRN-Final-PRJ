@@ -8,10 +8,15 @@
 <aside>
     <div id="sidebar" class="leftside-navigation">
         <!-- sidebar menu start-->
+        <div class="sidebar-header">
+            <button id="sidebar-toggle" type="button" class="toggle-btn">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
         <div class="leftside-navigation">
             <ul class="sidebar-menu" id="nav-accordion">
                 <li>
-                    <a class="active" href="index">
+                    <a class="active" href="/Employee">
                         <i class="fa fa-dashboard"></i>
                         <span>Dashboard</span>
                     </a>
@@ -19,13 +24,12 @@
                 <li class="sub-menu">
                     <a href="javascript:;">
                         <i class="fa fa-book"></i>
-                        <span>Danh mục</span>
+                        <span>User</span>
                     </a>
                     <ul class="sub">
                         <li>
-                            <a asp-action="index" asp-controller="category">
-                                <i class="fa fa-folder-o"></i>Danh mục
-                                Chuyên mục
+                            <a asp-action="index" asp-controller="User">
+                                <i class="fa fa-folder-o"></i>User Management
                             </a>
                         </li>
                     </ul>
@@ -33,19 +37,12 @@
                 <li class="sub-menu">
                     <a href="javascript:;">
                         <i class="fa fa-book"></i>
-                        <span>Quản lý</span>
+                        <span>Class</span>
                     </a>
                     <ul class="sub">
                         <li>
-                            <a asp-controller="blog" asp-action="index">
-                                <i class="fa fa-folder-o"></i>Quản lý Chuyên
-                                mục
-                            </a>
-                        </li>
-                        <li>
-                            <a asp-controller="user" asp-action="index">
-                                <i class="fa fa-folder-o"></i>Quản lý Người
-                                dùng
+                            <a asp-controller="Class" asp-action="index">
+                                <i class="fa fa-folder-o"></i>Class Managerment
                             </a>
                         </li>
                     </ul>
@@ -53,17 +50,16 @@
                 <li class="sub-menu">
                     <a href="javascript:;">
                         <i class="fa fa-book"></i>
-                        <span>Báo cáo - Thống kê</span>
+                        <span>Schedule</span>
                     </a>
                     <ul class="sub">
-                        <li><a href="#"><i class="fa fa-folder-o"></i>Báo cáo</a></li>
-                        <li><a href="#"><i class="fa fa-folder-o"></i>Thống kê</a></li>
+                        <li><a href="/schedule"><i class="fa fa-folder-o"></i>Schedule Management</a></li>
                     </ul>
                 </li>
-                <li class="sub-menu">
-                    <a href="javascript:;">
+                <li>
+                    <a href="/logout">
                         <i class="fa fa-book"></i>
-                        <span>Cấu hình</span>
+                        <span>Logout</span>
                     </a>
                 </li>
             </ul>

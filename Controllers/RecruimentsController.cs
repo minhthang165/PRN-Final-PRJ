@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PRN_Final_Project.Service.Interface;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace PRN_Final_Project.Controllers
 {
@@ -18,23 +19,37 @@ namespace PRN_Final_Project.Controllers
         // GET: /Recruitment
         public IActionResult Index()
         {
+            var userRoleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
+
             return View();
         }
 
         // GET: /recruitments/detail/5
         public async Task<IActionResult> Detail(int id)
         {
-            var recruitment = await _recruitmentService.GetByIdAsync(id);
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userRoleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
 
-            if (recruitment == null || userIdClaim == null)
+            if (string.IsNullOrEmpty(userRoleClaim))
             {
-                return RedirectToAction("Index", "Recruitments");
+                return RedirectToAction("Home", "Index");
             }
 
-            ViewBag.UserId = userIdClaim;
+            if (userRoleClaim == "ADMIN")
+            {
+                return View("~/Views/Admin/ManageClass.cshtml");
+            }
 
-            return View(recruitment);
+            else if (userRoleClaim == "EMPLOYEE")
+            {
+                return View("~/Views/Employee/manage-class.cshtml");
+            }
+
+            else if (userRoleClaim == "INTERN")
+            {
+                return View("~/Views/Intern/InternViewClass.cshtml");
+            }
+
+            return Redirect("/landingpage");
         }
     }
 }

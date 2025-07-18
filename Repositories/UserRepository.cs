@@ -43,34 +43,37 @@ namespace PRN_Final_Project.Repositories
 
         public async Task<List<user>> GetAllAsync()
         {
-            return await _context.users.ToListAsync();
+            return await _context.users
+                .ToListAsync();
         }
 
         public async Task<Page<user>> GetAllPagingAsync(string? searchKey = "", int page = 1, int pageSize = 10)
         {
             var query = _context.users.AsQueryable();
-            var totalItems = await query.CountAsync();
-            var items = await query
-                .Where(c => string.IsNullOrEmpty(searchKey) || c.last_name.Contains(searchKey))
-                .OrderBy(c => c.last_name)
-                .Skip((page - 1) * pageSize)
+            if (!string.IsNullOrEmpty(searchKey))
+            {
+                query = query.Where(u => u.role.Contains(searchKey));
+            }
+            var totalItems = query.Count();
+            var items = query
+                .OrderBy(u => u.first_name)
                 .Take(pageSize)
                 .ToListAsync();
-
-            return new Page<user>
+            return Task.FromResult(new Page<user>
             {
-                Items = items,
+                Items = items.Result,
                 TotalItems = totalItems,
                 PageSize = pageSize,
-                PageNumber = page,
-            };
+                PageNumber = page
+            });
         }
 
         public async Task<user?> GetByEmail(string email)
         {
             try
             {
-                return await _context.users.FirstOrDefaultAsync(u => u.email == email);
+                return await _context.users
+                     .FirstOrDefaultAsync(u => u.email == email);
             }
             catch
             {
