@@ -58,6 +58,14 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddScoped<IAIExtractor, AIExtractorService>();
 
+builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+
+builder.Services.AddScoped<ISubjectService, SubjectService>();
+builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
+
+builder.Services.AddScoped<IScheduleService, ScheduleService>();
+builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 // Add services to the container.
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
