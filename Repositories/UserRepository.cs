@@ -54,18 +54,19 @@ namespace PRN_Final_Project.Repositories
             {
                 query = query.Where(u => u.role.Contains(searchKey));
             }
-            var totalItems = query.Count();
-            var items = query
+            var totalItems = await query.CountAsync();
+            var items = await query
                 .OrderBy(u => u.first_name)
+                // .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
-            return Task.FromResult(new Page<user>
+            return new Page<user>
             {
-                Items = items.Result,
+                Items = items,
                 TotalItems = totalItems,
                 PageSize = pageSize,
                 PageNumber = page
-            });
+            };
         }
 
         public async Task<user?> GetByEmail(string email)

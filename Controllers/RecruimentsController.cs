@@ -27,29 +27,17 @@ namespace PRN_Final_Project.Controllers
         // GET: /recruitments/detail/5
         public async Task<IActionResult> Detail(int id)
         {
-            var userRoleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
+            var recruitment = await _recruitmentService.GetByIdAsync(id);
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (string.IsNullOrEmpty(userRoleClaim))
+            if (recruitment == null || userIdClaim == null)
             {
-                return RedirectToAction("Home", "Index");
+                return RedirectToAction("Index", "Recruitments");
             }
 
-            if (userRoleClaim == "ADMIN")
-            {
-                return View("~/Views/Admin/ManageClass.cshtml");
-            }
+            ViewBag.UserId = userIdClaim;
 
-            else if (userRoleClaim == "EMPLOYEE")
-            {
-                return View("~/Views/Employee/manage-class.cshtml");
-            }
-
-            else if (userRoleClaim == "INTERN")
-            {
-                return View("~/Views/Intern/InternViewClass.cshtml");
-            }
-
-            return Redirect("/landingpage");
+            return View(recruitment);
         }
     }
 }
