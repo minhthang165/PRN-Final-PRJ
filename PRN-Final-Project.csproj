@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -19,7 +19,12 @@
     <PackageReference Include="CloudinaryDotNet" Version="1.27.6" />
     <PackageReference Include="dotenv.net" Version="4.0.0" />
     <PackageReference Include="Google_GenerativeAI" Version="2.7.0" />
+<<<<<<< HEAD
     <PackageReference Include="VNPAY.NET" Version="8.5.0" />
+=======
+    <PackageReference Include="MailKit" Version="4.13.0" />
+    <PackageReference Include="RazorEngine.NetCore" Version="3.1.0" />
+>>>>>>> e3373cdf77c8268bce3aa1b118a1fd64c856ce1f
   </ItemGroup>
 
 </Project>

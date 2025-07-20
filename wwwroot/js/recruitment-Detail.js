@@ -11,10 +11,11 @@ let appliedFileId = null; // Biến toàn cục để lưu fileId đã ứng tuy
 
 async function loadCVList() {
     const userId = document.getElementById("user_id").value;
+    const recruitmentId = document.getElementById("recruitmentId").value; 
     const cvSelect = document.getElementById("cvSelect");
 
     try {
-        let response = await fetch(`/file/user/${userId}/all`);
+        let response = await fetch(`/api/File/user/${userId}`);
 
         if (!response.ok) {
             throw new Error("Không thể tải danh sách CV!");
@@ -26,6 +27,7 @@ async function loadCVList() {
 
         const fileIds = cvList.map(cv => cv.id);
         const appliedStatus = await checkcvinfoExist(fileIds, recruitmentId);
+        console.log("Applied status:", appliedStatus);
 
         // Tìm fileId đã ứng tuyển (nếu có)
         const appliedResult = appliedStatus.find(status => status.exists);
@@ -34,8 +36,8 @@ async function loadCVList() {
         cvList.forEach(cv => {
             let option = document.createElement("option");
             option.value = cv.id;
-            option.text = cv.displayName || cv.fileName || `CV ${cv.id}`;
-            option.dataset.driveLink = cv.path || cv.driveLink || "";
+            option.text = cv.display_name;
+            // option.dataset.driveLink = cv.path;
 
             if (appliedFileId) {
                 option.disabled = true;
@@ -76,11 +78,11 @@ async function checkcvinfoExist(fileIds, recruitmentId) {
         const results = await Promise.all(
             fileIdArray.map(async (fileId) => {
                 try {
-                    let response = await fetch(`/api/cv-info/check-cv-info?fileId=${fileId}&recruitmentId=${recruitmentId}`, {
+                    let response = await fetch(`/api/CVInfo/exists-by-file-and-recruitment?fileId=${fileId}&recruitmentId=${recruitmentId}`, {
                         method: "GET",
                         headers: {
                             "Content-Type": "application/json",
-                        }
+                        },
                     });
 
                     if (!response.ok) {
@@ -88,7 +90,10 @@ async function checkcvinfoExist(fileIds, recruitmentId) {
                         throw new Error(errorData.message || `Không thể kiểm tra thông tin CV cho fileId ${fileId}!`);
                     }
 
-                    const exists = await response.json();
+                    const data = await response.json(); 
+                    console.log(`FileId: ${fileId}, Exists: ${data.exists}`);
+                    const exists = data.exists;
+
                     return { fileId, exists };
                 } catch (error) {
                     console.error(`Error checking CV for fileId ${fileId}:`, error);
@@ -97,17 +102,18 @@ async function checkcvinfoExist(fileIds, recruitmentId) {
             })
         );
 
-        return results; // Trả về mảng [{ fileId, exists }, ...]
+        return results;
     } catch (error) {
         console.error("Error checking CV info existence:", error);
         throw error;
     }
 }
+
 async function applyJob() {
     let messageEl = document.getElementById("message");
     let applyButton = document.getElementById("applyButton");
     let deleteButton = document.getElementById("deleteButton");
-    let { recruitmentId } = getIdsFromPath();
+    const recruitmentId  = document.getElementById("recruitmentId").value;
     const userId = document.getElementById("user_id").value;
     const cvSelect = document.getElementById("cvSelect");
     const selectedCV = cvSelect.options[cvSelect.selectedIndex];
@@ -133,39 +139,23 @@ async function applyJob() {
 
     try {
         const fileId = selectedCV.value;
-        let driveLink = selectedCV.dataset.driveLink;
+         const requestBody = {
+            FileId: parseInt(fileId),
+            RecruitmentId: parseInt(recruitmentId)
+        };
 
-        if (subtractYears(new Date(selectedCV.dataset.createdDate), 2) > new Date()) {
-            throw new Error("CV đã hết hạn sử dụng!");
-        }
+        console.log("Applying with fileId:", fileId, "and recruitmentId:", recruitmentId);
 
-        if (!driveLink) {
-            let pathResponse = await fetch(`/file/file/path/${fileId}`);
-
-            if (!pathResponse.ok) {
-                throw new Error("Không tìm thấy đường dẫn CV!");
-            }
-            driveLink = await pathResponse.text();
-        }
-
-
-        if (!driveLink || driveLink === "undefined") {
-            throw new Error("Đường dẫn CV không hợp lệ!");
-        }
-
-        const formData = new FormData();
-        formData.append("driveLink", driveLink);
-        formData.append("fileId", fileId);
-        formData.append("recruitmentId", recruitmentId);
-
-
-        let applyResponse = await fetch("/cv/save", {
+        let applyResponse = await fetch("/api/CVInfo/upload-cv", {
             method: "POST",
-            body: formData
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
         });
 
         // Lấy email của user (giả định từ API)
-        let userResponse = await fetch(`/api/user/${userId}`);
+        let userResponse = await fetch(`/api/User/${userId}`);
         if (!userResponse.ok) {
             throw new Error("Không thể lấy thông tin người dùng!");
         }
@@ -174,44 +164,44 @@ async function applyJob() {
 
         if (!applyResponse.ok) {
             const errorText = await applyResponse.text();
-            // Gửi email thông báo thất bại
-            await fetch("/api/email/send-mail", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    recipient: userEmail,
-                    msgBody: "Chào bạn, chúng tôi không thể xử lý hồ sơ ứng tuyển của bạn do lỗi: " + errorText + ". Vui lòng thử lại sau.",
-                    subject: "Ứng tuyển thất bại",
-                    attachment: null
-                })
-            });
+            // // Gửi email thông báo thất bại
+            // await fetch("/api/email/send-mail", {
+            //     method: "POST",
+            //     headers: {"Content-Type": "application/json"},
+            //     body: JSON.stringify({
+            //         recipient: userEmail,
+            //         msgBody: "Chào bạn, chúng tôi không thể xử lý hồ sơ ứng tuyển của bạn do lỗi: " + errorText + ". Vui lòng thử lại sau.",
+            //         subject: "Ứng tuyển thất bại",
+            //         attachment: null
+            //     })
+            // });
             throw new Error(`Apply thất bại: ${errorText}`);
         }
 
-        let applyData = await applyResponse.text();
+        // let applyData = await applyResponse.text();
 
-        // Gửi email thông báo thành công
-        await fetch("/api/email/send-mail", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                recipient: userEmail,
-                msgBody: "Chào bạn, chúng tôi đã nhận được hồ sơ ứng tuyển của bạn cho vị trí [Tên vị trí]. Cảm ơn bạn đã quan tâm!",
-                subject: "Xác nhận ứng tuyển thành công",
-                attachment: null
-            })
-        }).then(data => {
+        // // Gửi email thông báo thành công
+        // await fetch("/api/send-welcome-email/{userId}", {
+        //     method: "POST",
+        //     headers: { "Content-Type": "application/json" },
+        //     body: JSON.stringify({
+        //         recipient: userEmail,
+        //         msgBody: "Chào bạn, chúng tôi đã nhận được hồ sơ ứng tuyển của bạn cho vị trí [Tên vị trí]. Cảm ơn bạn đã quan tâm!",
+        //         subject: "Xác nhận ứng tuyển thành công",
+        //         attachment: null
+        //     })
+        // }).then(data => {
 
-            let notification = {
-                content: "Your CV have been applied",
-                type: "SYSTEM",
-                recipientIds: [document.getElementById("user_id").value],
-                url: `/recruitment/${recruitmentId}`
-            }
+        //     let notification = {
+        //         content: "Your CV have been applied",
+        //         type: "SYSTEM",
+        //         recipientIds: [document.getElementById("user_id").value],
+        //         url: `/recruitment/${recruitmentId}`
+        //     }
 
-            stompClient.send("/app/notification.sendNotification", {}, JSON.stringify(notification));
+        //     stompClient.send("/app/notification.sendNotification", {}, JSON.stringify(notification));
 
-        });
+        // });
 
         messageEl.textContent = "Apply thành công! Email xác nhận đã được gửi.";
         messageEl.style.color = "green";

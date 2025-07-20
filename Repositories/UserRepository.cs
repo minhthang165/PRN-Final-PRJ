@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace PRN_Final_Project.Repositories
 {
@@ -18,11 +19,13 @@ namespace PRN_Final_Project.Repositories
         private readonly IDistributedCache _cache;
         private const string BAN_PREFIX = "user:ban:";
         private readonly PRNDbContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UserRepository(PRNDbContext context, IDistributedCache cache)
+        public UserRepository(PRNDbContext context, IDistributedCache cache, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _cache = cache;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task AddAsync(user entity)
@@ -218,6 +221,12 @@ namespace PRN_Final_Project.Repositories
             // Remove ban information from cache
             await _cache.RemoveAsync(BAN_PREFIX + userId);
             await _cache.RemoveAsync(BAN_PREFIX + userId + ":expiry");
+        }
+        public async Task<List<user>> GetTraineeByClassId(int classId)
+        {
+            return await _context.users
+                .Where(u => u.class_id == classId && u.role == "INTERN" && u.is_active == true)
+                .ToListAsync();
         }
     }
 }

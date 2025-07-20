@@ -1,5 +1,4 @@
 using CloudinaryDotNet;
-using CloudinaryDotNet.Actions;
 using dotenv.net;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -40,6 +39,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 
     return ConnectionMultiplexer.Connect(configuration);
 });
+builder.Services.AddHttpContextAccessor();
 
 // .env config
 DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
@@ -49,6 +49,8 @@ cloudinary.Api.Secure = true;
 builder.Services.AddSingleton(cloudinary);
 
 // Inject service and repository
+builder.Services.AddScoped<EmailService>();
+
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IClassRepository, ClassRepository>();
 
@@ -63,6 +65,9 @@ builder.Services.AddScoped<IRecruitmentRepository, RecruitmentRepository>();
 
 builder.Services.AddScoped<ICVInfoService, CVInfoService>();
 builder.Services.AddScoped<ICVInfoRepository, CVInfoRepository>();
+
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddScoped<IAIExtractor, AIExtractorService>();
 
