@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using PRN_Final_Project.Service.Interface;
+using PRN_Final_Project.Business.Entities;
 
 namespace PRN_Final_Project.API
 {
