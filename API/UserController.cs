@@ -109,25 +109,20 @@ namespace PRN_Final_Project.API
             return Ok(existing);
         }
 
-        // PATCH: api/user/activate/5
-        [HttpPatch("activate/{id}")]
-        public async Task<ActionResult> Activate(int id)
-        {
-            var user = await _userService.GetByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            user.is_active = true;
-            await _userService.UpdateAsync(user);
-            return Ok(user);
-        }
-
         // GET: api/user/role/INTERN?page=1&pageSize=10
         [HttpGet("role/{role}")]
         public async Task<ActionResult> GetByRole(string role, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var pagedResult = await _userService.GetAllPagingAsync(role, page, pageSize);
             return Ok(pagedResult);
+        }
+
+        // GET: api/user/get-status/5
+        [HttpGet("get-status/{id}")]
+        public async Task<ActionResult> GetBanStatus(int id)
+        {
+            var banStatus = await _userService.GetBanStatus(id);
+            return Ok(banStatus);
         }
 
         // POST: api/user/ban/5
@@ -138,11 +133,8 @@ namespace PRN_Final_Project.API
             if (user == null)
                 return NotFound();
 
-            // This would need a real implementation in the service
-            user.is_active = false;
-            await _userService.UpdateAsync(user);
-
-            // Store ban information (would need a real implementation)
+            await _userService.BanUser(id, request.Duration, request.Reason);
+            
             return Ok(new { message = $"User {id} banned for {request.Duration} days. Reason: {request.Reason}" });
         }
 
@@ -154,8 +146,7 @@ namespace PRN_Final_Project.API
             if (user == null)
                 return NotFound();
 
-            user.is_active = true;
-            await _userService.UpdateAsync(user);
+            await _userService.UnbanUser(id);
             return Ok(new { message = $"User {id} unbanned" });
         }
 
@@ -183,6 +174,7 @@ namespace PRN_Final_Project.API
         }
     }
 
+    // Class used for ban request
     public class BanUserRequest
     {
         public int Duration { get; set; } // Days

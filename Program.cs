@@ -1,15 +1,18 @@
-using Microsoft.EntityFrameworkCore;
-using PRN_Final_Project.Business.Data;
-using PRN_Final_Project.Repositories;
-using PRN_Final_Project.Repositories.Interface;
-using PRN_Final_Project.Service;
-using PRN_Final_Project.Service.Interface;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using dotenv.net;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
+using PRN_Final_Project.Business.Data;
+using PRN_Final_Project.Repositories;
+using PRN_Final_Project.Repositories.Interface;
+using PRN_Final_Project.Service;
+using PRN_Final_Project.Service.Interface;
+using StackExchange.Redis;
 using System.Text.Json.Serialization;
+using VNPAY.NET;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +30,17 @@ builder.Services.AddControllers()
 builder.Services.AddDbContext<PRNDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
                      new MySqlServerVersion(new Version(8, 0, 2))));
-                     
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var host = Environment.GetEnvironmentVariable("REDIS_HOST");
+    var password = Environment.GetEnvironmentVariable("REDIS_PASSWORD");
+
+    var configuration = $"{host},password={password}";
+
+    return ConnectionMultiplexer.Connect(configuration);
+});
+
 // .env config
 DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
 builder.Configuration["Gemini:ApiKey"] = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
@@ -53,6 +66,19 @@ builder.Services.AddScoped<ICVInfoRepository, CVInfoRepository>();
 
 builder.Services.AddScoped<IAIExtractor, AIExtractorService>();
 
+builder.Services.AddSingleton<IVnpay, Vnpay>();
+builder.Services.AddScoped<VnpayPayment>();
+
+
+var vnpay = new Vnpay();
+vnpay.Initialize(
+    builder.Configuration["Vnpay:TmnCode"],
+    builder.Configuration["Vnpay:HashSecret"],
+    builder.Configuration["Vnpay:BaseUrl"],
+    builder.Configuration["Vnpay:ReturnUrl"]
+);
+
+builder.Services.AddSingleton<IVnpay>(vnpay);
 // Add services to the container.
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -79,6 +105,8 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 builder.Services.AddAuthorization();
+
+builder.Services.AddDistributedMemoryCache();
 
 var app = builder.Build();
 

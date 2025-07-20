@@ -385,7 +385,6 @@ function loadPage(page, size) {
 function renderTable(interns) {
     let tableContent = document.getElementById("table-body");
     tableContent.innerHTML = '';
-
     tableContent.innerHTML = interns.map(user => `
         <tr>
             <td>${user.first_name} ${user.last_name}</td>
@@ -394,10 +393,10 @@ function renderTable(interns) {
             <td>${user.phone_number}</td>
             <td>${user.gender}</td>
             <td>${user.role}</td>
-            <td class="${user.active ? 'active' : 'inactive'}">
+            <td class="${user.is_active ? 'active' : 'inactive'}">
                 <a href="#" data-id="${user.id}" class="toggle-class-status">
                     <i data-id="${user.id}" data-user-email="${user.email}"
-                       class="flaticon-padlock ${user.active ? 'active' : 'inactive'}">
+                       class="flaticon-padlock ${user.is_active ? 'active' : 'inactive'}">
                     </i>
                 </a>
                 <a href="#" class="edit-user-modal" data-id="${user.id}"

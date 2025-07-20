@@ -10,5 +10,8 @@ namespace PRN_Final_Project.Service.Interface
     public interface IUserService : ICommonService<user>
     {
         Task<user> GetByEmail(string email);
+        Task BanUser(int userId, int durationInDays, string reason);
+        Task<Dictionary<string, object>> GetBanStatus(int userId);
+        Task UnbanUser(int userId);
     }
 }

@@ -1,4 +1,5 @@
 using PRN_Final_Project.Business.Entities;
+using PRN_Final_Project.Repositories;
 using PRN_Final_Project.Repositories.Common;
 using PRN_Final_Project.Repositories.Interface;
 using PRN_Final_Project.Service.Interface;
@@ -51,6 +52,20 @@ namespace PRN_Final_Project.Service
         public async Task<user> GetByEmail(string email)
         {
             return await _repository.GetByEmail(email);
+        }
+        public async Task BanUser(int userId, int durationInDays, string reason)
+        {
+            await _repository.BanUser(userId, durationInDays, reason);
+        }
+
+        public async Task<Dictionary<string, object>> GetBanStatus(int userId)
+        {
+            return await _repository.GetBanStatus(userId);
+        }
+
+        public async Task UnbanUser(int userId)
+        {
+            await _repository.UnbanUser(userId);
         }
     }
 }
