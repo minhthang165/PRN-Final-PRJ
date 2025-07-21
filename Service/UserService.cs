@@ -126,7 +126,14 @@ namespace PRN_Final_Project.Service
             }
             return result;
         }
-
+        public async Task<List<user>> GetTraineeByClassId(int classId)
+        {
+            return await _repository.GetTraineeByClassId(classId);
+        }
+        public async Task<user> GetOneByEmail(string email)
+        {
+            return await _repository.GetOneByEmail(email);
+        }
         public async Task<List<user>> GetUsersByRoleAsync(string role)
         {
             return await _repository.GetUsersByRoleAsync(role);
@@ -135,14 +142,6 @@ namespace PRN_Final_Project.Service
         public Task<Page<user>> GetUsersByRolePagingAsync(string role, string? searchKey = "", int page = 1, int pageSize = 10)
         {
             return _repository.GetUsersByRolePagingAsync(role, searchKey, page, pageSize);
-        }
-        public async Task<List<user>> GetTraineeByClassId(int classId)
-        {
-            return await _repository.GetTraineeByClassId(classId);
-        }
-        public async Task<user> GetOneByEmail(string email)
-        {
-            return await _repository.GetOneByEmail(email);
         }
     }
 }
