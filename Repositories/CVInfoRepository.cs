@@ -152,8 +152,8 @@ namespace PRN_Final_Project.Repositories
 
             // 8. Đánh dấu cv đã đc approve (=> inActive = false)
             cv.is_active = false;
-
             await _emailService.SendWelcomeEmailAsync(user.id);
+            Console.WriteLine("Before SaveChangesAsync: CV is_active = " + cv.is_active);
             await _context.SaveChangesAsync();
         }
 
