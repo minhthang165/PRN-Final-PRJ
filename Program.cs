@@ -1,13 +1,19 @@
-using Microsoft.EntityFrameworkCore;
-using PRN_Final_Project.Business.Data;
-using PRN_Final_Project.Repositories;
-using PRN_Final_Project.Repositories.Interface;
-using PRN_Final_Project.Service;
-using PRN_Final_Project.Service.Interface;
 using CloudinaryDotNet;
 using dotenv.net;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
+using PRN_Final_Project.Business.Data;
+using PRN_Final_Project.Hubs;
+using PRN_Final_Project.Repositories;
+using PRN_Final_Project.Repositories.Interface;
+using PRN_Final_Project.Service;
+using PRN_Final_Project.Service.Interface;
+using StackExchange.Redis;
+using System.Text.Json.Serialization;
+using VNPAY.NET;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +32,21 @@ builder.Services.AddDbContext<PRNDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
                      new MySqlServerVersion(new Version(8, 0, 2))));
 
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+});
+
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var host = Environment.GetEnvironmentVariable("REDIS_HOST");
+    var password = Environment.GetEnvironmentVariable("REDIS_PASSWORD");
+
+    var configuration = $"{host},password={password}";
+
+    return ConnectionMultiplexer.Connect(configuration);
+});
 builder.Services.AddHttpContextAccessor();
 
 // .env config
@@ -58,6 +79,33 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddScoped<IAIExtractor, AIExtractorService>();
 
+builder.Services.AddSingleton<IVnpay, Vnpay>();
+builder.Services.AddScoped<VnpayPayment>();
+
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+
+builder.Services.AddScoped<IConversationService, ConversationService>();
+builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
+
+builder.Services.AddScoped<IConversationUserService, ConversationUserService>();
+builder.Services.AddScoped<IConversationUserRepository, ConversationUserRepository>();
+
+builder.Services.AddSignalR().AddHubOptions<ChatHub>(options =>
+{
+    options.EnableDetailedErrors = true;
+});
+
+var vnpay = new Vnpay();
+vnpay.Initialize(
+    builder.Configuration["Vnpay:TmnCode"],
+    builder.Configuration["Vnpay:HashSecret"],
+    builder.Configuration["Vnpay:BaseUrl"],
+    builder.Configuration["Vnpay:ReturnUrl"]
+);
+
+builder.Services.AddSingleton<IVnpay>(vnpay);
+
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 
@@ -66,6 +114,7 @@ builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
+
 // Add services to the container.
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -93,6 +142,8 @@ builder.Services.AddSession(options =>
 });
 builder.Services.AddAuthorization();
 
+builder.Services.AddDistributedMemoryCache();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -112,6 +163,9 @@ if (app.Environment.IsDevelopment())
 
 
 app.UseSession();
+
+// Add SignalR services
+app.MapHub<ChatHub>("/chatHub");
 
 app.UseAuthentication();
 app.UseHttpsRedirection();

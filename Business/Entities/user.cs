@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -42,7 +42,6 @@ public partial class user
 
     public virtual ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
 
-    [JsonIgnore]
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
     public virtual ICollection<Conversation_user> Conversation_users { get; set; } = new List<Conversation_user>();
@@ -54,4 +53,6 @@ public partial class user
     public virtual ICollection<UserFile> UserFiles { get; set; } = new List<UserFile>();
 
     public virtual ICollection<UserTask> UserTasks { get; set; } = new List<UserTask>();
+    [JsonIgnore]
+    public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 }

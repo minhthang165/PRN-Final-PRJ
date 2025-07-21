@@ -17,15 +17,17 @@ var deleteAttach = null;
 var listUserAdd = [];
 var selectedRecipientId = null;
 var conversation_list = [];
-let originalConversationList = []; // Lưu trữ danh sách conversation gốc
-var isCurrentUserAdmin = false; // Thêm biến global mới
-window.userId = user_id; // Gắn vào window
+let originalConversationList = []; // Store original conversation list
+var isCurrentUserAdmin = false; // New global variable
+window.userId = user_id; // Attach to window
 localStorage.setItem("userId", user_id);
-console.log("✅ User ID:", window.userId);
+
+// SignalR connection
+var connection = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
     await loadConversation(user_id);
-    connectWebSocket();
+    connectSignalR();
     adjustHeight();
     var chatDropdown = document.getElementById('chatDropdown');
     var userList = document.getElementById('userList');
@@ -36,7 +38,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     var selectedUsers = document.getElementById('selectedUsers');
     var createGroupBtn = document.getElementById('createGroupBtn');
 
-    // Thêm hàm đóng modal
+    // Add close modal function
     function closeGroupModal() {
         groupModal.classList.remove('flex');
         groupModal.classList.add('hidden');
@@ -47,14 +49,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         updateSelectedUsersDisplay();
     }
 
-    // Sửa lại event listener cho modal
+    // Fix event listener for modal
     groupModal.addEventListener('click', (event) => {
         if (event.target === groupModal) {
             closeGroupModal();
         }
     });
 
-    // Thêm nút đóng modal
+    // Add close modal button
     const closeButton = document.createElement('button');
     closeButton.className = 'absolute top-2 right-2 text-gray-500 hover:text-gray-700';
     closeButton.innerHTML = '<i class="fas fa-times"></i>';
@@ -71,30 +73,61 @@ document.addEventListener("DOMContentLoaded", async function () {
     const conversationIdFromUrl = urlParams.get('conversationId');
 
     if (conversationIdFromUrl) {
-        // Tìm conversation element tương ứng
+        // Find corresponding conversation element
         const conversationElement = document.querySelector(`[data-id="${conversationIdFromUrl}"]`);
         if (conversationElement) {
-            // Mở conversation
+            // Open conversation
             setConversation(conversationElement);
         }
-        // Xóa conversationId khỏi URL
+        // Remove conversationId from URL
         window.history.replaceState({}, document.title, "/messenger");
     }
 });
 
-//---------------------------------------- WEBSOCKET SETUP ----------------------------------------------
+//---------------------------------------- SIGNALR SETUP ----------------------------------------------
 
-function connectWebSocket() {
-    if (stompClient && stompClient.connected) {
-        stompClient.subscribe(`/topic/messenger/${user_id}`, handleWebsocketPayload);
-    } else {
-        const waitForConnect = setInterval(() => {
-            if (stompClient && stompClient.connected) {
-                stompClient.subscribe(`/topic/messenger/${user_id}`, handleWebsocketPayload);
-                clearInterval(waitForConnect);
-            }
-        }, 100);
-    }
+function connectSignalR() {
+    // Create SignalR connection
+    connection = new signalR.HubConnectionBuilder()
+        .withUrl("/chatHub")
+        .withAutomaticReconnect()
+        .build();
+
+    // Handle incoming messages
+    connection.on("ReceiveMessage", (data) => {
+        console.log("ReceiveMessage called with:", data);
+        handleWebsocketPayload(data);
+    });
+    
+    // Handle user added/removed events
+    connection.on("UserAdded", (data) => {
+        const payload = {
+            type: "ADD_USER",
+            userId: data.userId,
+            conversation: data.conversation,
+            recipients: data.recipients
+        };
+        handleWebsocketPayload(payload);
+    });
+
+    connection.on("UserRemoved", (data) => {
+        const payload = {
+            type: "REMOVE_USER",
+            userId: data.userId,
+            conversationId: data.conversationId,
+            recipients: data.recipients
+        };
+        handleWebsocketPayload(payload);
+    });
+
+    // Start connection
+    connection.start()
+        .then(() => {
+            console.log("✅ SignalR Connected!");
+            // Join user's personal channel
+            connection.invoke("JoinUserChannel", user_id.toString());
+        })
+        .catch(err => console.error("❌ SignalR Connection Error: ", err));
 }
 
 //---------------------------------------- Call SETUP ----------------------------------------------
@@ -111,7 +144,7 @@ window.makeCall = () => {
         return;
     }
 
-    // Lấy danh sách receiverIds từ conversationMember, loại bỏ user_id của người hiện tại
+    // Get receiverIds from conversationMember, excluding current user
     const receiverIds = conversationMember
         .filter(member => member.user.id != user_id)
         .map(member => member.user.id);
@@ -131,10 +164,10 @@ const startCall = (receiverIds) => {
         return;
     }
 
-    const roomID = Math.floor(Math.random() * 10000) + ""; // Tạo roomID duy nhất cho toàn bộ cuộc gọi
+    const roomID = Math.floor(Math.random() * 10000) + ""; // Create unique roomID for the call
     localStorage.setItem("roomID", roomID);
 
-    // Gửi yêu cầu gọi đến từng receiverId
+    // Send call requests to each receiverId
     const callPromises = receiverIds.map(receiverId => {
         return fetch(`/calls/create/${window.userId}/${receiverId}/${roomID}`, {
             method: "POST",
@@ -156,12 +189,12 @@ const startCall = (receiverIds) => {
             });
     });
 
-    // Chờ tất cả các yêu cầu hoàn tất
+    // Wait for all requests to complete
     Promise.all(callPromises)
         .then(results => {
             const successfulCalls = results.filter(result => result.success);
             if (successfulCalls.length > 0) {
-                // Nếu ít nhất một yêu cầu thành công, mở tab video call
+                // If at least one request was successful, open video call tab
                 window.open(`/video-call?room=${roomID}`, '_blank');
             } else {
                 alert("All receivers are busy or unavailable!");
@@ -172,6 +205,7 @@ const startCall = (receiverIds) => {
             alert("An error occurred while initiating the call.");
         });
 };
+
 function logAllMemberIds(members) {
     if (!members || members.length === 0) {
         console.log("⚠️ No members to log");
@@ -193,20 +227,20 @@ async function loadMember(conversationId, conversationType) {
         console.log("✅ Loaded members for conversation", conversationId, ":", conversationMember);
         console.log("✅ Current user_id:", user_id);
 
-        // Kiểm tra nếu là hội thoại 1:1 và có ít nhất 2 thành viên
+        // Check if it's a one-to-one conversation with at least 2 members
         if (conversationType === "OneToOne" && conversationMember.length >= 2) {
-            // Sử dụng user_id thay vì userId để đảm bảo đúng người dùng hiện tại
-            const otherMember = conversationMember.find(member => member.id != user_id);
+            // Use user_id instead of userId to ensure correct current user
+            const otherMember = conversationMember.find(member => member.user_id != user_id);
 
             if (otherMember) {
-                window.receiverId = otherMember.id;
+                window.receiverId = otherMember.user_id;
                 console.log("✅ Receiver ID set to:", window.receiverId);
             } else {
                 console.error("❌ Could not find the other member in this conversation");
             }
         }
     } catch (error) {
-        console.error("❌ Lỗi khi tải danh sách thành viên:", error);
+        console.error("❌ Error loading member list:", error);
     }
 }
 
@@ -217,7 +251,7 @@ async function loadConversation(user_id) {
             throw new Error("Failed to fetch conversations");
         }
         conversation_list = await response.json();
-        originalConversationList = [...conversation_list]; // Lưu bản sao
+        originalConversationList = [...conversation_list]; // Save a copy
         renderHtmlConversation(conversation_list);
     } catch (error) {
         console.log("Error fetching conversation", error);
@@ -232,20 +266,20 @@ function renderHtmlConversation(conversation_list) {
         conversation_list.forEach(conversation => {
             let conversationHTML = `    
                 <div class="flex items-center space-x-2 p-2 bg-white rounded-lg cursor-pointer hover:bg-gray-200" 
-                     data-id="${conversation.id}" 
-                     data-conversationName="${conversation.conversationName.replace(/<[^>]*>/g, '')}" 
+                     data-id="${conversation.conversation_id}" 
+                     data-conversationName="${conversation.conversation_name.replace(/<[^>]*>/g, '')}" 
                      data-conversation-type="${conversation.type}" 
-                     data-conversationAvatar="${conversation.conversationAvatar}" 
+                     data-conversationAvatar="${conversation.conversation_avatar}" 
                      onclick="setConversation(this)">
                     <img alt="User avatar" 
                          id="conversation-avatar" 
                          class="rounded-full" 
                          height="40" 
-                         src="${conversation.conversationAvatar || 'https://storage.googleapis.com/a1aa/image/P3mTDAXzCcHqcSIVZqLFhn31Oc6SJ-ZYT5fCH91vHJ4.jpg'}" 
+                         src="${conversation.conversation_avatar || 'https://storage.googleapis.com/a1aa/image/P3mTDAXzCcHqcSIVZqLFhn31Oc6SJ-ZYT5fCH91vHJ4.jpg'}" 
                          width="40"/>
                     <div>
-                        <div class="font-bold">${conversation.conversationName}</div>
-                        <div class="text-gray-500 text-sm">${conversation.last_message || "No messages yet"}</div>
+                        <div class="font-bold">${conversation.conversation_name}</div>
+                        <div class="text-gray-500 text-sm">${"No messages yet"}</div>
                     </div>
                 </div>
             `;
@@ -264,7 +298,7 @@ function setConversation(element) {
     conversationId = element.getAttribute('data-id');
     conversationName = element.getAttribute('data-conversationName');
     conversationAvatar = element.getAttribute('data-conversationAvatar');
-    conversationType = element.getAttribute('data-conversation-type'); // Sửa lỗi chính tả
+    conversationType = element.getAttribute('data-conversation-type');
     selectedRecipientId = element.getAttribute('data-track-user-id');
 
     let existingConversation = conversation_list.find(conver => conver.conversationName === conversationName);
@@ -317,7 +351,7 @@ function setConversation(element) {
     document.getElementById("chat-container").innerHTML += rightSide;
 
     // Add event listener for Enter key on message input
-    document.getElementById("message").addEventListener("keypress", function(event) {
+    document.getElementById("message").addEventListener("keypress", function (event) {
         if (event.key === "Enter") {
             event.preventDefault();
             if (conversationId) {
@@ -330,15 +364,11 @@ function setConversation(element) {
 
     if (conversationId) {
         loadMessages(conversationId);
-        loadMember(conversationId,conversationType);
+        loadMember(conversationId, conversationType);
     }
 
     const callButton = document.querySelector(".btn_call");
-    if (conversationType === "OneToOne") { // Sửa lỗi chính tả
-        callButton.addEventListener("click", window.makeCall);
-    } else {
-        callButton.addEventListener("click", window.makeCall);
-    }
+    callButton.addEventListener("click", window.makeCall);
 
     // Handle file upload
     displayFiles();
@@ -397,7 +427,6 @@ function renderFile(typeFile) {
         }
     }
 
-
     if (fileList.length == 0) {
         file.innerHTML = "";
         file.classList.remove("active");
@@ -409,7 +438,6 @@ function renderFile(typeFile) {
     deleteAttach = document.querySelectorAll(".delete-attach");
 }
 
-
 function scrollToLatestMessage() {
     const chatContainer = document.getElementById("chat");
     if (!chatContainer) return;
@@ -419,123 +447,111 @@ function scrollToLatestMessage() {
     });
 }
 
-function handleWebsocketPayload(payload) {
-    var message = JSON.parse(payload.body);
-
-    // Xử lý theo loại sự kiện
-    switch(message.type) {
-        case "REMOVE_USER":
-            // Xử lý khi người dùng bị đá, out khỏi cuộc trò chuyện
-            if (message.userId == user_id) {
-                // Nếu chính người dùng hiện tại bị đá
-                removeConversationFromList(message.conversationId);
-                // Nếu đang xem cuộc trò chuyện đó, xóa nội dung
-                if (conversationId == message.conversationId) {
-                    document.getElementById("chat-container").innerHTML = '<div class="text-center p-4">Bạn đã bị xóa khỏi cuộc trò chuyện này</div>';
-                    conversationId = null;
-                }
-            } else {
-                const userElement = document.querySelector(`[data-track-user-id="${message.userId}"]`);
-                if (userElement) {
-                    const parentDiv = userElement.closest('.flex.items-center.p-3.hover\\:bg-gray-50.rounded-lg.group');
-                    if (parentDiv) {
-                        parentDiv.remove();
-                    }
-                }
-            }
-            break;
-
-        case "ADD_USER":
-            // Xử lý khi người dùng được thêm vào cuộc trò chuyện
-            if (message.userId == user_id) {
-                // Thêm cuộc trò chuyện mới vào danh sách
-                addNewConversationToList(message.conversation);
-            }
-            break;
-
-        default:
-            // Xử lý tin nhắn thông thường
-            if (!message.conversation) return;
-
-            // Xử lý tên hiển thị cho cuộc trò chuyện one-to-one
-            if (message.conversation.type === "OneToOne") {
-                const conversationName = message.conversation.conversationName;
-                if (conversationName.includes(" - ")) {
-                    const nameParts = conversationName.split(" - ");
-                    // Nếu người dùng hiện tại là người gửi tin nhắn
-                    if (message.createdBy == user_id) {
-                        // Hiển thị tên người nhận (phần sau dấu "-")
-                        message.conversation.conversationName = nameParts[1];
-                    } else {
-                        // Nếu người dùng hiện tại là người nhận
-                        // Hiển thị tên người gửi (phần trước dấu "-")
-                        message.conversation.conversationName = nameParts[0];
-                    }
-                }
-            }
-
-            // Kiểm tra xem cuộc trò chuyện đã tồn tại trong danh sách chưa
-            const existingConversationIndex = conversation_list.findIndex(conv => conv.id === message.conversation.id);
-
-            if (existingConversationIndex === -1) {
-                // Nếu chưa tồn tại, thêm vào đầu danh sách
-                conversation_list.unshift(message.conversation);
-                originalConversationList.unshift(message.conversation);
-            } else {
-                // Nếu đã tồn tại, di chuyển nó lên đầu danh sách
-                const conversation = conversation_list[existingConversationIndex];
-                conversation_list.splice(existingConversationIndex, 1);
-                conversation_list.unshift(conversation);
-
-                if (!message.messageType.startsWith("text"))
-                {
-                    conversation.last_message = "New images";
-                }
-                else
-                    // Cập nhật thông tin cuộc trò chuyện
-                    conversation.last_message = message.messageContent;
-            }
-
-            // Cập nhật UI
-            if (document.querySelector(".space-y-4") != null)
-                renderHtmlConversation(conversation_list);
-
-            // Làm nổi bật tên cuộc trò chuyện
-            const conversationElement = document.querySelector(`[data-id="${message.conversation.id}"] .font-bold`);
-            if (conversationElement) {
-                conversationElement.classList.add('text-blue-600');
-                // Tự động bỏ nổi bật sau 3 giây
-                setTimeout(() => {
-                    conversationElement.classList.remove('text-blue-600');
-                }, 3000);
-            }
-
-            // Nếu là cuộc trò chuyện hiện tại, hiển thị tin nhắn
-            if (message.conversation.id === conversationId) {
-                console.log("test");
-                displayMessage(message);
-            }
+async function handleWebsocketPayload(payload) {
+    // Process display name for one-to-one conversation
+    if (payload.conversation.type == "OneToOne") {
+        const conversationName = payload.conversation.conversation_name;
+        if (conversationName.includes(" - ")) {
+            const nameParts = conversationName.split(" - ");
+            var otherName = (nameParts[0] == user_fullName) ? nameParts[1] : nameParts[0];
+            payload.conversation.conversation_name = otherName;
+        }
     }
+    
+    // Check if conversation already exists in list
+    const existingConversationIndex = conversation_list.findIndex(conv => conv.conversation_id == payload.conversation.conversation_id);
+
+    if (existingConversationIndex === -1) {
+        // If not exists, add to beginning of list
+        conversation_list.unshift(payload.conversation);
+        originalConversationList.unshift(payload.conversation);
+    } else {
+        // If exists, move it to top of list
+        const conversation = conversation_list[existingConversationIndex];
+        conversation_list.splice(existingConversationIndex, 1);
+        conversation_list.unshift(conversation);
+
+        if (!payload.message_type.startsWith("text")) {
+            conversation.last_message = "New images";
+        }
+        else
+            // Update conversation info
+            conversation.last_message = payload.message_content;
+    }
+
+    // Update UI
+    if (document.querySelector(".space-y-4") != null)
+        renderHtmlConversation(conversation_list);
+
+    // Highlight conversation name
+    const conversationElement = document.querySelector(`[data-id="${payload.conversation.id}"] .font-bold`);
+    if (conversationElement) {
+        conversationElement.classList.add('text-blue-600');
+        // Auto remove highlight after 3 seconds
+        setTimeout(() => {
+            conversationElement.classList.remove('text-blue-600');
+        }, 3000);
+    }
+
+    // If current conversation, display message
+    if (payload.conversation.conversation_id == conversationId) {
+        displayMessage(payload);
+        console.log("perfect");
+    }
+
+    //// Handle by event type
+    //switch (payload.type) {
+    //    case "REMOVE_USER":
+    //        // Handle when a user is kicked/leaves a conversation
+    //        if (payload.userId == user_id) {
+    //            // If current user is removed
+    //            removeConversationFromList(payload.conversationId);
+    //            // If viewing that conversation, clear content
+    //            if (conversationId == payload.conversationId) {
+    //                document.getElementById("chat-container").innerHTML = '<div class="text-center p-4">You have been removed from this conversation</div>';
+    //                conversationId = null;
+    //            }
+    //        } else {
+    //            const userElement = document.querySelector(`[data-track-user-id="${payload.userId}"]`);
+    //            if (userElement) {
+    //                const parentDiv = userElement.closest('.flex.items-center.p-3.hover\\:bg-gray-50.rounded-lg.group');
+    //                if (parentDiv) {
+    //                    parentDiv.remove();
+    //                }
+    //            }
+    //        }
+    //        break;
+
+    //    case "ADD_USER":
+    //        // Handle when a user is added to a conversation
+    //        if (payload.userId == user_id) {
+    //            // Add new conversation to list
+    //            addNewConversationToList(payload.conversation);
+    //        }
+    //        break;
+
+    //    default:
+    //}
 }
 
-// Thêm hàm để xóa cuộc trò chuyện khỏi danh sách
+// Function to remove conversation from list
 function removeConversationFromList(conversationIdToRemove) {
-    // Lọc ra cuộc trò chuyện cần xóa
+    // Filter out conversation to remove
     conversation_list = conversation_list.filter(conv => conv.id !== conversationIdToRemove);
     originalConversationList = originalConversationList.filter(conv => conv.id !== conversationIdToRemove);
 
-    // Cập nhật UI
+    // Update UI
     renderHtmlConversation(conversation_list);
 }
 
-// Thêm hàm để thêm cuộc trò chuyện mới vào danh sách
+// Function to add new conversation to list
 function addNewConversationToList(conversation) {
-    // Kiểm tra nếu cuộc trò chuyện đã tồn tại
+    // Check if conversation already exists
     if (conversation_list.some(conv => conv.id === conversation.id)) {
         return;
     }
 
-    // Tạo một đối tượng conversation mới
+    // Create new conversation object
     const newConversation = {
         id: conversation.id,
         conversationName: conversation.conversationName,
@@ -545,66 +561,66 @@ function addNewConversationToList(conversation) {
     };
     console.log(newConversation);
 
-    // Thêm vào đầu danh sách
+    // Add to beginning of list
     conversation_list.unshift(newConversation);
     originalConversationList.unshift(newConversation);
 
-    // Cập nhật UI
+    // Update UI
     renderHtmlConversation(conversation_list);
 }
 
 function handleNewConversation(message) {
-    // Lấy tên cuộc trò chuyện từ message
+    // Get conversation name from message
     let conversationName = message.conversation.conversationName;
     let displayName = conversationName;
 
-    // Xử lý tên cuộc trò chuyện dành cho OneToOne chat
+    // Process display name for one-to-one chat
     if (message.conversation.type == "OneToOne" && conversationName.includes(" - ")) {
         const nameParts = conversationName.split(" - ");
 
-        // Nếu người dùng hiện tại là người gửi tin nhắn
+        // If current user is message sender
         if (message.createdBy == user_id) {
-            // Hiển thị tên người nhận (phần sau dấu "-")
+            // Display recipient name (part after "-")
             displayName = nameParts[1];
         } else {
-            // Nếu người dùng hiện tại là người nhận
-            // Hiển thị tên người gửi (phần trước dấu "-")
+            // If current user is recipient
+            // Display sender name (part before "-")
             displayName = nameParts[0];
         }
     }
 
-    // Tạo một đối tượng conversation mới
+    // Create new conversation object
     const newConversation = {
         id: message.conversation.id,
-        conversationName: displayName, // Sử dụng tên hiển thị đã được xử lý
+        conversationName: displayName, // Use processed display name
         conversationAvatar: message.conversation.conversationAvatar,
         last_message: message.messageContent,
         type: message.conversation.type
     };
 
-    // Thêm vào đầu danh sách
+    // Add to beginning of list
     conversation_list.unshift(newConversation);
     originalConversationList.unshift(newConversation);
 
-    // Cập nhật UI
+    // Update UI
     renderHtmlConversation(conversation_list);
 }
 
 function displayMessage(message) {
     var currentChat = document.getElementById('chat');
     if (!currentChat) return;
-    // Tạo phần tử tin nhắn mới
+    // Create new message element
     var tempDiv = document.createElement('div');
     tempDiv.innerHTML = customLoadMessage(message);
 
-    // Lấy phần tử tin nhắn từ container tạm
+    // Get message element from temp container
     var messageElement = tempDiv.firstChild;
 
-    // Thêm tin nhắn vào chat container bằng appendChild thay vì sử dụng innerHTML
+    // Add message to chat container using appendChild instead of innerHTML
     currentChat.appendChild(messageElement);
 
-    // Nếu tin nhắn chứa hình ảnh, đợi hình ảnh tải xong trước khi cuộn
-    if (message.messageType.startsWith("image") || message.messageType.startsWith("video")) {
+    // If message contains images, wait for images to load before scrolling
+    if (message.message_type.startsWith("image") || message.message_type.startsWith("video")) {
         const imgElements = messageElement.querySelectorAll('img');
         Promise.all([...imgElements].map(img =>
             img.complete ? Promise.resolve() : new Promise(resolve => img.onload = img.onerror = resolve)
@@ -617,15 +633,15 @@ function displayMessage(message) {
 function customLoadMessage(message) {
     var imgSrc = "";
     var msgDisplay = '';
-    var isMediaMessage = message.messageType.startsWith("image") || message.messageType.startsWith("video");
-    if (message.messageType.startsWith("image")) {
-        // Don't modify the original messageContent, create a formatted HTML instead
-        message.messageContent = `<a href="${message.messageContent}" target="_blank">`+
-            '<img class="w-full h-auto max-w-xs rounded" src="' + message.messageContent + '" alt="Image">'+
+    var isMediaMessage = message.message_type.startsWith("image") || message.message_type.startsWith("video");
+    if (message.message_type.startsWith("image")) {
+        // Don't modify the original messageContent, create formatted HTML instead
+        message.message_content = `<a href="${message.message_content}" target="_blank">` +
+            '<img class="w-full h-auto max-w-xs rounded" src="' + message.message_content + '" alt="Image">' +
             '</a>';
-    } else if (message.messageType.startsWith("video")) {
-        message.messageContent = '<video class="w-full max-w-xs rounded" controls>' +
-            '<source src="' + message.messageContent + '">' +
+    } else if (message.message_type.startsWith("video")) {
+        message.message_content = '<video class="w-full max-w-xs rounded" controls>' +
+            '<source src="' + message.message_content + '">' +
             'Your browser does not support the video tag.' +
             '</video>';
     }
@@ -634,14 +650,14 @@ function customLoadMessage(message) {
         ? "message-text rounded-lg shadow-sm overflow-hidden" // No padding for media
         : "message-text p-2 rounded-lg shadow-sm";
 
-    if (message.createdBy != user_id) {
+    if (message.created_by != user_id) {
         messageContainerClass += isMediaMessage ? "" : " bg-slate-200";
     } else {
         messageContainerClass += isMediaMessage ? "" : " bg-blue-500 text-white";
     }
 
     // Handle different message types
-    if (message.createdBy != user_id) {
+    if (message.created_by != user_id) {
         // Message from other user
         msgDisplay += '<div class="flex items-start space-x-2 message">';
         imgSrc = message.sender.avatar_path;
@@ -651,7 +667,7 @@ function customLoadMessage(message) {
             + '</div>'
             + '<div class="flex flex-col">'
             + '<span class="text-xs text-gray-600 font-medium mb-1">' + message.sender.first_name + " " + message.sender.last_name + '</span>'
-            + '<div class="' + messageContainerClass + '">' + message.messageContent
+            + '<div class="' + messageContainerClass + '">' + message.message_content
             + '</div>'
             + '</div>'
             + '</div>';
@@ -662,7 +678,7 @@ function customLoadMessage(message) {
         return msgDisplay
             + '<div class="flex flex-col items-end">'
             + '<span class="text-xs text-gray-600 font-medium mb-1"> You </span>'
-            + '<div class="' + messageContainerClass + '">' + message.messageContent
+            + '<div class="' + messageContainerClass + '">' + message.message_content
             + '</div>'
             + '</div>'
             + '<div class="message-img">'
@@ -711,7 +727,7 @@ function sendMessage() {
     } else {
         sendAttachments();
     }
-    scrollToLatestMessage()
+    scrollToLatestMessage();
     return false;
 }
 
@@ -720,7 +736,8 @@ function buildMessageToDTO(messageContent, messageType) {
         conversationId: conversationId,
         messageContent: messageContent,
         createdBy: user_id,
-        messageType: messageType
+        messageType: messageType,
+        messageStatus: "SENT"
     }
 }
 
@@ -736,7 +753,7 @@ async function sendAttachments() {
             body: formData,
         }).then(fileData => fileData.json())
             .then(async data => {
-                let message = buildMessageToDTO(data.url, file.type)
+                let message = buildMessageToDTO(data.url, file.type);
                 let response = await fetch("api/message/post", {
                     method: "POST",
                     body: JSON.stringify(message),
@@ -746,38 +763,45 @@ async function sendAttachments() {
                 });
                 let responseData = await response.json();
                 document.querySelector(".list-file").innerHTML = '';
-                const payload = {
+
+                // Create recipients array for SignalR
+                const recipients = conversationMember.map(member => member.user.id);
+
+                // Send via SignalR
+                connection.invoke("SendMessage", {
                     message: responseData,
-                    recipients: conversationMember.map(member => member.user.id)
-                };
-                stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(payload));
-                // Create notification object
-                let notification = {
-                    actorId: user_id,
-                    content: "You have new message from " + (conversationType === "Group" ? conversationName : user_fullName),
-                    actor_avatar: user_avatar,
-                    type: "MESSENGER",
-                    recipientIds: conversationMember.map(member => member.user.id).filter(id => id !== user_id),
-                    url: `/messenger?conversationId=${conversationId}`
-                }
-                //Websocket
-                stompClient.send("/app/notification.sendNotification", {}, JSON.stringify(notification));
-                await fetch("api/notification/create-notification", {
-                    method: "POST",
-                    body: JSON.stringify(notification),
-                    headers: {
-                        "Content-Type": "application/json; charset=UTF-8"
-                    }
-                })
+                    recipients: recipients
+                });
+
+                //// Create notification object
+                //let notification = {
+                //    actorId: user_id,
+                //    content: "You have new message from " + (conversationType === "Group" ? conversationName : user_fullName),
+                //    actor_avatar: user_avatar,
+                //    type: "MESSENGER",
+                //    recipientIds: conversationMember.map(member => member.user.id).filter(id => id !== user_id),
+                //    url: `/messenger?conversationId=${conversationId}`
+                //};
+
+                //// Send notification via SignalR
+                //connection.invoke("SendNotification", notification);
+
+                //await fetch("api/notification/create-notification", {
+                //    method: "POST",
+                //    body: JSON.stringify(notification),
+                //    headers: {
+                //        "Content-Type": "application/json; charset=UTF-8"
+                //    }
+                //});
             }).catch(error => {
                 console.log(error);
-            })
+            });
     }
-    // Xóa file đính kèm sau khi gửi
+    // Clear attachments after sending
     document.querySelector(".list-file").innerHTML = '';
     document.querySelector(".list-file").classList.remove("active");
-    
-    // Khởi tạo lại event listener cho việc upload file
+
+    // Reinitialize file upload event listener
     displayFiles();
 }
 
@@ -801,29 +825,32 @@ async function sendText() {
         });
 
         let responseData = await response.json();
-        // Create notification object
-        let notification = {
-            actorId: user_id,
-            content: "You have new message from " + (conversationType === "Group" ? conversationName : user_fullName),
-            actor_avatar: user_avatar,
-            type: "MESSENGER",
-            recipientIds: conversationMember.map(member => member.user.id).filter(id => id !== user_id),
-            url: `/messenger?conversationId=${conversationId}`
-        }
-        // Send the entire response data object to the WebSocket
-        const payload = {
+        //// Create notification object
+        //let notification = {
+        //    actorId: user_id,
+        //    content: "You have new message from " + (conversationType === "Group" ? conversationName : user_fullName),
+        //    actor_avatar: user_avatar,
+        //    type: "MESSENGER",
+        //    recipientIds: conversationMember.map(member => member.user.id).filter(id => id !== user_id),
+        //    url: `/messenger?conversationId=${conversationId}`
+        //};
+
+        // Send the message via SignalR
+        connection.invoke("SendMessage", {
             message: responseData,
             recipients: conversationMember.map(member => member.user.id)
-        };
-        stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(payload));
-        stompClient.send("/app/notification.sendNotification", {}, JSON.stringify(notification));
-        await fetch("api/notification/create-notification", {
-            method: "POST",
-            body: JSON.stringify(notification),
-            headers: {
-                "Content-Type": "application/json; charset=UTF-8"
-            }
-        })
+        });
+
+        //// Send notification via SignalR
+        //connection.invoke("SendNotification", notification);
+
+        //await fetch("api/notification/create-notification", {
+        //    method: "POST",
+        //    body: JSON.stringify(notification),
+        //    headers: {
+        //        "Content-Type": "application/json; charset=UTF-8"
+        //    }
+        //});
     } catch (error) {
         console.log(error);
     }
@@ -1281,8 +1308,8 @@ async function startNewConversation(element) {
     }
 
     let tempConversation = {
-        conversation_name: chatName,
-        conversation_avatar: selectedUser.avatar_path,
+        conversationName: chatName,
+        conversationAvatar: selectedUser.avatar_path,
         type: conversationType
     };
 
@@ -1300,7 +1327,8 @@ async function startNewConversation(element) {
     }
 
     let conversationData = await response.json();
-    conversationId = conversationData.id;
+    console.log(conversationData + " and " + response);
+    conversationId = conversationData.conversation_id;
 
     // Step 2: Add current user to the conversation
     await fetch('/api/conversation-user/add-user', {

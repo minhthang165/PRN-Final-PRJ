@@ -50,7 +50,7 @@ namespace PRN_Final_Project.Controllers
             }
 
             // Check if user exists or create new
-            var existingUser = await _userService.GetByEmail(email);
+            var existingUser = await _userService.GetOneByEmail(email);
             if (existingUser == null)
             {
                 var newUser = new user
@@ -61,11 +61,28 @@ namespace PRN_Final_Project.Controllers
                     avatar_path = picture,
                     phone_number = phoneNumber,
                     gender = gender,
-                    role = "GUEST"
+                    role = "GUEST",
+                    is_active = true,
+                    created_at = DateTime.Now
                 };
 
                 await _userService.AddAsync(newUser);
-                existingUser = await _userService.GetByEmail(email);
+                existingUser = await _userService.GetOneByEmail(email);
+            }
+
+            // Check if user is banned (exists in Redis cache)
+            var banStatus = await _userService.GetBanStatus(existingUser.id);
+            if (banStatus.ContainsKey("isBanned") && (bool)banStatus["isBanned"] == true)
+            {
+                // Add a TempData message to inform the user
+                TempData["ErrorMessage"] = $"Your account has been banned. Reason: {banStatus["reason"]}";
+
+                Redirect("/logout");
+            }
+
+            if (existingUser.is_active.HasValue && existingUser.is_active.Value == false)
+            {
+                Redirect("/logout");
             }
 
             // Create your own claims

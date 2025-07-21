@@ -450,10 +450,10 @@ function renderTable(employees) {
             <td>${user.phone_number}</td>
             <td>${user.gender}</td>
             <td>${user.role}</td>
-            <td class="${user.active ? 'active' : 'inactive'}">
+            <td class="${user.is_active ? 'active' : 'inactive'}">
                 <a href="#" data-id="${user.id}" class="toggle-class-status">
                     <i data-id="${user.id}" data-user-email="${user.email}"
-                       class="flaticon-padlock ${user.active ? 'active' : 'inactive'}">
+                       class="flaticon-padlock ${user.is_active ? 'active' : 'inactive'}">
                     </i>
                 </a>
                 <a href="#" class="edit-user-modal" data-id="${user.id}"
