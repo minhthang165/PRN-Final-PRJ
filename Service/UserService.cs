@@ -49,7 +49,7 @@ namespace PRN_Final_Project.Service
             await _repository.UpdateAsync(entity);
         }
 
-        public async Task<user> GetByEmail(string email)
+        public async Task<List<user>> GetByEmail(string email)
         {
             return await _repository.GetByEmail(email);
         }
@@ -70,6 +70,10 @@ namespace PRN_Final_Project.Service
         public async Task<List<user>> GetTraineeByClassId(int classId)
         {
             return await _repository.GetTraineeByClassId(classId);
+        }
+        public async Task<user> GetOneByEmail(string email)
+        {
+            return await _repository.GetOneByEmail(email);
         }
     }
 }

@@ -30,4 +30,6 @@ public partial class Message
     public bool? is_active { get; set; }
 
     public virtual Conversation? conversation { get; set; }
+
+    public virtual user? sender { get; set; }
 }

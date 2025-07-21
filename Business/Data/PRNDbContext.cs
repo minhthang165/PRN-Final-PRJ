@@ -212,9 +212,11 @@ public partial class PRNDbContext : DbContext
         {
             entity.HasKey(e => e.message_id).HasName("PRIMARY");
 
-            entity.ToTable("Message");
+            entity.ToTable("message");
 
             entity.HasIndex(e => e.conversation_id, "FK_Message_Conversation");
+
+            entity.HasIndex(e => e.created_by, "FK_Message_Sender");
 
             entity.Property(e => e.created_at).HasColumnType("datetime");
             entity.Property(e => e.deleted_at).HasColumnType("datetime");
@@ -226,6 +228,10 @@ public partial class PRNDbContext : DbContext
             entity.HasOne(d => d.conversation).WithMany(p => p.Messages)
                 .HasForeignKey(d => d.conversation_id)
                 .HasConstraintName("FK_Message_Conversation");
+
+            entity.HasOne(d => d.sender).WithMany(p => p.Messages)
+                .HasForeignKey(d => d.created_by)
+                .HasConstraintName("FK_Message_Sender");
         });
 
         modelBuilder.Entity<Notification>(entity =>

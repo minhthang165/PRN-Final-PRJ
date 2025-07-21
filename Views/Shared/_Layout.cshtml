@@ -7,7 +7,7 @@
     <title>@ViewData["Title"] - PRN_Final_Project</title>
     @RenderSection("Styles", required: false)
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="/img/logo/logo-fpt-small.svg">
+    <link rel="shortcut icon" type="image/x-icon" href="~/assets/img/logo/logo-fpt-small.svg">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -20,13 +20,11 @@
     <link rel="stylesheet" href="/css/metisMenu.min.css">
     <link rel="stylesheet" href="/css/swiper-bundle.min.css">
     <link rel="stylesheet" href="/css/slick.css">
-    <link rel="stylesheet" href="/css/profile.css">
     <link rel="stylesheet" href="/css/backtotop.css">
     <link rel="stylesheet" href="/css/magnific-popup.css">
     <link rel="stylesheet" href="/css/flaticon_expovent.css">
     <link rel="stylesheet" href="/css/fontawesome-pro.css">
     <link rel="stylesheet" href="/css/spacing.css">
-
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/sidebar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -277,6 +275,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/js/notification.js"></script>
     <script src="/js/sidebar.js"></script>
+    <!-- Add this before your other script tags -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 

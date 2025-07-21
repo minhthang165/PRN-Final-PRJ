@@ -9,7 +9,7 @@ using PRN_Final_Project.Business.Entities;
 namespace PRN_Final_Project.API
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/user")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -39,7 +39,7 @@ namespace PRN_Final_Project.API
         }
 
         // POST: api/user
-        [HttpPost]
+        [HttpPost("create")]
         public async Task<ActionResult> Create([FromBody] user newUser)
         {
             await _userService.AddAsync(newUser);
@@ -68,7 +68,7 @@ namespace PRN_Final_Project.API
         [HttpPut("update")]
         public async Task<ActionResult> Update([FromBody] user updatedUser)
         {
-            var existingUser = await _userService.GetByEmail(updatedUser.email);
+            var existingUser = await _userService.GetOneByEmail(updatedUser.email);
             if (existingUser == null)
                 return NotFound();
 
@@ -99,7 +99,7 @@ namespace PRN_Final_Project.API
         }
 
         // DELETE: api/user/5
-        [HttpDelete("{id}")]
+        [HttpDelete("/delete/{id}")]
         public async Task<ActionResult> Delete(int id)
         {
             var existing = await _userService.GetByIdAsync(id);
@@ -151,8 +151,8 @@ namespace PRN_Final_Project.API
             return Ok(new { message = $"User {id} unbanned" });
         }
 
-        // GET: api/user/search?email=example
-        [HttpGet("search")]
+        // GET: api/user/search/users?email=example
+        [HttpGet("search/users/")]
         public async Task<ActionResult> SearchByEmail([FromQuery] string email)
         {
             if (string.IsNullOrEmpty(email))

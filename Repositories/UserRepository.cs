@@ -91,12 +91,13 @@ namespace PRN_Final_Project.Repositories
         }
 
 
-        public async Task<user?> GetByEmail(string email)
+        public async Task<List<user>> GetByEmail(string email)
         {
             try
             {
                 return await _context.users
-                     .FirstOrDefaultAsync(u => u.email == email);
+                     .Where(u => u.email.Contains(email.ToLower()))
+                     .ToListAsync();
             }
             catch
             {
@@ -227,6 +228,11 @@ namespace PRN_Final_Project.Repositories
             return await _context.users
                 .Where(u => u.class_id == classId && u.role == "INTERN" && u.is_active == true)
                 .ToListAsync();
+        }
+        public async Task<user> GetOneByEmail(string email)
+        {
+            return await _context.users
+                .FirstOrDefaultAsync(u => u.email == email);
         }
     }
 }

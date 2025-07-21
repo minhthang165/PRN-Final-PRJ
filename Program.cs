@@ -2,9 +2,11 @@ using CloudinaryDotNet;
 using dotenv.net;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using PRN_Final_Project.Business.Data;
+using PRN_Final_Project.Hubs;
 using PRN_Final_Project.Repositories;
 using PRN_Final_Project.Repositories.Interface;
 using PRN_Final_Project.Service;
@@ -29,6 +31,12 @@ builder.Services.AddControllers()
 builder.Services.AddDbContext<PRNDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
                      new MySqlServerVersion(new Version(8, 0, 2))));
+
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+});
+
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
@@ -74,6 +82,19 @@ builder.Services.AddScoped<IAIExtractor, AIExtractorService>();
 builder.Services.AddSingleton<IVnpay, Vnpay>();
 builder.Services.AddScoped<VnpayPayment>();
 
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+
+builder.Services.AddScoped<IConversationService, ConversationService>();
+builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
+
+builder.Services.AddScoped<IConversationUserService, ConversationUserService>();
+builder.Services.AddScoped<IConversationUserRepository, ConversationUserRepository>();
+
+builder.Services.AddSignalR().AddHubOptions<ChatHub>(options =>
+{
+    options.EnableDetailedErrors = true;
+});
 
 var vnpay = new Vnpay();
 vnpay.Initialize(
@@ -132,6 +153,9 @@ if (app.Environment.IsDevelopment())
 
 
 app.UseSession();
+
+// Add SignalR services
+app.MapHub<ChatHub>("/chatHub");
 
 app.UseAuthentication();
 app.UseHttpsRedirection();

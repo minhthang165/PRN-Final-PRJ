@@ -50,7 +50,7 @@ namespace PRN_Final_Project.Controllers
             }
 
             // Check if user exists or create new
-            var existingUser = await _userService.GetByEmail(email);
+            var existingUser = await _userService.GetOneByEmail(email);
             if (existingUser == null)
             {
                 var newUser = new user
@@ -67,7 +67,7 @@ namespace PRN_Final_Project.Controllers
                 };
 
                 await _userService.AddAsync(newUser);
-                existingUser = await _userService.GetByEmail(email);
+                existingUser = await _userService.GetOneByEmail(email);
             }
 
             // Check if user is banned (exists in Redis cache)

@@ -10,10 +10,11 @@ namespace PRN_Final_Project.Repositories.Interface
 {
     public interface IUserRepository : ICommonRepository<user>
     {
-        Task<user> GetByEmail(string email);
+        Task<List<user>> GetByEmail(string email);
         Task BanUser(int userId, int durationInDays, string reason);
         Task<Dictionary<string, object>> GetBanStatus(int userId);
         Task UnbanUser(int userId);
         Task<List<user>> GetTraineeByClassId(int classId);
+        Task<user> GetOneByEmail(string email);
     }
 }
