@@ -1,0 +1,139 @@
+﻿@model PRN_Final_Project.Service.Dto.AdminScheduleViewModel
+@using System.Linq
+@* 
+    Giả định bạn có một ViewModel để truyền dữ liệu từ Controller sang View.
+    Nó có thể trông như thế này:
+    public class AdminScheduleViewModel
+    {
+        public int UserId { get; set; }
+        public string UserRole { get; set; }
+        public int ClassId { get; set; }
+        public List<RoomViewModel> Rooms { get; set; }
+    }
+    public class RoomViewModel
+    {
+        public string RoomName { get; set; }
+        public bool Active { get; set; }
+    }
+
+@model PRN_Final_Project.Service.Dto.AdminScheduleViewModel *@
+
+@{
+    ViewData["Title"] = "Manage Schedule";
+    var slotToIndex = Model.TimeSlots.Select((s, i) => new { s, i }).ToDictionary(x => x.s, x => x.i);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/adminSchedule.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+}
+
+<div class="breadcrumb__area">
+    <div class="breadcrumb__wrapper mb-35" style="padding: 0px;">
+        <div class="breadcrumb__main" style="padding: 10px;">
+            <div class="breadcrumb__inner">
+                <div class="breadcrumb__icon">
+                    <i class="flaticon-home"></i>
+                </div>
+                <div class="breadcrumb__menu">
+                    <nav>
+                        <ul>
+                            <li><span><a asp-controller="Dashboard" asp-action="Index">Dashboard</a></span></li>
+                            <li class="active"><span>Manage Schedule</span></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="nav-bar">
+        <div class="nav-buttons">
+            <button class="nav-btn-1" id="prevDay">
+                <i class="flaticon-right-arrow-1"></i>
+            </button>
+            <button class="nav-btn" id="nextDay">
+                <i class="flaticon-right-arrow-1"></i>
+            </button>
+            <button class="nav-btn" id="todayBtn">Today</button>
+            <button class="nav-btn">Week</button>
+            <button class="nav-btn">Day</button>
+        </div>
+        <div class="current-date">@Model.CurrentDate.ToString("dd/MM/yyyy")</div>
+        <div class="action-buttons">
+            <button class="btn btn-dark" id="generateScheduleBtn">Import Schedule</button>
+            <button class="btn btn-dark" id="downloadTemplateBtn">Download Template</button>
+        </div>
+    </div>
+
+    <div class="schedule-container">
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th>Room / Time</th>
+                    @foreach (var slot in Model.TimeSlots)
+                    {
+                        <th>@slot</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Rooms == null || Model.Rooms.Count == 0)
+                {
+                    <tr>
+                        <td colspan="@(Model.TimeSlots?.Count + 1 ?? 12)">No rooms found in database</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var room in Model.Rooms)
+                    {
+                        <tr>
+                            <td>@room.RoomName</td>
+                            @{
+                                int slotIndex = 0;
+                                while (slotIndex < Model.TimeSlots.Count)
+                                {
+                                    var slot = Model.TimeSlots[slotIndex];
+                                    var cell = Model.ScheduleCells?.FirstOrDefault(c => c.RoomId == room.RoomId && c.TimeSlot == slot);
+                                    // Chỉ render lịch ở slot đầu tiên
+                                    if (cell != null && cell.TimeRange.StartsWith(slot))
+                                    {
+                                        // Tính số slot mà lịch chiếm
+                                        var start = slotIndex;
+                                        int end = start + 1;
+                                        var cellStart = TimeSpan.Parse(slot + ":00");
+                                        var cellEnd = TimeSpan.Parse(cell.TimeRange.Substring(8, 5) + ":00");
+                                        while (end < Model.TimeSlots.Count && TimeSpan.Parse(Model.TimeSlots[end] + ":00") < cellEnd)
+                                        {
+                                            end++;
+                                        }
+                                        int colspan = end - start;
+                                        <td colspan="@colspan" style="background:@cell.Color">
+                                            <div><b>@cell.TimeRange</b></div>
+                                            <div>@cell.ClassName</div>
+                                            <div>@cell.Subject</div>
+                                            <div>@cell.Teacher</div>
+                                        </td>
+                                        slotIndex = end;
+                                    }
+                                    else
+                                    {
+                                        <td></td>
+                                        slotIndex++;
+                                    }
+                                }
+                            }
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/adminSchedule.js"></script>
+}

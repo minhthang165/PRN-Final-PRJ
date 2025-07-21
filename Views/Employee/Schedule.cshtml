@@ -1,0 +1,198 @@
+﻿@using PRN_Final_Project.Service.Dto
+@model ScheduleViewModel
+@{
+    ViewData["Title"] = "Schedule";
+}
+
+<link rel="stylesheet" href="~/css/schedule.css" />
+
+<style>
+    .calendar-event {
+        background: #e0e7ff;
+        border-left: 5px solid #6366f1;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.10), 0 1.5px 4px rgba(0, 0, 0, 0.07);
+        padding: 10px 14px 10px 12px;
+        color: #222;
+        font-size: 1rem;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        transition: box-shadow 0.2s, background 0.2s;
+        cursor: pointer;
+        overflow: hidden;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .calendar-event:hover {
+        background: #c7d2fe;
+        box-shadow: 0 8px 32px rgba(99, 102, 241, 0.18), 0 2px 8px rgba(0, 0, 0, 0.10);
+    }
+
+    .calendar-event .event-title {
+        font-weight: 700;
+        color: #3730a3;
+        font-size: 1.08rem;
+        margin-bottom: 2px;
+    }
+
+    .calendar-event .event-details {
+        font-size: 0.97rem;
+        color: #444;
+        margin-bottom: 2px;
+    }
+
+    .calendar-event .event-time {
+        font-size: 0.95rem;
+        color: #555;
+        margin-bottom: 2px;
+    }
+
+    .calendar-event .mentor-name {
+        font-size: 0.95rem;
+        color: #059669;
+        font-weight: 500;
+    }
+</style>
+
+<main class="inset-0 bg-white p-8 shadow-lg animate-fade-in overflow-auto z-[9999]">
+    <!-- Đã bỏ input ẩn userId/userRole, chỉ render Razor -->
+    <div class="container mx-auto px-4">
+        <div class="py-4">
+            <div class="flex justify-between items-center mb-4 header-container">
+                <div class="flex items-center gap-2">
+                    <svg class="h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <h1 class="text-xl font-medium">Schedule</h1>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center nav-container">
+                <div class="flex items-center gap-4">
+                    <button class="btn btn-ghost btn-sm btn-today">
+                        Today
+                    </button>
+                    <div class="month-nav-container">
+                        <button class="btn btn-ghost btn-icon h-8 w-8" id="prev-month">
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+                        <button class="btn btn-ghost btn-icon h-8 w-8" id="next-month">
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                        <div class="flex items-center gap-1 ml-2">
+                            <span class="font-medium" id="current-month">@Model.CurrentMonthYear</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <div class="calendar-header-cell"></div>
+                @{
+                    var currentDate = Model.CurrentWeekStart;
+                    var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" };
+                    for (int i = 0; i < 5; i++)
+                    {
+                        var dayClass = currentDate == DateOnly.FromDateTime(DateTime.Today) ? "active-day" : "";
+                        <div class="calendar-header-cell @dayClass">
+                            <div class="day-number">@currentDate.Day</div>
+                            <div class="day-name">@daysOfWeek[i]</div>
+                        </div>
+                        currentDate = currentDate.AddDays(1);
+                    }
+                }
+            </div>
+
+            @{
+                int hourStart = 8;
+                int hourEnd = 20;
+                int slotHeight = 60;
+                int dayCount = 5;
+                // Không set width cứng, layout sẽ tự động theo flex/grid như ban đầu
+            }
+            <div class="calendar-body" style="position: relative;">
+                @* Render lưới lịch như cũ *@
+                @{
+                    var timeSlots = new[]
+                    {
+                                new { Hour = 8, Label = "8 AM" },
+                                new { Hour = 9, Label = "9 AM" },
+                                new { Hour = 10, Label = "10 AM" },
+                                new { Hour = 11, Label = "11 AM" },
+                                new { Hour = 12, Label = "12 PM" },
+                                new { Hour = 13, Label = "1 PM" },
+                                new { Hour = 14, Label = "2 PM" },
+                                new { Hour = 15, Label = "3 PM" },
+                                new { Hour = 16, Label = "4 PM" },
+                                new { Hour = 17, Label = "5 PM" },
+                                new { Hour = 18, Label = "6 PM" },
+                                new { Hour = 19, Label = "7 PM" },
+                                new { Hour = 20, Label = "8 PM" }
+                                };
+                   
+                }
+                <div style="position: relative;">
+                    @foreach (var timeSlot in timeSlots)
+                    {
+                        <div class="time-label">@timeSlot.Label</div>
+                        @for (int day = 0; day < dayCount; day++)
+                        {
+                            <div class="calendar-cell"></div>
+                        }
+                    }
+                </div>
+
+                @* Render block sự kiện overlay *@
+                @foreach (var schedule in Model.Schedules)
+                {
+                    // Tính toán vị trí block
+                    var startHour = schedule.StartTime.Hour + schedule.StartTime.Minute / 60.0;
+                    var endHour = schedule.EndTime.Hour + schedule.EndTime.Minute / 60.0;
+                    var duration = endHour - startHour;
+                    // Xác định thứ trong tuần (Monday=0, ..., Friday=4)
+                    var dayIndex = ((int)schedule.StartDate.DayOfWeek + 6) % 7;
+                    if (dayIndex >= 0 && dayIndex < dayCount)
+                    {
+                        // Tính toán top: (startHour - hourStart) * slotHeight
+                        var top = (startHour - hourStart) * slotHeight;
+                        var height = duration * slotHeight;
+                        // Tính toán left/width dựa trên số lượng cột ngày thực tế
+                        var leftPercent = 100.0 / dayCount * dayIndex;
+                        var widthPercent = 100.0 / dayCount;
+
+                        <div class="calendar-event"
+                            style="position:absolute; top:@top px; left:@leftPercent%; height:@height px; width:@widthPercent%; min-width:120px;">
+                            <div class="event-title">@schedule.SubjectName</div>
+                            <div class="event-details">@schedule.ClassName <span style="color:#888;">@schedule.RoomName</span>
+                            </div>
+                            <div class="event-time"><i class="bi bi-clock"></i> @schedule.StartTime.ToString("HH:mm") -
+                                @schedule.EndTime.ToString("HH:mm")</div>
+                            <div class="mentor-name"><i class="bi bi-person"></i> @schedule.MentorName</div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script src="~/js/schedule.js"></script>
+}

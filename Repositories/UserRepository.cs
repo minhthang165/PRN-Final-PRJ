@@ -67,6 +67,7 @@ namespace PRN_Final_Project.Repositories
 
             var items = await query
                 .OrderBy(u => u.first_name)
+                // .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
@@ -145,6 +146,7 @@ namespace PRN_Final_Project.Repositories
             }
 
         }
+        
         public async Task BanUser(int userId, int durationInDays, string reason)
         {
             // Update user active status in database
@@ -222,6 +224,35 @@ namespace PRN_Final_Project.Repositories
             // Remove ban information from cache
             await _cache.RemoveAsync(BAN_PREFIX + userId);
             await _cache.RemoveAsync(BAN_PREFIX + userId + ":expiry");
+        }
+        
+        public async Task<List<user>> GetUsersByRoleAsync(string role)
+        {
+            return await _context.users
+                .Where(u => u.role == role && u.is_active == true)
+                .ToListAsync();
+        }
+
+        public async Task<Page<user>> GetUsersByRolePagingAsync(string role, string? searchKey = "", int page = 1, int pageSize = 10)
+        {
+            var query = _context.users.Where(u => u.role == role && u.is_active == true);
+
+            if (!string.IsNullOrEmpty(searchKey))
+            {
+                query = query.Where(u => u.user_name.Contains(searchKey) || u.email.Contains(searchKey));
+            }
+
+            var totalItems = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return new Page<user>
+            {
+                SearchTerm = searchKey,
+                Items = items,
+                TotalItems = totalItems,
+                PageSize = pageSize,
+                PageNumber = page
+            };
         }
         public async Task<List<user>> GetTraineeByClassId(int classId)
         {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using PRN_Final_Project.API.Dto;
 using PRN_Final_Project.Business.Entities;
 using PRN_Final_Project.Repositories.Common;
 using PRN_Final_Project.Repositories.Interface;
@@ -89,7 +90,7 @@ namespace PRN_Final_Project.Service
             return cvInfo;
         }
 
-        public async Task<List<CV_Info>> FindCvInfoByRecruitmentId(int recruitmentId)
+        public async Task<List<CandidateDto>> FindCvInfoByRecruitmentId(int recruitmentId)
         {
             return await _repository.FindCvInfoByRecruitmentId(recruitmentId);
         }

@@ -1,4 +1,5 @@
-﻿@model PRN_Final_Project.Business.Entities.Recruitment
+﻿@using System.Security.Claims
+@model PRN_Final_Project.Business.Entities.Recruitment
 @{
     ViewData["Title"] = "Chi tiết Tuyển Dụng";
     var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

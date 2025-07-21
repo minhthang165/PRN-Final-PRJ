@@ -204,10 +204,10 @@
         {
             @Html.Partial("_AdminHeader")
         }
-        else if (roleClaim == "EMPLOYEE")
+        @* else if (roleClaim == "EMPLOYEE")
         {
-            @Html.Partial("_AdminHeader")
-        }
+            @Html.Partial("_EmployeeHeader")
+        } *@
         else if (roleClaim == "GUEST")
         {
             @Html.Partial("_UserHeader")
