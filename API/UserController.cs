@@ -167,11 +167,10 @@ namespace PRN_Final_Project.API
 
         // GET: api/user/classroom/5
         [HttpGet("classroom/{classId}")]
-        public async Task<ActionResult> GetUsersByClassId(int classId)
+        public async Task<ActionResult> GetTraineeByClassId(int classId)
         {
-            // This would need implementation in the service
-            // For now, return a placeholder
-            return Ok(new { message = $"Users for classroom {classId} would be returned here" });
+            var users = await _userService.GetTraineeByClassId(classId);
+            return Ok(users);
         }
     }
 

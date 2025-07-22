@@ -66,7 +66,7 @@ function loadUsers(classId) {
     const tableBody = document.getElementById("userTableBody");
     tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Loading users...</td></tr>';
 
-    fetch(`/api/class/${classId}/users`)
+    fetch(`/api/Class/${classId}`)
         .then(response => {
             if (!response.ok) throw new Error(`Failed to fetch users: ${response.status}`);
             return response.json();
@@ -124,7 +124,7 @@ document.addEventListener("click", function (event) {
     });
 });
 function toggleClassStatus(classId, action) {
-    let url = action === "unlock" ? `/api/class/setIsActiveTrue/${classId}` : `/api/class/delete/${classId}`;
+    let url = action === "unlock" ? `/api/Class/setIsActiveTrue/${classId}` : `/api/class/delete/${classId}`;
     let method = action === "unlock" ? "PATCH" : "DELETE";
 
     fetch(url, { method: method })
@@ -175,8 +175,8 @@ function toggleActiveStatus(icon, event) {
 
     showModal("Confirm", message, true, function () {
         let url = action === "unlock"
-            ? `/api/class/setIsActiveTrue/${classId}`
-            : `/api/class/delete/${classId}`;
+            ? `/api/Class/setIsActiveTrue/${classId}`
+            : `/api/Class/${classId}`;
         let method = action === "unlock" ? "PATCH" : "DELETE";
 
         fetch(url, { method: method })
@@ -413,7 +413,7 @@ function changePageSize(select) {
 }
 
 function loadPage(page, size) {
-    fetch(`/api/class?page=${page}&&size=${size}`)
+    fetch(`/api/Class?paging=${page}&pageSize=${size}`)
         .then(response => response.json())
         .then(data => {
             totalPages = data.totalPages;
@@ -437,7 +437,7 @@ function renderTable(classes) {
             <td>${c.status}</td>
             <td>
                 <a href="#" class="toggle-class-status open-modal" data-id="${c.id}">
-                    <i class="${c.active ? 'flaticon-padlock active' : 'flaticon-padlock inactive'}" onclick="toggleActiveStatus(this, event)"></i>
+                    <i class="${c.is_active ? 'flaticon-padlock active' : 'flaticon-padlock inactive'}" onclick="toggleActiveStatus(this, event)"></i>
                 </a>
                 <a href="#" class="edit-class-status">
                     <i class="flaticon-edit edit-class" style="cursor: pointer; color: blue;"></i>
