@@ -358,7 +358,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const formData = new FormData();
         formData.append("file", selectedFile);
 
-        fetch("/api/excel/import", {
+        fetch("/api/Excel/import-employees", {
             method: "POST",
             body: formData,
         })
@@ -374,6 +374,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 } else {
                     showToast("Error occurs when uploading file!", "warning");
                 }
+                var modal = document.getElementById("importModal");
+                modal.classList.remove("show");
+                modal.style.display = "none";
             })
     });
 
