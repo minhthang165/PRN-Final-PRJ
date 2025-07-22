@@ -26,7 +26,7 @@ namespace PRN_Final_Project.Repositories
 
         public async Task<Page<Class>> GetAllPagingAsync(string searchKey = "", int page = 1, int pageSize = 10)
         {
-            var query =  _context.Classes.Include(c => c.mentor).AsQueryable();
+            var query = _context.Classes.Include(c => c.mentor).AsQueryable();
             var totalItems = await query.CountAsync();
             var items = await query
                 .Where(c => string.IsNullOrEmpty(searchKey) || c.class_name.Contains(searchKey))
@@ -108,6 +108,17 @@ namespace PRN_Final_Project.Repositories
                 .Where(c => c.mentor_id == userId)
                 .ToListAsync();
             return classes;
+        }
+
+        public async Task<Class> GetClassByUserId(int userId)
+        {
+            var user = await _context.users
+                .FirstOrDefaultAsync(u => u.id == userId && u.role == "INTERN" && u.is_active == true);
+            if (user == null)
+                throw new Exception("User not found or is not an active intern");
+
+            return await _context.Classes
+                    .FirstOrDefaultAsync(c => c.id == user.class_id);
         }
     }
 }

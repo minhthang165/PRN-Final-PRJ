@@ -412,7 +412,7 @@ function displayCandidatesPage(page, pageSize, recruitmentId) {
         acceptButton.title = "Approve Candidate";
         acceptButton.innerHTML = '<i class="fas fa-solid fa-check"></i>';
         acceptButton.onclick = function () {
-            approveCandidate(candidate.fileId, recruitmentId);
+            approveCandidate(event, candidate.fileId, recruitmentId);
         };
 
         // Create reject button
@@ -422,7 +422,7 @@ function displayCandidatesPage(page, pageSize, recruitmentId) {
         rejectButton.innerHTML = '<i class="fas fa-times"></i>';
         rejectButton.onclick = function () {
             console.log("Reject button clicked for fileId:", candidate.fileId);
-            rejectCandidate(candidate.fileId, recruitmentId);
+            rejectCandidate(event, candidate.fileId, recruitmentId);
         };
 
         // Add buttons to container
@@ -440,23 +440,33 @@ function displayCandidatesPage(page, pageSize, recruitmentId) {
     });
 }
 
-function rejectCandidate(cvId) {
+function rejectCandidate(event, cvId) {
     fetch(`/api/CVInfo/reject-cv?cvId=${cvId}`, {
         method: 'POST'
     })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { throw new Error(err.message || 'Rejection failed') });
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log(data.message);
-        showToast('Candidate rejected successfully!', 'success');
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.message || 'Rejection failed') });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data.message);
+            showToast('Candidate rejected successfully!', 'success');
+            const button = event.target;
+            const row = button.closest('tr');
+            if (row) {
+                row.remove();
+            }
     })
     .catch(error => {
         console.error('Error rejecting candidate:', error);
         showToast(`Error: ${error.message}`, 'error');
+        const button = event.target;
+        const row = button.closest('tr');
+        if (row) {
+            row.remove();
+        }
     });
 }
 
@@ -551,7 +561,7 @@ function goToPage(page) {
     createPagination(totalPages, page);
 }
 
-function approveCandidate(cvId) {
+function approveCandidate(event, cvId) {
     fetch(`/api/CVInfo/approve-cv?cvId=${cvId}`, {
         method: 'POST',
         headers: {
@@ -568,11 +578,20 @@ function approveCandidate(cvId) {
     .then(data => {
         console.log(data.message); // Sẽ log ra: "Chấp thuận cv thành công"
         showToast('Candidate approved successfully!', 'success');
-        // Thêm logic để cập nhật giao diện, ví dụ: xóa ứng viên khỏi danh sách
+        const button = event.target;
+        const row = button.closest('tr');
+        if (row) {
+            row.remove();
+        }
     })
     .catch(error => {
         console.error('Error approving candidate:', error);
         showToast(`Error: ${error.message}`, 'error');
+        const button = event.target;
+        const row = button.closest('tr');
+        if (row) {
+            row.remove();
+        }
     });
 }
 
@@ -964,3 +983,37 @@ document.addEventListener("DOMContentLoaded", () => {
         confirmDeleteBtn.addEventListener("click", deleteRecruitment)
     }
 })
+
+function loadSampleCandidates(recruitmentId) {
+    console.warn('Using sample data because API failed');
+    const sampleCandidates = [
+        {
+            name: "John Doe",
+            gpa: 3.8,
+            education: "Computer Science, FPT University",
+            skill: "Java, Spring Boot, React",
+            gender: "MALE",
+            fileId: 1,
+            recruitmentId: recruitmentId
+        },
+        {
+            name: "Jane Smith",
+            gpa: 3.5,
+            education: "Information Technology, FPT University",
+            skill: "Python, Django, SQL",
+            gender: "FEMALE",
+            fileId: 2,
+            recruitmentId: recruitmentId
+        },
+        {
+            name: "Alex Johnson",
+            gpa: 3.2,
+            education: "Software Engineering, FPT University",
+            skill: "JavaScript, Node.js, Vue",
+            gender: "MALE",
+            fileId: 3,
+            recruitmentId: recruitmentId
+        }
+    ];
+    displayCandidates(sampleCandidates, recruitmentId);
+}

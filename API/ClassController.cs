@@ -114,5 +114,12 @@ namespace PRN_Final_Project.API
             return Ok(result);
         }
 
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult> GetClassByUserId(int userId)
+        {
+            var result = await _classService.GetClassByUserId(userId);
+            return Ok(result);
+        }
+
     }
 }

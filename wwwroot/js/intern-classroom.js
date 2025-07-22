@@ -1,7 +1,7 @@
 // Global variables
-var user_id = document.getElementById("user_id").value;
+var userId = document.getElementById("user_id").value;
 let internId = null;
-let classId = null;
+let classId = null; 
 
 // Hàm hiển thị thông báo toàn cục
 function showGlobalAlert(message, type = 'danger') {
@@ -59,86 +59,138 @@ function showGlobalAlert(message, type = 'danger') {
 
 
 // Initialize the page
+// document.addEventListener("DOMContentLoaded", function() {
+//     // Get the intern ID from the hidden input
+//     const userIdElement = document.getElementById("user_id");
+//     const classroom =document.getElementById("class_Id")
+//     if (userIdElement && userIdElement.value) {
+//         internId = userIdElement.value;
+//         classId = classroom.value;
+
+//         console.log("Successfully fetched IDs:", { userId: internId, classId: classId });
+
+//         loadClassData(classId, internId);
+//     } else {
+//         console.error("Could not find user_id or class_Id in the DOM. Loading cannot proceed.");
+//         const errorMessage = document.getElementById("error-message");
+//         if (errorMessage) {
+//             errorMessage.textContent = "Không thể xác thực người dùng hoặc lớp học. Vui lòng tải lại trang.";
+//             errorMessage.style.display = "block";
+//         }
+//         document.getElementById("loading-indicator").style.display = 'none';
+//     }
+//     fixTaskListDisplay();
+
+//     // Also call after a short delay to ensure all content is loaded
+//     setTimeout(fixTaskListDisplay, 1000);
+
+//     // Call again after tasks are loaded
+//     const originalFetchTasks = window.fetchTasks;
+//     if (originalFetchTasks) {
+//         window.fetchTasks = (classId) => {
+//             originalFetchTasks(classId).then(() => {
+//                 setTimeout(fixTaskListDisplay, 500);
+//             });
+//         };
+//     }
+//     // Set up event listeners
+//     const sendMessageBtn = document.getElementById("sendMessageBtn");
+//     if (sendMessageBtn) {
+//         sendMessageBtn.addEventListener("click", sendMessage);
+//     }
+
+//     const messageInput = document.getElementById("message");
+//     if (messageInput) {
+//         messageInput.addEventListener("keypress", (e) => {
+//             if (e.key === "Enter") {
+//                 e.preventDefault();
+//                 sendMessage();
+//             }
+//         });
+//         ensureModalZIndex();
+//     }
+//     function ensureModalZIndex() {
+//         // Set global alert container to highest z-index
+//         const alertContainer = document.getElementById('globalAlertContainer');
+//         if (alertContainer) {
+//             alertContainer.style.zIndex = '1060';
+//         }
+
+//         // Adjust modal backdrop z-index
+//         const style = document.createElement('style');
+//         style.innerHTML = `
+//       .modal-backdrop {
+//         z-index: 1040 !important;
+//       }
+//       .modal {
+//         z-index: 1050 !important;
+//       }
+//       #globalAlertContainer {
+//         z-index: 9999 !important;
+//       }
+//     `;
+//         document.head.appendChild(style);
+//     }
+
+//     const submissionForm = document.getElementById("submission-form");
+//     if (submissionForm) {
+//         submissionForm.addEventListener("submit", (e) => {
+//             e.preventDefault();
+//             submitTask();
+//         });
+//     }
+
+//     // Add this new function call
+//     fixModalZIndexes();
+
+//     // Existing code...
+// });
+
 document.addEventListener("DOMContentLoaded", function() {
-    // Get the intern ID from the hidden input
+    console.log("Bước 1: DOM đã được tải. Script intern-classroom.js BẮT ĐẦU CHẠY.");
+
+    // Dòng này sẽ tạm dừng trình duyệt nếu DevTools (F12) đang mở,
+    // cho phép chúng ta kiểm tra mọi thứ.
+    // debugger;
+
+    console.log("Bước 2: Bắt đầu tìm kiếm các element user_id và class_Id.");
     const userIdElement = document.getElementById("user_id");
-    const classroom =document.getElementById("class_Id")
-    if (userIdElement && userIdElement.value) {
+    const classIdElement = document.getElementById("class_Id");
+
+    console.log("Bước 3: Kết quả tìm kiếm element:", {
+        userIdElement: userIdElement,
+        classIdElement: classIdElement
+    });
+
+    if (userIdElement && userIdElement.value && classIdElement && classIdElement.value) {
+        // Nếu vào được đây, có nghĩa là các element và value của chúng đều hợp lệ.
+        console.log("Bước 4: ĐIỀU KIỆN IF ĐÚNG (TRUE). Sẽ tiến hành gọi API.");
+
         internId = userIdElement.value;
-        classId = classroom.value;
-        loadClassData(classId);
+        classId = classIdElement.value;
+
+        console.log("Bước 5: Lấy được IDs thành công:", {
+            userId: internId,
+            classId: classId
+        });
+
+        // Gọi hàm loadClassData với đủ cả 2 tham số
+        loadClassData(classId, internId);
+        displayMockAttendanceChart();
+
     } else {
-        // Fallback to example ID for testing
-        internId = "203";
-
-        // Load the intern's class with mock data
-        loadInternClass();
-    }
-    fixTaskListDisplay();
-
-    // Also call after a short delay to ensure all content is loaded
-    setTimeout(fixTaskListDisplay, 1000);
-
-    // Call again after tasks are loaded
-    const originalFetchTasks = window.fetchTasks;
-    if (originalFetchTasks) {
-        window.fetchTasks = (classId) => {
-            originalFetchTasks(classId).then(() => {
-                setTimeout(fixTaskListDisplay, 500);
-            });
-        };
-    }
-    // Set up event listeners
-    const sendMessageBtn = document.getElementById("sendMessageBtn");
-    if (sendMessageBtn) {
-        sendMessageBtn.addEventListener("click", sendMessage);
-    }
-
-    const messageInput = document.getElementById("message");
-    if (messageInput) {
-        messageInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-        ensureModalZIndex();
-    }
-    function ensureModalZIndex() {
-        // Set global alert container to highest z-index
-        const alertContainer = document.getElementById('globalAlertContainer');
-        if (alertContainer) {
-            alertContainer.style.zIndex = '1060';
-        }
-
-        // Adjust modal backdrop z-index
-        const style = document.createElement('style');
-        style.innerHTML = `
-      .modal-backdrop {
-        z-index: 1040 !important;
-      }
-      .modal {
-        z-index: 1050 !important;
-      }
-      #globalAlertContainer {
-        z-index: 9999 !important;
-      }
-    `;
-        document.head.appendChild(style);
-    }
-
-    const submissionForm = document.getElementById("submission-form");
-    if (submissionForm) {
-        submissionForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            submitTask();
+        // Nếu vào đây, có nghĩa là một trong các điều kiện đã sai.
+        console.error("Bước 4: ĐIỀU KIỆN IF SAI (FALSE). Không thể gọi API.");
+        console.error("Kiểm tra lại giá trị của các biến:", {
+            isUserIdElementTruthy: !!userIdElement,
+            isUserIdValueTruthy: !!(userIdElement && userIdElement.value),
+            isClassIdElementTruthy: !!classIdElement,
+            isClassIdValueTruthy: !!(classIdElement && classIdElement.value)
         });
     }
 
-    // Add this new function call
-    fixModalZIndexes();
-
-    // Existing code...
+    // ... các đoạn mã khác trong DOMContentLoaded của bạn (nếu có)
+    // ví dụ: fixTaskListDisplay();
 });
 
 // Add this new function
@@ -169,7 +221,7 @@ function fixModalZIndexes() {
 function loadStudents(classId) {
 
 
-    fetch(`/api/class/${classId}/users`)
+    fetch(`/api/user/classroom/${classId}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Không thể lấy danh sách sinh viên từ server');
@@ -221,8 +273,9 @@ async function fetchTasks(classId) {
         const taskList = document.getElementById("task-list");
         if (taskList) {
             taskList.innerHTML = `
-                <div class="alert alert-danger">
-                    Không thể tải danh sách task. Vui lòng thử lại sau.
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm text-warning me-2" role="status"></div>
+                    <span>Đang tải danh sách task...</span>
                 </div>
             `;
         }
@@ -268,8 +321,6 @@ function fixTaskListDisplay() {
 }
 
 // Function to render tasks with the new design
-
-
 function renderTasksNewDesign(tasks) {
     const taskListElement = document.getElementById("task-list");
     if (!taskListElement) {
@@ -329,14 +380,14 @@ function renderTasksNewDesign(tasks) {
 
             // Add the task content first (we'll check submission status later)
             taskElement.innerHTML = `
-        ${statusIndicator}
-        <div class="task-title">${task.taskName || 'Unnamed Task'}</div>
-        <div class="task-description">${task.description || 'No Description'}</div>
-        <div class="task-meta">
-          <div>Start At: ${formattedStartTime}</div>
-          <div class="task-deadline">Deadline: ${formattedEndTime}</div>
-        </div>
-      `;
+            ${statusIndicator}
+            <div class="task-title">${task.taskName || 'Unnamed Task'}</div>
+            <div class="task-description">${task.description || 'No Description'}</div>
+            <div class="task-meta">
+            <div>Start At: ${formattedStartTime}</div>
+            <div class="task-deadline">Deadline: ${formattedEndTime}</div>
+            </div>
+        `;
 
             // Add click event to open task detail modal
             taskElement.addEventListener("click", () => {
@@ -447,8 +498,8 @@ function loadInternClass() {
 
 
     // Get the intern ID from the hidden input
-    const classroom = document.getElementById("class_Id");
-    const userIdElement = document.getElementById("user_id");
+    const classroom = document.getElementById("classId");
+    const userIdElement = document.getElementById("userId");
     if (userIdElement && userIdElement.value) {
         internId = userIdElement.value;
         classId = classroom.value;
@@ -463,7 +514,7 @@ function loadInternClass() {
     }
 }
 
-function loadClassData(classId) {
+function loadClassData(classId, userId) {
     // Show loading indicator
     const loadingIndicator = document.getElementById("loading-indicator");
     const errorMessage = document.getElementById("error-message");
@@ -473,7 +524,7 @@ function loadClassData(classId) {
     if (errorMessage) errorMessage.style.display = "none";
     if (classContent) classContent.style.display = "none";
 
-    fetch(`/api/class/${classId}`)
+    fetch(`/api/Class/user/${userId}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Không thể lấy dữ liệu lớp học từ server');
@@ -498,7 +549,7 @@ function loadClassData(classId) {
             fetchTasks(classId);
 
             // Load chat messages bằng cách gọi loadClassroomConversation với dữ liệu thực tế
-            loadClassroomConversation(classData.id, classData.className);
+            loadClassroomConversation(classData.id, classData.class_name);
 
             // Hide loading indicator and show content
             if (loadingIndicator) loadingIndicator.style.display = "none";
@@ -524,12 +575,12 @@ function displayClassDetails(classData) {
     const mentorInitials = document.getElementById("mentorInitials");
     const chatTitle = document.getElementById("chatTitle");
 
-    if (className) className.textContent = classData.className || "Unnamed Class";
+    if (className) className.textContent = classData.class_name || "Unnamed Class";
 
     // Format date and time
     if (classTime) {
         try {
-            const createdAt = new Date(classData.createdAt);
+            const createdAt = new Date(classData.created_at);
             const formattedDate = createdAt.toLocaleDateString("vi-VN", { day: '2-digit', month: '2-digit', year: 'numeric' });
             const formattedTime = createdAt.toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' });
             classTime.textContent = `${formattedDate} - ${formattedTime}`;
@@ -540,29 +591,29 @@ function displayClassDetails(classData) {
     }
 
     // Set mentor information
-    if (mentorName && classData.manager) {
-        const mentorFullName = `${classData.manager.first_name || ''} ${classData.manager.last_name || ''}`.trim();
+    if (mentorName && classData.mentor) {
+        const mentorFullName = `${classData.mentor.first_name || ''} ${classData.mentor.last_name || ''}`.trim();
         mentorName.textContent = mentorFullName || "Unknown Mentor";
     }
 
     // Get mentor ID and fetch avatar
-    if (classData.manager && classData.manager.id) {
-        const mentorId = classData.manager.id;
+    if (classData.mentor && classData.mentor.id) {
+        const mentorId = classData.mentor.id;
 
         // Fetch mentor avatar using the mentor ID
         fetchMentorAvatar(mentorId, mentorAvatar, mentorInitials);
     } else {
         // If no mentor ID, show initials
-        if (mentorInitials && classData.manager) {
-            const firstInitial = classData.manager.first_name ? classData.manager.first_name.charAt(0) : '';
-            const lastInitial = classData.manager.last_name ? classData.manager.last_name.charAt(0) : '';
+        if (mentorInitials && classData.mentor) {
+            const firstInitial = classData.mentor.first_name ? classData.mentor.first_name.charAt(0) : '';
+            const lastInitial = classData.mentor.last_name ? classData.mentor.last_name.charAt(0) : '';
             mentorInitials.textContent = (firstInitial + lastInitial) || "?";
             mentorInitials.style.display = "block";
         }
     }
 
     // Set chat title
-    if (chatTitle) chatTitle.textContent = classData.className || "Class Chat";
+    if (chatTitle) chatTitle.textContent = classData.class_name || "Class Chat";
 }
 
 // fetch Mentor avatar
@@ -571,9 +622,8 @@ function fetchMentorAvatar(mentorId, avatarElement, initialsElement) {
         console.error("Missing required parameters for fetchMentorAvatar");
         return;
     }
-
     // Make API call to get user details including avatar
-    fetch(`/api/user/${mentorId}`, {
+    fetch(`/api/Class/mentor/${mentorId}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -659,7 +709,7 @@ function displayStudents(students) {
 async function loadClassroomConversation(classId, className) {
     try {
         // Fetch class details to get conversation_id
-        const classResponse = await fetch(`/api/class/${classId}`);
+        const classResponse = await fetch(`/api/Class/${classId}`);
         if (!classResponse.ok) {
             throw new Error("Failed to fetch class details");
         }
@@ -724,9 +774,10 @@ async function loadClassroomConversation(classId, className) {
     } catch (error) {
         console.error("Error loading classroom conversation:", error);
         document.getElementById("chatContainer").innerHTML = `
-            <div class="alert alert-danger">
-                Không thể tải tin nhắn. Vui lòng thử lại sau.
-            </div>
+            <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm text-warning me-2" role="status"></div>
+                    <span>Đang tải danh sách tin nhắn...</span>
+                </div>
         `;
     }
 }
@@ -1166,4 +1217,108 @@ async function loadSubmissionHistory2(taskId) {
         `;
         throw error;
     }
+}
+
+/**
+     * Hàm này tạo và hiển thị biểu đồ chuyên cần với dữ liệu ảo.
+     * Nó sẽ tự sinh ngẫu nhiên số buổi có mặt và số buổi vắng.
+     */
+    function displayMockAttendanceChart() {
+        // --- Tạo dữ liệu ảo ---
+        const totalSessions = 25; // Giả sử tổng số buổi học là 25
+        const presentCount = Math.floor(Math.random() * 5) + 20; // Sinh số buổi có mặt ngẫu nhiên từ 20 -> 24
+        const absentCount = totalSessions - presentCount; // Số buổi vắng là phần còn lại
+
+        console.log("Creating mock attendance chart with data:", { present: presentCount, absent: absentCount });
+
+        // --- Cấu hình biểu đồ ---
+        const data = {
+            labels: ['Có mặt', 'Vắng mặt'],
+            datasets: [{
+                label: 'Số buổi',
+                data: [presentCount, absentCount],
+                backgroundColor: [
+                    'rgba(40, 167, 69, 0.85)', // Màu xanh lá cho "Có mặt"
+                    'rgba(220, 53, 69, 0.85)'  // Màu đỏ cho "Vắng mặt"
+                ],
+                borderColor: [
+                    'rgba(40, 167, 69, 1)',
+                    'rgba(220, 53, 69, 1)'
+                ],
+                borderWidth: 1,
+                hoverOffset: 8
+            }]
+        };
+
+        const config = {
+            type: 'doughnut',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%', // Độ lớn của vòng tròn ở giữa
+                plugins: {
+                    legend: {
+                        position: 'bottom', // Chú thích nằm ở dưới
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: {
+                                size: 13
+                            },
+                            // Tạo text cho chú thích (ví dụ: "Có mặt: 22 buổi")
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (data.labels.length && data.datasets.length) {
+                                    return data.labels.map(function(label, i) {
+                                        const ds = data.datasets[0];
+                                        const value = ds.data[i];
+                                        return {
+                                            text: `${label}: ${value} buổi`,
+                                            fillStyle: ds.backgroundColor[i],
+                                            strokeStyle: 'transparent',
+                                            lineWidth: ds.borderWidth,
+                                            hidden: isNaN(ds.data[i]),
+                                            index: i
+                                        };
+                                    });
+                                }
+                                return [];
+                            }
+                        }
+                    },
+                    tooltip: {
+                        // Tùy chỉnh tooltip khi di chuột vào
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.chart.getData().datasets[0].data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: ${value} buổi (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true
+                }
+            }
+        };
+
+        // --- Vẽ biểu đồ ---
+        const ctx = document.getElementById('attendanceChart');
+        if (ctx) {
+            // Xóa biểu đồ cũ đi nếu có để tránh vẽ chồng lên nhau
+            const existingChart = Chart.getChart(ctx);
+            if (existingChart) {
+                existingChart.destroy();
+            }
+            // Tạo biểu đồ mới
+            new Chart(ctx, config);
+        } else {
+            console.error("Không tìm thấy canvas với id 'attendanceChart'.");
+        }
 }

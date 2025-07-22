@@ -146,7 +146,7 @@ namespace PRN_Final_Project.Repositories
             }
 
         }
-        
+
         public async Task BanUser(int userId, int durationInDays, string reason)
         {
             // Update user active status in database
@@ -225,7 +225,7 @@ namespace PRN_Final_Project.Repositories
             await _cache.RemoveAsync(BAN_PREFIX + userId);
             await _cache.RemoveAsync(BAN_PREFIX + userId + ":expiry");
         }
-        
+
         public async Task<List<user>> GetUsersByRoleAsync(string role)
         {
             return await _context.users
@@ -264,6 +264,12 @@ namespace PRN_Final_Project.Repositories
         {
             return await _context.users
                 .FirstOrDefaultAsync(u => u.email == email);
+        }
+
+        public async Task<user> GetUserByClassId(int classId)
+        {
+            return await _context.users
+                .FirstOrDefaultAsync(u => u.class_id == classId && u.role == "INTERN" && u.is_active == true);
         }
     }
 }
