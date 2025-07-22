@@ -40,7 +40,9 @@ namespace PRN_Final_Project.Controllers
             var email = user.FindFirst(ClaimTypes.Email)?.Value;
             var firstName = user.FindFirst(ClaimTypes.GivenName)?.Value;
             var lastName = user.FindFirst(ClaimTypes.Surname)?.Value;
-            var picture = user.FindFirst("picture")?.Value;
+            var picture = user.FindFirst("urn:google:picture")?.Value ?? "/assets/img/users/default-avatar.png";
+            var phoneNumber = user.FindFirst(ClaimTypes.MobilePhone)?.Value;
+            var gender = user.FindFirst(ClaimTypes.Gender)?.Value;
 
             if (string.IsNullOrEmpty(email))
             {
@@ -48,7 +50,7 @@ namespace PRN_Final_Project.Controllers
             }
 
             // Check if user exists or create new
-            var existingUser = await _userService.GetByEmail(email);
+            var existingUser = await _userService.GetOneByEmail(email);
             if (existingUser == null)
             {
                 var newUser = new user
@@ -57,21 +59,40 @@ namespace PRN_Final_Project.Controllers
                     first_name = firstName,
                     last_name = lastName,
                     avatar_path = picture,
-                    role = "GUEST"
+                    phone_number = phoneNumber,
+                    gender = gender,
+                    role = "GUEST",
+                    is_active = true,
+                    created_at = DateTime.Now
                 };
 
                 await _userService.AddAsync(newUser);
-                existingUser = newUser;
+                existingUser = await _userService.GetOneByEmail(email);
+            }
+
+            // Check if user is banned (exists in Redis cache)
+            var banStatus = await _userService.GetBanStatus(existingUser.id);
+            if (banStatus.ContainsKey("isBanned") && (bool)banStatus["isBanned"] == true)
+            {
+                // Add a TempData message to inform the user
+                TempData["ErrorMessage"] = $"Your account has been banned. Reason: {banStatus["reason"]}";
+
+                Redirect("/logout");
+            }
+
+            if (existingUser.is_active.HasValue && existingUser.is_active.Value == false)
+            {
+                Redirect("/logout");
             }
 
             // Create your own claims
-            var claims = new List<Claim>    
+            var claims = new List<Claim>
     {
         new Claim(ClaimTypes.NameIdentifier, existingUser.id.ToString()),
         new Claim(ClaimTypes.Email, existingUser.email),
-        new Claim("Avatar", existingUser.avatar_path ?? "/assets/img/default-avatar.png"),
+        new Claim("Avatar", existingUser.avatar_path ?? "/assets/img/users/default-avatar.png"),
         new Claim(ClaimTypes.Name, existingUser.first_name + " " + existingUser.last_name),
-        new Claim(ClaimTypes.Role, existingUser.role)
+        new Claim(ClaimTypes.Role, existingUser.role),
     };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -90,9 +111,11 @@ namespace PRN_Final_Project.Controllers
 
             // Redirect based on role
             if (existingUser.role == "ADMIN")
-                return Redirect("/manage-user");
-            else if (existingUser.role == "EMPLOYEE" || existingUser.role == "INTERN")
-                return Redirect("/manageclass");
+                return Redirect("/admin");
+            else if (existingUser.role == "EMPLOYEE")
+                return Redirect("/employee");
+            else if (existingUser.role == "INTERN")
+                return Redirect("/intern");
             else
                 return Redirect("/landingpage");
         }

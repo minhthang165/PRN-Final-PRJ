@@ -1,0 +1,251 @@
+﻿@{
+    ViewData["Title"] = "Manage Classroom";
+}
+
+<link rel="stylesheet" href="/css/manageClass.css">
+
+<div class="app__slide-wrapper">
+    <div class="breadcrumb__area">
+        <div class="breadcrumb__wrapper mb-35" style="padding: 0px;">
+            <div class="breadcrumb__main">
+                <div class="breadcrumb__inner">
+                    <div class="breadcrumb__icon">
+                        <i class="flaticon-home"></i>
+                    </div>
+                    <div class="breadcrumb__menu">
+                        <nav>
+                            <ul>
+                                <li><span><a asp-controller="Admin" asp-action="Index">Dashboard</a></span></li>
+                                <li class="active"><span>Manage Classroom</span></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+                <div class="search_add d-flex justify-content-between align-items-center">
+                    <div class="new_class">
+                        <div class="breadcrum__button">
+                            <button class="element__btn yellow-bg" data-bs-toggle="modal" data-bs-target="#newClassModal">
+                                Add Class +
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-grow-1 p-4">
+        <h5 class="classroom-title">Classroom List</h5>
+        <!-- Table -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <input type="text" id="searchInput" class="form-control"
+                           style="width: 250px; margin-right: 10px;"
+                           placeholder="Search classrooms..." onkeyup="filterTable()">
+                    <button class="btn btn-outline-primary btn-sm" onclick="sortTable(0)">Sort by Name</button>
+                    <button class="btn btn-outline-primary btn-sm mx-2" onclick="sortTable(1)">Sort by Number of Interns</button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="sortTable(3)">Sort By Status</button>
+                </div>
+                <table id="classroomTable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Class Name</th>
+                            <th>Number of Interns</th>
+                            <th>Manager</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-content"></tbody>
+                </table>
+                <!-- pagination -->
+                <div class="table-footer">
+                    <div class="records-selector">
+                        <span>Show</span>
+                        <select class="records-per-page" style="width: 64px" onchange="changePageSize(this)">
+                            <option value="5" selected>5</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>records</span>
+                    </div>
+
+                    <div class="pagination-container">
+                        <ul id="pagination-list" class="pagination-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userModalTitle">User List</h5>
+                    <button type="button" class="btn-close" onclick="closeModal()" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="search-bar d-flex gap-2 align-items-center">
+                        <input type="text" id="searchUserInput" class="form-control" placeholder="Search users...">
+                        <button class="btn btn-primary" id="searchUserButton">Search</button>
+                    </div>
+                    <div class="table-responsive mt-4">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Full Name</th>
+                                    <th>Email</th>
+                                    <th>Phone Number</th>
+                                    <th>Gender</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody">
+                                <!-- User data will be loaded here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal for locking/unlocking class -->
+    <div class="modal fade" id="genericModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalMessage">Message here...</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary d-none" id="modalCancelBtn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary d-none" id="modalConfirmBtn">Yes</button>
+                    <button type="button" class="btn btn-success d-none" id="modalOkBtn" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Class Modal -->
+    <div class="modal fade" id="editClassModal" tabindex="-1" aria-labelledby="editClassModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editClassModalLabel">Edit Class</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editClassForm">
+                        <input type="hidden" id="editClassId"> <!-- Store class ID -->
+
+                        <div class="mb-3">
+                            <label for="editClassName" class="form-label">Class Name</label>
+                            <input type="text" class="form-control" id="editClassName" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editNumberOfInterns" class="form-label">Number of Interns</label>
+                            <input type="number" class="form-control" id="editNumberOfInterns" required min="1">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editStatus" class="form-label">Status</label>
+                            <select class="form-control" id="editStatus" required>
+                                <option value="NOT_STARTED">NOT_STARTED</option>
+                                <option value="ON_GOING">ON_GOING</option>
+                                <option value="ENDED">ENDED</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editManager" class="form-label">Select Manager:</label>
+                            <select id="editManager" name="manager" class="form-control">
+                                @if (ViewBag.userRoleList != null)
+                                {
+                                    @foreach (var user in ViewBag.userRoleList)
+                                    {
+                                        <option value="@user.id">@(user.first_name + " " + user.last_name)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="editClassFormSubmit">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Class Modal -->
+    <div class="modal fade" id="newClassModal" tabindex="-1" aria-labelledby="newClassModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newClassModalLabel">Create a new Class</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newClassForm">
+                        <input type="hidden" id="newClassId">
+
+                        <div class="mb-3">
+                            <label for="newClassName" class="form-label">Class Name</label>
+                            <input type="text" class="form-control" id="newClassName" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="newNumberOfInterns" class="form-label">Number of Interns</label>
+                            <input type="number" class="form-control" id="newNumberOfInterns" required min="1">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="newStatus" class="form-label">Status</label>
+                            <select class="form-control" id="newStatus" required>
+                                <option value="NOT_STARTED">NOT_STARTED</option>
+                                <option value="ON_GOING">ON_GOING</option>
+                                <option value="ENDED">ENDED</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="newManager" class="form-label">Select Manager:</label>
+                            <select id="newManager" name="manager" class="form-control">
+                                @if (ViewBag.userRoleList != null)
+                                {
+                                    @foreach (var user in ViewBag.userRoleList)
+                                    {
+                                        <option value="@user.id">@(user.first_name + " " + user.last_name)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="newClassFormSubmit">Save a new class</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="toast-notification">
+        <div class="toast-content">
+            <i class="fas fa-check-circle toast-icon"></i>
+            <div class="toast-message" id="toastMessage">Notification message</div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="/js/manageClass.js"></script>
+}

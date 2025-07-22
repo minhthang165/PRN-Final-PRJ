@@ -10,5 +10,6 @@ namespace PRN_Final_Project.Service.Interface
     public interface IFileService : ICommonService<UserFile>
     {
         Task<UserFile> UploadPdf(IFormFile file);
+        Task<List<UserFile>> GetByUserIdAsync(int id);
     }
 }

@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace PRN_Final_Project.Business.Entities;
 
@@ -52,4 +53,6 @@ public partial class user
     public virtual ICollection<UserFile> UserFiles { get; set; } = new List<UserFile>();
 
     public virtual ICollection<UserTask> UserTasks { get; set; } = new List<UserTask>();
+    [JsonIgnore]
+    public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 }

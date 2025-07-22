@@ -106,5 +106,13 @@ namespace PRN_Final_Project.API
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("mentor/{id}")]
+        public async Task<ActionResult> GetClassByMentorId(int id)
+        {
+            var result = await _classService.GetClassesByMentorId(id);
+            return Ok(result);
+        }
+
     }
 }

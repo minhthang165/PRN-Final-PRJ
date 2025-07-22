@@ -1,0 +1,189 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@section Styles {
+    <link rel="stylesheet" href="/css/donation.css" />
+}
+
+<main class="main">
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1 class="hero-title">Make a Difference Today</h1>
+            <p class="hero-description">
+                Your donation helps us provide essential resources, education, and support to communities in need.
+                Every contribution, no matter the size, creates lasting impact.
+            </p>
+
+            <!-- Impact Stats -->
+            <div class="stats">
+                <div class="stat-item">
+                    <i class="fas fa-users stat-icon"></i>
+                    <div class="stat-number">10,000+</div>
+                    <div class="stat-label">Lives Impacted</div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-bullseye stat-icon"></i>
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">Programs Active</div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-shield-alt stat-icon"></i>
+                    <div class="stat-number">95%</div>
+                    <div class="stat-label">Goes to Programs</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Donation Form -->
+        <div class="donation-form-container">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Choose Your Donation Amount</h2>
+                    <p class="card-description">
+                        Your generosity helps us continue our mission to create positive change
+                    </p>
+                </div>
+                <div class="card-content">
+                    <form id="donationForm" class="donation-form">
+                        <!-- Amount Selection -->
+                        <div class="form-section">
+                            <label class="section-label">Select Amount (In Thousand)</label>
+                            <div class="amount-buttons">
+                                <button type="button" class="amount-btn" data-amount="50000">50</button>
+                                <button type="button" class="amount-btn active" data-amount="100000">100</button>
+                                <button type="button" class="amount-btn" data-amount="200000">200</button>
+                                <button type="button" class="amount-btn" data-amount="500000">500</button>
+                                <button type="button" class="amount-btn" data-amount="1000000">1000</button>
+                            </div>
+
+                            <div class="custom-amount">
+                                <label for="customAmount" class="custom-label">Custom Amount:</label>
+                                <div class="custom-input-wrapper">
+                                    <span class="currency-symbol"></span>
+                                    <input type="number" id="customAmount" placeholder="Enter amount" min="1" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Donor Information -->
+                        <div class="form-section">
+                            <label class="section-label">Donor Information</label>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="firstName">First Name *</label>
+                                    <input type="text" id="firstName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="lastName">Last Name *</label>
+                                    <input type="text" id="lastName" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email Address *</label>
+                                <input type="email" id="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="message">Message (Optional)</label>
+                                <textarea id="message" placeholder="Share why you're supporting our cause..." rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Donation Summary -->
+                        <div class="donation-summary">
+                            <div class="summary-row">
+                                <span>Total Donation:</span>
+                                <span class="total-amount" id="totalAmount">100000</span>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="donate-btn" id="donateBtn">
+                            <span id="btnText">Donate 100000</span>
+                            <div id="btnLoader" class="btn-loader" style="display: none;">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                Processing...
+                            </div>
+                        </button>
+
+                        <!-- Security Notice -->
+                        <div class="security-notice">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Secure payment powered by Stripe</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="additional-info">
+                <p>Your donation is tax-deductible. You will receive a receipt via email for your records.</p>
+                <p>
+                    Questions? Contact us at
+                    <a href="mailto:donations@hopefoundation.org">donations@hopefoundation.org</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Success Modal -->
+<div id="successModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <i class="fas fa-check-circle success-icon"></i>
+            <h2>Thank You!</h2>
+            <p>Your donation has been successfully processed</p>
+        </div>
+        <div class="modal-body">
+            <div class="confirmation-details">
+                <div class="detail-row">
+                    <span>Donation Amount:</span>
+                    <span class="amount" id="confirmedAmount">100000</span>
+                </div>
+                <div class="detail-row">
+                    <span>Transaction ID:</span>
+                    <span id="transactionId">TXN-123456789</span>
+                </div>
+                <div class="detail-row">
+                    <span>Date:</span>
+                    <span id="transactionDate"></span>
+                </div>
+            </div>
+
+            <div class="next-steps">
+                <h3>What happens next?</h3>
+                <ul>
+                    <li>You'll receive a tax-deductible receipt via email within 24 hours</li>
+                    <li>Your donation will be put to work immediately in our programs</li>
+                    <li>We'll send you updates on the impact of your contribution</li>
+                </ul>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeModal()">Close</button>
+            <button class="btn-primary" onclick="downloadReceipt()">
+                <i class="fas fa-download"></i>
+                Download Receipt
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="/js/donation.js"></script>
+
+    @if (ViewData["PaymentSuccess"] != null && (bool)ViewData["PaymentSuccess"])
+    {
+        <script>
+            var paymentResult = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewData["PaymentResult"]));
+            var paymentAmmount = @ViewBag.Money;
+            document.addEventListener('DOMContentLoaded', function() {
+                showSuccessModal(paymentResult, paymentAmmount);
+            });
+        </script>
+    }
+}

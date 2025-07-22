@@ -291,8 +291,8 @@ function updateUser() {
         gender: genderInput.value,
     };
 
-    fetch(`/api/user/update/${userId}`, {
-        method: "PATCH",
+    fetch(`/api/user/update/`, {
+        method: "PUT",
         headers: {
             "Content-Type": "application/json"
         },
@@ -301,10 +301,7 @@ function updateUser() {
         .then(response => response.json())
         .then(user => {
             $('#editUserModal').modal('hide');
-            showToast("User updated successfully!", "success");
-            setTimeout(() => {
-                location.reload();
-            }, 500);
+            location.reload();
         })
         .catch(error => showToast("Error updating user: " + error, "error"));
 }
@@ -376,10 +373,11 @@ function loadPage(page, size) {
     fetch(`/api/user/role/INTERN?page=${page}&&size=${size}`)
         .then(response => response.json())
         .then(data => {
+            console.log(data);
             totalPages = data.totalPages;
             currentPage = data.number;
             pageSize = data.size;
-            renderTable(data.content);
+            renderTable(data.items);
             renderPagination();
         })
 }
@@ -387,19 +385,18 @@ function loadPage(page, size) {
 function renderTable(interns) {
     let tableContent = document.getElementById("table-body");
     tableContent.innerHTML = '';
-
     tableContent.innerHTML = interns.map(user => `
         <tr>
             <td>${user.first_name} ${user.last_name}</td>
             <td>${user.email}</td>
-            <td>${user.classroom.className}</td>
+            <td>${user.class_id}</td>
             <td>${user.phone_number}</td>
             <td>${user.gender}</td>
             <td>${user.role}</td>
-            <td class="${user.active ? 'active' : 'inactive'}">
+            <td class="${user.is_active ? 'active' : 'inactive'}">
                 <a href="#" data-id="${user.id}" class="toggle-class-status">
                     <i data-id="${user.id}" data-user-email="${user.email}"
-                       class="flaticon-padlock ${user.active ? 'active' : 'inactive'}">
+                       class="flaticon-padlock ${user.is_active ? 'active' : 'inactive'}">
                     </i>
                 </a>
                 <a href="#" class="edit-user-modal" data-id="${user.id}"

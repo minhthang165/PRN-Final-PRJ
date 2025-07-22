@@ -1,0 +1,13 @@
+﻿.btn-gradient {
+    background: linear-gradient(90deg, #f857a6 0%, #ff5858 100%);
+    color: white;
+    border: none;
+}
+
+    .btn-gradient:hover {
+        opacity: 0.9;
+    }
+
+.opacity-85 {
+    opacity: 0.85;
+}

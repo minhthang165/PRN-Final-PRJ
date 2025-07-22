@@ -1,0 +1,251 @@
+﻿@{
+    ViewData["Title"] = "Manage Employee";
+}
+
+<link rel="stylesheet" href="/css/manageEmployee.css">
+
+@Html.Partial("Sidebar/_AdminSidebar")
+<div class="app__slide-wrapper">
+    <div class="breadcrumb__area">
+        <div class="breadcrumb__wrapper mb-35" style="padding: 0px;">
+            <div class="breadcrumb__main">
+                <div class="breadcrumb__inner">
+                    <div class="breadcrumb__icon">
+                        <i class="flaticon-home"></i>
+                    </div>
+                    <div class="breadcrumb__menu">
+                        <nav>
+                            <ul>
+                                <li><span><a asp-controller="Admin" asp-action="Index">Dashboard</a></span></li>
+                                <li class="active"><span>Manage Employee</span></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+                <div class="search_add d-flex justify-content-between align-items-center">
+                    <div class="new_class">
+                        <div class="breadcrum__button">
+                            <button class="element__btn border-red" data-bs-toggle="modal"
+                                    data-bs-target="#importModal">
+                                Import Excel
+                            </button>
+                        </div>
+                    </div>
+                    <div class="new_class">
+                        <div class="breadcrum__button">
+                            <button class="element__btn yellow-bg" data-bs-toggle="modal"
+                                    data-bs-target="#addUserModal">
+                                Add Employee +
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-grow-1 p-4">
+        <h3 style="font-weight: bold">Employee List</h3>
+        <!-- Table -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <input type="text" id="searchInput" class="form-control"
+                           style="width: 250px; margin-right: 10px;"
+                           placeholder="Search Employees..." onkeyup="filterTable()">
+                    <button class="btn btn-outline-primary btn-sm" onclick="sortTable(0)">Sort by Name</button>
+                    <button class="btn btn-outline-primary btn-sm mx-2" onclick="sortTable(2)">Sort by Phone</button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="sortTable(4)">Sort by Role</button>
+                </div>
+
+                <table id="userTable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Phone number</th>
+                            <th>Gender</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+                <!--pagination-->
+                <div class="table-footer">
+                    <div class="records-selector">
+                        <span>Show</span>
+                        <select class="records-per-page" style="width: 64px" onchange="changePageSize(this)">
+                            <option value="5" selected>5</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>record</span>
+                    </div>
+                    <div class="pagination-container">
+                        <ul id="pagination-list" class="pagination-list">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lock/Unlock User Modal -->
+    <div class="modal fade" id="genericModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="modalMessage"></p>
+                    <div id="lockInputs" class="d-none">
+                        <label for="lockReason" class="form-label">Reason for Lock:</label>
+                        <textarea id="lockReason" class="form-control" rows="2"></textarea>
+                        <label for="lockDuration" class="form-label mt-2">Lock Duration (in days):</label>
+                        <input type="number" id="lockDuration" class="form-control" min="1">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary d-none" id="modalCancelBtn"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary d-none" id="modalConfirmBtn">Confirm</button>
+                    <button type="button" class="btn btn-primary" id="modalOkBtn" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId">
+                        <div class="form-group mb-3">
+                            <label for="editFullName" class="form-label">Full Name</label>
+                            <input type="text" id="editFullName" class="form-control">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" id="editEmail" class="form-control uneditable" readonly>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="editPhoneNumber" class="form-label">Phone number</label>
+                            <input type="tel" id="editPhoneNumber" class="form-control">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="editGender" class="form-label">Gender</label>
+                            <select id="editGender" class="form-control">
+                                <option value="MALE">MALE</option>
+                                <option value="FEMALE">FEMALE</option>
+                                <option value="OTHER">OTHER</option>
+                            </select>
+                        </div>
+                        <div class="form-group" hidden>
+                            <select id="editRole" class="form-control"></select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="updateUser()">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Add User -->
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addUserModalLabel">Add Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addUserForm">
+                        <div class="mb-3">
+                            <label for="addUserName" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="addUserName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addUserEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="addUserEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addUserPhoneNumber" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="addUserPhoneNumber" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addUserGender" class="form-label">Gender</label>
+                            <select class="form-control" id="addUserGender">
+                                <option value="MALE">Male</option>
+                                <option value="FEMALE">Female</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" hidden>
+                            <label for="addUserRole" class="form-label">Role</label>
+                            <select class="form-control" id="addUserRole"></select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-warning" onclick="addUser()">Add User</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Import Data -->
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Import Data From Excel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Make sure the data matches the format of the sample template</p>
+                    <div class="upload-box text-center border border-dashed p-4" id="dropZone"
+                         style="border-radius: 10px;">
+                        <input type="file" id="fileInput" hidden>
+                        <label for="fileInput" class="d-block cursor-pointer">
+                            <img src="/assets/img/icon/upload-icon.png" alt="Upload" width="50" style="margin: auto">
+                            <p class="mt-2">Drag and drop or select<br>to upload data files</p>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link" id="downloadTemplate">Download Template</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="uploadFile">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="toast-notification">
+        <div class="toast-content">
+            <i class="fas fa-check-circle toast-icon"></i>
+            <div class="toast-message" id="toastMessage">Notification message</div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="/js/manageEmployee.js"></script>
+}

@@ -19,7 +19,8 @@ namespace PRN_Final_Project.Service
             _apiKey = config["Gemini:ApiKey"] ?? throw new Exception("Missing Gemini API key");
             _httpClient = new HttpClient();
         }
-        public async Task<CVExtractedInfo> ExtractData(string base64Pdf)
+
+        public async Task<CVExtractedInfo> ExtractData(string fileUrl)
         {
             var instructionPrompt = """
         Dựa vào nội dung file CV được cung cấp, hãy trích xuất các thông tin sau dưới dạng JSON:
@@ -29,6 +30,15 @@ namespace PRN_Final_Project.Service
         
         Chỉ trả về đối tượng JSON, không giải thích gì thêm.
         """;
+
+
+            // 1. Tải nội dung file từ URL về dưới dạng byte array
+            var fileBytes = await _httpClient.GetByteArrayAsync(fileUrl);
+
+            // 2. Chuyển byte array thành chuỗi Base64
+            var fileBase64 = Convert.ToBase64String(fileBytes);
+
+            // 3. Cập nhật lại body request để gửi dữ liệu inline thay vì fileUri
             var body = new
             {
                 contents = new[]
@@ -38,9 +48,9 @@ namespace PRN_Final_Project.Service
                 {
                     new { text = instructionPrompt },
                     new {
-                        inline_data = new {
-                            mime_type = "application/pdf",
-                            data = base64Pdf
+                        inlineData = new {
+                            mimeType = "application/pdf",
+                            data = fileBase64
                         }
                     }
                 }

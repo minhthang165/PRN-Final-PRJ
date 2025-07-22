@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using PRN_Final_Project.API.Dto;
 using PRN_Final_Project.Business.Entities;
 using PRN_Final_Project.Repositories.Common;
 using PRN_Final_Project.Repositories.Interface;
@@ -54,17 +55,12 @@ namespace PRN_Final_Project.Service
             await _repository.DeleteAsync(id);
         }
 
-        public async Task<CV_Info> UploadCv(IFormFile file, int recruitmentId)
+        public async Task<CV_Info> ApplyCv(int fileId, int recruitmentId)
         {
-            if (file == null || file.Length == 0)
-                throw new Exception("No file uploaded");
-            var userFile = await _file.UploadPdf(file);
-
-            using var ms = new MemoryStream();
-            await file.CopyToAsync(ms);
-            var base64 = Convert.ToBase64String(ms.ToArray());
-
-            var extractedInfo = await _extractor.ExtractData(base64);
+            var file = await _file.GetByIdAsync(fileId);
+            if (file == null || string.IsNullOrEmpty(file.path))
+                throw new Exception("File not found or missing URL");
+            var extractedInfo = await _extractor.ExtractData(file.path);
 
             if (extractedInfo.GPA == 0)
             {
@@ -82,7 +78,7 @@ namespace PRN_Final_Project.Service
             var cvInfo = new CV_Info
             {
                 recruitment_id = recruitmentId,
-                file_id = userFile.id,
+                file_id = file.id,
                 gpa = extractedInfo.GPA ?? 0.0m,
                 education = educationDbString,
                 skill = skillString,
@@ -94,7 +90,7 @@ namespace PRN_Final_Project.Service
             return cvInfo;
         }
 
-        public async Task<List<CV_Info>> FindCvInfoByRecruitmentId(int recruitmentId)
+        public async Task<List<CandidateDto>> FindCvInfoByRecruitmentId(int recruitmentId)
         {
             return await _repository.FindCvInfoByRecruitmentId(recruitmentId);
         }
@@ -107,6 +103,14 @@ namespace PRN_Final_Project.Service
         public async Task RejectCv(int cvId)
         {
             await _repository.RejectCv(cvId);
+        }
+        public async Task<int> CountActiveCVByRecruitmentId(int recruitmentId)
+        {
+            return await _repository.CountActiveCVByRecruitmentId(recruitmentId);
+        }
+        public async Task<bool> ExistsByFileIdAndRecruitmentId(int fileId, int recruitmentId)
+        {
+            return await _repository.ExistsByFileIdAndRecruitmentId(fileId, recruitmentId);
         }
     }
 }

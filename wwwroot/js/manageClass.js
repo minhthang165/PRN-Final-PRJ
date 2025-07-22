@@ -66,7 +66,7 @@ function loadUsers(classId) {
     const tableBody = document.getElementById("userTableBody");
     tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Loading users...</td></tr>';
 
-    fetch(`/api/class/${classId}/users`)
+    fetch(`/api/Class/${classId}`)
         .then(response => {
             if (!response.ok) throw new Error(`Failed to fetch users: ${response.status}`);
             return response.json();
@@ -124,7 +124,7 @@ document.addEventListener("click", function (event) {
     });
 });
 function toggleClassStatus(classId, action) {
-    let url = action === "unlock" ? `/api/class/setIsActiveTrue/${classId}` : `/api/class/delete/${classId}`;
+    let url = action === "unlock" ? `/api/Class/setIsActiveTrue/${classId}` : `/api/class/delete/${classId}`;
     let method = action === "unlock" ? "PATCH" : "DELETE";
 
     fetch(url, { method: method })
@@ -175,8 +175,8 @@ function toggleActiveStatus(icon, event) {
 
     showModal("Confirm", message, true, function () {
         let url = action === "unlock"
-            ? `/api/class/setIsActiveTrue/${classId}`
-            : `/api/class/delete/${classId}`;
+            ? `/api/Class/setIsActiveTrue/${classId}`
+            : `/api/Class/${classId}`;
         let method = action === "unlock" ? "PATCH" : "DELETE";
 
         fetch(url, { method: method })
@@ -315,7 +315,7 @@ document.getElementById("newClassForm").addEventListener("submit", function (eve
             if (row) {
                 row.children[0].textContent = newClass.className;
                 row.children[1].textContent = newClass.numberOfIntern;
-                row.children[2].setAttribute("data-manager-id", newClass.manager.id);
+                row.children[2].setAttribute("data-manager-id", newClass.mentor.id);
                 row.children[2].textContent = newClass.manager.first_name + " " + newClass.manager.last_name;
             }
 
@@ -413,13 +413,14 @@ function changePageSize(select) {
 }
 
 function loadPage(page, size) {
-    fetch(`/api/class?page=${page}&&size=${size}`)
+    fetch(`/api/Class?paging=${page}&pageSize=${size}`)
         .then(response => response.json())
         .then(data => {
             totalPages = data.totalPages;
             currentPage = data.number;
             pageSize = data.size;
-            renderTable(data.content);
+            console.log(data);
+            renderTable(data);
             renderPagination();
         })
         .catch(error => console.error("Error fetching data:", error));
@@ -429,14 +430,14 @@ function renderTable(classes) {
     let tableContent = document.getElementById("table-content");
     tableContent.innerHTML='';
     tableContent.innerHTML = classes.map(c => `
-        <tr id="manager-${c.manager.id}" data-class-id="${c.id}">
-            <td>${c.className}</td>
-            <td>${c.numberOfIntern}</td>
-            <td>${c.manager.first_name} ${c.manager.last_name}</td>
+        <tr id="manager-${c.mentor.id}" data-class-id="${c.id}">
+            <td>${c.class_name}</td>
+            <td>${c.number_of_interns}</td>
+            <td>${c.mentor.first_name} ${c.mentor.last_name}</td>
             <td>${c.status}</td>
             <td>
                 <a href="#" class="toggle-class-status open-modal" data-id="${c.id}">
-                    <i class="${c.active ? 'flaticon-padlock active' : 'flaticon-padlock inactive'}" onclick="toggleActiveStatus(this, event)"></i>
+                    <i class="${c.is_active ? 'flaticon-padlock active' : 'flaticon-padlock inactive'}" onclick="toggleActiveStatus(this, event)"></i>
                 </a>
                 <a href="#" class="edit-class-status">
                     <i class="flaticon-edit edit-class" style="cursor: pointer; color: blue;"></i>

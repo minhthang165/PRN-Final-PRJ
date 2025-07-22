@@ -1,0 +1,97 @@
+﻿@model PRN_Final_Project.Business.Entities.user;  
+
+@{  
+    ViewData["Title"] = "Edit Profile";  
+}  
+
+@section Styles {  
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />  
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />  
+    <link href="/css/edit.css" rel="stylesheet" />  
+}  
+
+<div class="flex justify-center items-center min-h-screen p-4 relative">  
+    <div class="profile-container w-full max-w-4xl">  
+        <div class="profile-header">  
+            <div>  
+                <h1 class="profile-title">Edit Your Profile</h1>  
+                <p class="profile-subtitle">Update your personal information</p>  
+            </div>  
+        </div>  
+
+        <div class="profile-content">  
+
+            <div class="flex justify-between items-center mb-4">  
+                <a asp-controller="Account" asp-action="Logout" class="logout-link">  
+                    <i class="fas fa-sign-out-alt"></i> Logout  
+                </a>  
+            </div>  
+
+            <div class="divider"></div>  
+
+            <form asp-action="Edit" asp-controller="Profile" enctype="multipart/form-data" method="post">  
+                @* Hidden Id Field *@  
+                <input type="hidden" asp-for="id" />  
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">  
+                    <div class="md:col-span-2 flex justify-center mb-6">  
+                        <div class="profile-image-container" onclick="document.getElementById('avatarFile').click()">  
+                            <img id="picture" src="@Model.avatar_path ?? "/placeholder.svg?height=120&width=120"" alt="Profile Picture" class="profile-image" />  
+                            <button type="button" class="image-edit-button">  
+                                <i class="fas fa-camera"></i>  
+                            </button>  
+                            <input asp-for="avatar_path" type="file" id="avatarFile" style="display:none" onchange="updateAvatar(event)" />  
+                        </div>  
+                    </div>  
+
+                    <div class="form-group">  
+                        <label asp-for="first_name" class="form-label"></label>  
+                        <input asp-for="first_name" class="form-input" placeholder="Enter your first name" required />  
+                        <span asp-validation-for="first_name" class="text-red-500 text-sm"></span>  
+                    </div>  
+
+                    <div class="form-group">  
+                        <label asp-for="last_name" class="form-label"></label>  
+                        <input asp-for="last_name" class="form-input" placeholder="Enter your last name" required />  
+                        <span asp-validation-for="last_name" class="text-red-500 text-sm"></span>  
+                    </div>  
+
+                    <div class="form-group">  
+                        <label asp-for="email" class="form-label"></label>  
+                        <input asp-for="email" class="form-input bg-gray-100" readonly />  
+                    </div>  
+
+                    <div class="form-group">  
+                        <label asp-for="phone_number" class="form-label"></label>  
+                        <input asp-for="phone_number" class="form-input" placeholder="Enter your phone number" />  
+                        <span asp-validation-for="phone_number" class="text-red-500 text-sm"></span>  
+                    </div>  
+
+                    <div class="form-group md:col-span-2">  
+                        <label asp-for="gender" class="form-label"></label>  
+                        <select asp-for="gender" class="form-input form-select" required>  
+                            <option value="FEMALE">Female</option>  
+                            <option value="MALE">Male</option>  
+                            <option value="OTHER">Other</option>  
+                        </select>  
+                        <span asp-validation-for="gender" class="text-red-500 text-sm"></span>  
+                    </div>  
+                </div>  
+
+                <div class="action-buttons mt-6">  
+                    <a href="javascript:history.back()" class="action-button secondary">  
+                        <i class="fas fa-arrow-left"></i> Cancel  
+                    </a>  
+                    <button type="submit" class="action-button primary">  
+                        <i class="fas fa-save"></i> Save Changes  
+                    </button>  
+                </div>  
+            </form>  
+        </div>  
+    </div>  
+</div>  
+
+@section Scripts {  
+    <script src="/js/editProfile.js"></script>  
+    <partial name="_ValidationScriptsPartial" />  
+}

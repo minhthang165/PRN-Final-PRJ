@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using CloudinaryDotNet.Actions;
 using Microsoft.EntityFrameworkCore;
+using PRN_Final_Project.API.Dto;
 using PRN_Final_Project.Business.Data;
 using PRN_Final_Project.Business.Entities;
 using PRN_Final_Project.Repositories.Common;
 using PRN_Final_Project.Repositories.Interface;
+using PRN_Final_Project.Service;
 using PRN_Final_Project.Service.Interface;
 
 namespace PRN_Final_Project.Repositories
@@ -16,11 +18,13 @@ namespace PRN_Final_Project.Repositories
     {
         private readonly PRNDbContext _context;
         private readonly IFileRepository _file;
+        private readonly EmailService _emailService;
 
-        public CVInfoRepository(PRNDbContext context, IFileRepository file)
+        public CVInfoRepository(PRNDbContext context, IFileRepository file, EmailService emailService)
         {
             _file = file;
             _context = context;
+            _emailService = emailService;
         }
 
         public async Task<List<CV_Info>> GetAllAsync()
@@ -80,12 +84,25 @@ namespace PRN_Final_Project.Repositories
             }
         }
 
-        public async Task<List<CV_Info>> FindCvInfoByRecruitmentId(int recruitmentId)
+        public async Task<List<CandidateDto>> FindCvInfoByRecruitmentId(int recruitmentId)
         {
-            return await _context.CV_Infos
-                .Where(c => c.is_active == true)
-                .Where(c => c.recruitment_id == recruitmentId)
-                .ToListAsync();
+            var candidates = await _context.CV_Infos
+                .Where(ci => ci.recruitment_id == recruitmentId && ci.is_active == true)
+                .Include(ci => ci.file)
+                    .ThenInclude(f => f.submitter)
+                .Select(ci => new CandidateDto
+                {
+                    first_name = ci.file.submitter.first_name,
+                    last_name = ci.file.submitter.last_name,
+                    gpa = ci.gpa,
+                    education = ci.education,
+                    skill = ci.skill,
+                    path = ci.file.path,
+                    fileId = ci.file_id,
+                    isActive = ci.is_active
+                })
+            .ToListAsync();
+            return candidates;
         }
 
         public async Task ApproveCv(int cvId)
@@ -135,6 +152,8 @@ namespace PRN_Final_Project.Repositories
 
             // 8. Đánh dấu cv đã đc approve (=> inActive = false)
             cv.is_active = false;
+            await _emailService.SendWelcomeEmailAsync(user.id);
+            Console.WriteLine("Before SaveChangesAsync: CV is_active = " + cv.is_active);
             await _context.SaveChangesAsync();
         }
 
@@ -145,8 +164,31 @@ namespace PRN_Final_Project.Repositories
             if (cv == null)
                 throw new Exception("CV not found");
 
+            UserFile file = await _context.UserFiles
+                .FirstOrDefaultAsync(c => c.id == cv.file_id);
+            if (file == null)
+                throw new Exception("File not found");
+            user user = await _context.users
+                .FirstOrDefaultAsync(c => c.id == file.submitter_id);
+            if (user == null)
+                throw new Exception("User not found");
+
             cv.is_active = false;
+            // Gửi email thông báo từ chối CV
+            await _emailService.SendRejectEmailAsync(user.id);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<int> CountActiveCVByRecruitmentId(int recruitmentId)
+        {
+            return await _context.CV_Infos
+                .CountAsync(c => c.is_active == true && c.recruitment_id == recruitmentId);
+        }
+
+        public async Task<bool> ExistsByFileIdAndRecruitmentId(int fileId, int recruitmentId)
+        {
+            return await _context.CV_Infos
+                .AnyAsync(c => c.file_id == fileId && c.recruitment_id == recruitmentId && c.is_active == true);
         }
     }
 }
