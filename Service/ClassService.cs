@@ -62,5 +62,10 @@ namespace PRN_Final_Project.Service
         {
             return await _repository.GetClassesByMentorId(userId);
         }
+
+        public async Task<Class> GetClassByUserId(int userId)
+        {
+            return await _repository.GetClassByUserId(userId);
+        }
     }
 }

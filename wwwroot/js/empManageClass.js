@@ -355,9 +355,10 @@ async function loadClassroomConversation(classId, className) {
     } catch (error) {
         console.error("Error loading classroom conversation:", error);
         document.getElementById("chatContainer").innerHTML = `
-            <div class="alert alert-bg-1">
-                No member in this class
-            </div>
+            <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm text-warning me-2" role="status"></div>
+                    <span>Đang tải danh sách tin nhắn...</span>
+                </div>
         `;
     }
 }
@@ -503,9 +504,9 @@ async function fetchTasks(classId) {
     } catch (error) {
         // Show error message if API call fails
         document.getElementById("task-list").innerHTML = `
-        <div class="alert alert-danger">
-           Unable loading Tasks list. Please try again.
-        </div>displayUsers
+        <div class="alert alert-info">
+                There are no Task for this class.
+            </div>
     `;
         console.error("Error fetching tasks:", error);
     }

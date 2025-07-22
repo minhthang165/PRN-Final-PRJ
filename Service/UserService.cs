@@ -143,5 +143,10 @@ namespace PRN_Final_Project.Service
         {
             return _repository.GetUsersByRolePagingAsync(role, searchKey, page, pageSize);
         }
+
+        public async Task<user> GetUserByClassId(int classId)
+        {
+            return await _repository.GetUserByClassId(classId);
+        }
     }
 }

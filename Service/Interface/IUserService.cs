@@ -19,5 +19,6 @@ namespace PRN_Final_Project.Service.Interface
         Task<ImportResult> ImportEmployeesFromExcelAsync(IFormFile file);
         Task<List<user>> GetUsersByRoleAsync(string role);
         Task<Page<user>> GetUsersByRolePagingAsync(string role, string? searchKey = "", int page = 1, int pageSize = 10);
+        Task<user> GetUserByClassId(int classId);
     }
 }

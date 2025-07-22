@@ -12,5 +12,6 @@ namespace PRN_Final_Project.Service.Interface
         Task AssignTrainerToClassAsync(int classId, int trainerId);
         Task AssignTraineeToClassAsync(int classId, int traineeId);
         Task<List<Class>> GetClassesByMentorId(int userId);
+        Task<Class> GetClassByUserId(int userId);
     }
 }
