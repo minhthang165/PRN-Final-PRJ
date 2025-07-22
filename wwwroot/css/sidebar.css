@@ -1,14 +1,15 @@
 ﻿/* Sidebar Wrapper */
 #sidebar {
     width: 250px;
-    background: #f09138db;
-    color: #fff;
-    transition: width 0.3s ease;
+    background: linear-gradient(242deg, #f65d0d 0%, #f8dcc8 100%);
+    color: white;
+    position: fixed;
+    height: 100vh;
+    left: 0;
+    top: 77px;
+    z-index: 1000;
+    transition: all 0.3s ease;
     overflow-y: auto;
-    overflow-x: hidden;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-    border-radius: 0 10px 10px 0;
-    padding-top: 10px;
 }
 
     /* Collapsed State */
@@ -122,7 +123,20 @@
     color: #b0b0b0;
 }
 
-    .sub-menu ul li a:hover {
-        background: white;
-        color: black;
-    }
+.sub-menu ul li a:hover {
+    background: white;
+    color: black;
+}
+
+.container {
+    min-height: 100vh;
+    margin-left: 3vw;
+}
+
+.container .pb-3 {
+    flex: 1;
+    transition: margin-left 0.3s ease;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
