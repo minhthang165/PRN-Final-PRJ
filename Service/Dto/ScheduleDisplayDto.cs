@@ -8,6 +8,7 @@ namespace PRN_Final_Project.Service.Dto
         public string ClassName { get; set; } = string.Empty;
         public string SubjectName { get; set; } = string.Empty;
         public string RoomName { get; set; } = string.Empty;
+        public int RoomId { get; set; }
         public string MentorName { get; set; } = string.Empty;
         public string DayOfWeek { get; set; } = string.Empty;
         public TimeOnly StartTime { get; set; }

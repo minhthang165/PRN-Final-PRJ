@@ -58,5 +58,29 @@ namespace PRN_Final_Project.API
                 return BadRequest(result);
             return Ok(result);
         }
+
+        [HttpGet("template")]
+        public IActionResult DownloadTemplate()
+        {
+            // Logic to generate and download template
+            var templateGenerator = new ExcelTemplateGenerator();
+            var fileBytes = templateGenerator.GenerateScheduleTemplate();
+            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "schedule_template.xlsx");
+        }
+
+        [HttpPost("scheduling/generate")]
+        public async Task<IActionResult> GenerateSchedule(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file uploaded.");
+
+            // Use July 14, 2025 as the reference date
+            var startDate = new DateOnly(2025, 7, 14);
+
+            var result = await _scheduleService.ImportAndGenerateSchedulesAsync(file, startDate);
+            if (result.Errors.Count > 0)
+                return BadRequest(result);
+            return Ok(result);
+        }
     }
 }
