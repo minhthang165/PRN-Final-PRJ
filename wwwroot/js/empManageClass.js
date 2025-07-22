@@ -50,7 +50,7 @@ async function fetchClassrooms(mentorId) {
         document.getElementById("error-message").style.display = "none";
 
         // Fetch classroom data from API
-        const response = await fetch(`/api/class/mentor/${mentorId}`);
+        const response = await fetch(`/api/Class/mentor/${mentorId}`);
 
         // Check if the request was successful
         if (!response.ok) {
@@ -101,7 +101,7 @@ function renderClassroomCards(classrooms) {
     // If no classrooms, show a message
     if (classrooms.length === 0) {
         const noDataElement = document.createElement("div");
-        noDataElement.className = "text-center py-4";
+        noDataElement.class_name = "text-center py-4";
         noDataElement.textContent = "No class here";
         classroomList.appendChild(noDataElement);
         return;
@@ -115,17 +115,17 @@ function renderClassroomCards(classrooms) {
 
             // Set data attributes
             card.setAttribute("data-id", classroom.id);
-            card.setAttribute("data-class", classroom.className);
+            card.setAttribute("data-class", classroom.class_name);
 
             // Handle manager data correctly based on API response structure
             let managerName = "";
-            if (classroom.manager) {
-                if (typeof classroom.manager === 'object') {
+            if (classroom.mentor) {
+                if (typeof classroom.mentor === 'object') {
                     // If manager is an object with first_name and last_name
-                    managerName = `${classroom.manager.first_name || ''} ${classroom.manager.last_name || ''}`.trim();
+                    managerName = `${classroom.mentor.first_name || ''} ${classroom.mentor.last_name || ''}`.trim();
                 } else {
                     // If manager is just a string
-                    managerName = classroom.manager;
+                    managerName = classroom.mentor;
                 }
             }
 
@@ -135,9 +135,9 @@ function renderClassroomCards(classrooms) {
             let formattedTime = "";
             let formattedDate = "";
 
-            if (classroom.createdAt) {
+            if (classroom.created_at) {
                 try {
-                    const createdAt = new Date(classroom.createdAt);
+                    const createdAt = new Date(classroom.created_at);
                     formattedTime = createdAt.toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                     formattedDate = createdAt.toLocaleDateString("vi-VN", { day: '2-digit', month: '2-digit', year: 'numeric' });
                 } catch (e) {
@@ -152,8 +152,8 @@ function renderClassroomCards(classrooms) {
 
             // Fill in the content
             card.querySelector(".card-date").textContent = formattedDate;
-            card.querySelector(".card-name").textContent = classroom.className || "Unnamed Class";
-            card.querySelector(".card-description").textContent = classroom.classDescription || "Không có mô tả";
+            card.querySelector(".card-name").textContent = classroom.class_name || "Unnamed Class";
+            card.querySelector(".card-description").textContent = classroom.class_description || "Không có mô tả";
 
             const statusElement = card.querySelector(".card-status");
             statusElement.textContent = getStatusText(classroom.status);
@@ -289,7 +289,7 @@ async function loadClassroomDetails(classId, className, username, time, date) {
 async function loadClassroomConversation(classId, className) {
     try {
         // Fetch class details to get conversation_id
-        const classResponse = await fetch(`/api/class/${classId}`);
+        const classResponse = await fetch(`/api/Class/${classId}`);
         if (!classResponse.ok) {
             throw new Error("Failed to fetch class details");
         }
@@ -363,22 +363,22 @@ async function loadClassroomConversation(classId, className) {
 }
 
 function loadUsers(classId) {
-    const studentContainer = document.getElementById("student-container");
-    if (!studentContainer) return;
+    // const studentContainer = document.getElementById("student-container");
+    // if (!studentContainer) return;
 
-    studentContainer.innerHTML = `
-        <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
-        <span>Loading Interns list...</span>
-    `;
+    // studentContainer.innerHTML = `
+    //     <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+    //     <span>Loading Interns list...</span>
+    // `;
 
-    fetch(`/api/class/${classId}/users`)
+    fetch(`/api/user/classroom/${classId}`)
         .then(response => {
             if (!response.ok) throw new Error(`Failed to fetch users: ${response.status}`);
             return response.json();
         })
         .then(users => {
             membersOfClass = users;
-            displayUsers(users);
+            (users);
         })
         .catch(error => {
             console.error("Error fetching users:", error);
@@ -477,7 +477,7 @@ async function fetchTasks(classId) {
     `;
 
         // Fetch tasks from API
-        const response = await fetch(`/api/class/task/${classId}`);
+        const response = await fetch(`/api/Class/task/${classId}`);
 
         // Check if the request was successful
         if (!response.ok) {
@@ -505,7 +505,7 @@ async function fetchTasks(classId) {
         document.getElementById("task-list").innerHTML = `
         <div class="alert alert-danger">
            Unable loading Tasks list. Please try again.
-        </div>
+        </div>displayUsers
     `;
         console.error("Error fetching tasks:", error);
     }
