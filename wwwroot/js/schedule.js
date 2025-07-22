@@ -2240,20 +2240,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const timeLabel = document.createElement('div');
                 timeLabel.className = 'current-time-label';
                 timeLabel.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                timeLabel.style.position = 'absolute';
-                timeLabel.style.top = '-15px';
-                timeLabel.style.left = '5px';
-                timeLabel.style.backgroundColor = 'white';
-                timeLabel.style.padding = '2px 5px';
-                timeLabel.style.borderRadius = '5px';
-
-                // Thêm vào calendar body
-                const calendarBody = document.querySelector('.calendar-body');
-                if (calendarBody) {
-                    calendarBody.style.position = 'relative';
-                    calendarBody.appendChild(indicator);
-                    indicator.appendChild(timeLabel);
-                }
+                indicator.appendChild(timeLabel);
+                
+                // Add to cell
+                hourCell.appendChild(indicator);
             }
         } catch (error) {
             console.error("Lỗi khi cập nhật time indicator:", error);
@@ -2604,3 +2594,345 @@ function showMonthPicker() {
 }
 // Thêm event listener cho current-month
 document.getElementById('current-month').addEventListener('click', showMonthPicker);
+
+// ============ SCHEDULE DISPLAY FUNCTIONALITY ============
+
+// Function to render schedules from the server data
+function renderSchedulesFromModel(schedules) {
+    console.log("Starting renderSchedulesFromModel with", schedules.length, "schedules");
+    if (!schedules || schedules.length === 0) return;
+    
+    // Clear any existing events
+    document.querySelectorAll('.calendar-event').forEach(el => el.remove());
+    
+    // Process each schedule
+    schedules.forEach(schedule => {
+        console.log("Processing schedule:", JSON.stringify(schedule));
+        
+        try {
+            // Get the day of week (0-4 for Monday-Friday)
+            const dayOfWeekMap = {
+                'MONDAY': 0,
+                'monday': 0,
+                'Monday': 0,
+                'TUESDAY': 1,
+                'tuesday': 1,
+                'Tuesday': 1,
+                'WEDNESDAY': 2,
+                'wednesday': 2,
+                'Wednesday': 2,
+                'THURSDAY': 3,
+                'thursday': 3,
+                'Thursday': 3,
+                'FRIDAY': 4,
+                'friday': 4,
+                'Friday': 4
+            };
+            
+            // Try to determine day of week from multiple sources
+            let dayOfWeek;
+            
+            if (schedule.dayOfWeek && dayOfWeekMap[schedule.dayOfWeek] !== undefined) {
+                // If dayOfWeek property exists and is valid
+                dayOfWeek = dayOfWeekMap[schedule.dayOfWeek];
+            } else if (schedule.startDate) {
+                // Try to determine day of week from startDate
+                const startDate = new Date(schedule.startDate);
+                if (!isNaN(startDate.getTime())) {
+                    const day = startDate.getDay(); // 0 is Sunday, 1 is Monday, etc.
+                    dayOfWeek = day === 0 ? 6 : day - 1; // Convert to 0-6 where 0 is Monday
+                    if (dayOfWeek > 4) dayOfWeek = undefined; // Only accept Monday-Friday
+                }
+            }
+            
+            console.log("Day of week determined:", dayOfWeek);
+            
+            if (dayOfWeek === undefined) {
+                console.error("Invalid day of week, skipping schedule:", schedule);
+                return; // Skip if not a weekday
+            }
+            
+            // Get the start and end hours
+            let startHour, endHour;
+            
+            // Parse startTime
+            if (schedule.startTime) {
+                if (typeof schedule.startTime === 'string') {
+                    const startTimeParts = schedule.startTime.split(':');
+                    startHour = parseInt(startTimeParts[0]);
+                } else if (typeof schedule.startTime === 'object') {
+                    if (schedule.startTime.hour !== undefined) {
+                        startHour = schedule.startTime.hour;
+                    } else if (schedule.startTime.Hour !== undefined) {
+                        startHour = schedule.startTime.Hour;
+                    }
+                }
+            }
+            
+            // Parse endTime
+            if (schedule.endTime) {
+                if (typeof schedule.endTime === 'string') {
+                    const endTimeParts = schedule.endTime.split(':');
+                    endHour = parseInt(endTimeParts[0]);
+                } else if (typeof schedule.endTime === 'object') {
+                    if (schedule.endTime.hour !== undefined) {
+                        endHour = schedule.endTime.hour;
+                    } else if (schedule.endTime.Hour !== undefined) {
+                        endHour = schedule.endTime.Hour;
+                    }
+                }
+            }
+            
+            if (startHour === undefined || isNaN(startHour)) {
+                console.error("Invalid start hour:", schedule.startTime);
+                return;
+            }
+            
+            if (endHour === undefined || isNaN(endHour)) {
+                console.error("Invalid end hour:", schedule.endTime);
+                return;
+            }
+            
+            console.log("Time range:", startHour, "to", endHour);
+            
+            // Find all cells for this day
+            const dayCells = document.querySelectorAll(`.calendar-cell[data-day="${dayOfWeek}"]`);
+            console.log(`Found ${dayCells.length} cells for day ${dayOfWeek}`);
+            
+            if (!dayCells.length) {
+                console.error("No cells found for day", dayOfWeek);
+                return;
+            }
+            
+            // Find the cell for the start hour
+            let startCell = null;
+            dayCells.forEach(cell => {
+                const hourAttr = cell.getAttribute('data-hour');
+                console.log(`Cell hour attribute: ${hourAttr}, comparing with startHour: ${startHour}`);
+                if (hourAttr && parseInt(hourAttr) === startHour) {
+                    startCell = cell;
+                }
+            });
+            
+            if (!startCell) {
+                console.error("No start cell found for hour", startHour);
+                
+                // Log all available hours
+                console.log("Available hours:");
+                dayCells.forEach(cell => {
+                    console.log(`- ${cell.getAttribute('data-hour')}`);
+                });
+                
+                return;
+            }
+            
+            console.log("Found start cell for hour", startHour);
+            
+            // Calculate the event height based on duration
+            const durationHours = endHour - startHour;
+            const eventHeight = durationHours * 80; // Each hour cell is 80px high
+            
+            // Create the event element
+            const eventEl = document.createElement('div');
+            eventEl.className = 'calendar-event';
+            
+            // Determine the class type for styling
+            const subjectName = (schedule.subjectName || '').toLowerCase();
+            if (subjectName.includes('korean')) {
+                eventEl.classList.add('korean');
+            } else if (subjectName.includes('japanese')) {
+                eventEl.classList.add('japanese');
+            } else if (subjectName.includes('code')) {
+                eventEl.classList.add('code');
+            }
+            
+            // Set the event content
+            eventEl.innerHTML = `
+                <div class="event-title">${schedule.className || 'Class'}</div>
+                <div class="event-details">
+                    <div>Subject: ${schedule.subjectName || 'N/A'}</div>
+                    <div>Room: ${schedule.roomName || 'N/A'}</div>
+                </div>
+            `;
+            
+            // Position the event
+            eventEl.style.height = `${eventHeight}px`;
+            
+            // Add event to the cell
+            startCell.appendChild(eventEl);
+            
+            // Add click event to show details
+            eventEl.addEventListener('click', () => {
+                showEventDetails(schedule);
+            });
+            
+            console.log("Added event to calendar:", schedule.className);
+        } catch (error) {
+            console.error("Error processing schedule:", error);
+        }
+    });
+}
+
+// Function to show event details in a modal
+function showEventDetails(schedule) {
+    console.log("Showing event details:", schedule);
+    
+    // Create modal element
+    const modal = document.createElement('div');
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    
+    // Format time strings
+    let startTimeStr = '';
+    let endTimeStr = '';
+    
+    try {
+        if (typeof schedule.startTime === 'string') {
+            startTimeStr = schedule.startTime;
+        } else if (schedule.startTime && typeof schedule.startTime === 'object') {
+            startTimeStr = `${schedule.startTime.hour.toString().padStart(2, '0')}:${schedule.startTime.minute.toString().padStart(2, '0')}`;
+        }
+        
+        if (typeof schedule.endTime === 'string') {
+            endTimeStr = schedule.endTime;
+        } else if (schedule.endTime && typeof schedule.endTime === 'object') {
+            endTimeStr = `${schedule.endTime.hour.toString().padStart(2, '0')}:${schedule.endTime.minute.toString().padStart(2, '0')}`;
+        }
+    } catch (error) {
+        console.error("Error formatting time:", error);
+        startTimeStr = 'Error';
+        endTimeStr = 'Error';
+    }
+    
+    modal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Schedule Details</h5>
+                    <button type="button" class="btn-close" id="close-modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <h6>Class Information</h6>
+                        <p><strong>ID:</strong> ${schedule.id}</p>
+                        <p><strong>Class:</strong> ${schedule.className || 'N/A'}</p>
+                        <p><strong>Subject:</strong> ${schedule.subjectName || 'N/A'}</p>
+                        <p><strong>Room:</strong> ${schedule.roomName || 'N/A'}</p>
+                        <p><strong>Day:</strong> ${schedule.dayOfWeek}</p>
+                        <p><strong>Time:</strong> ${startTimeStr} - ${endTimeStr}</p>
+                        <p><strong>Mentor:</strong> ${schedule.mentorName || 'N/A'}</p>
+                        <p><strong>Start Date:</strong> ${formatDate(schedule.startDate)}</p>
+                        <p><strong>End Date:</strong> ${formatDate(schedule.endDate)}</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="close-modal-btn">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add event listeners to close buttons
+    modal.querySelector('#close-modal').addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    modal.querySelector('#close-modal-btn').addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// Helper function to format date
+function formatDate(dateObj) {
+    if (!dateObj) return 'N/A';
+    
+    try {
+        if (typeof dateObj === 'string') {
+            // If it's already a string, just return it
+            return dateObj;
+        } else if (dateObj instanceof Date) {
+            // If it's a Date object, format it
+            return dateObj.toISOString().split('T')[0];
+        } else if (typeof dateObj === 'object') {
+            // If it's a custom date object
+            return `${dateObj.year}-${String(dateObj.month).padStart(2, '0')}-${String(dateObj.day).padStart(2, '0')}`;
+        } else {
+            return 'Invalid date';
+        }
+    } catch (error) {
+        console.error("Error formatting date:", error);
+        return 'Error';
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we have schedules data
+    if (typeof scheduleData !== 'undefined' && scheduleData) {
+        renderSchedulesFromModel(scheduleData);
+    } else {
+        // Fallback to fetch schedules via API
+        fetchAndRenderSchedules();
+    }
+    
+    // Add current time indicator
+    updateTimeIndicator();
+    setInterval(updateTimeIndicator, 60000); // Update every minute
+});
+
+// Function to update the current time indicator
+function updateTimeIndicator() {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 is Sunday, 1 is Monday, etc.
+    
+    // Only show time indicator on weekdays (Monday-Friday)
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        const dayIndex = dayOfWeek - 1; // Convert to 0-4 index
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        
+        // Remove any existing indicators
+        document.querySelectorAll('.current-time-indicator').forEach(el => el.remove());
+        
+        // Find the cell for the current hour
+        const cells = document.querySelectorAll(`.calendar-cell[data-day="${dayIndex}"]`);
+        if (!cells.length) return;
+        
+        const hourCell = Array.from(cells).find(cell => {
+            const hourText = cell.getAttribute('data-hour');
+            return hourText && parseInt(hourText) === hours;
+        });
+        
+        if (!hourCell) return;
+        
+        // Create the indicator
+        const indicator = document.createElement('div');
+        indicator.className = 'current-time-indicator';
+        
+        // Position the indicator based on minutes
+        const cellHeight = 80; // Height of each hour cell
+        const topPosition = (minutes / 60) * cellHeight;
+        indicator.style.top = `${topPosition}px`;
+        indicator.style.left = '0';
+        indicator.style.right = '0';
+        
+        // Add time label
+        const timeLabel = document.createElement('div');
+        timeLabel.className = 'current-time-label';
+        timeLabel.textContent = `${hours}:${minutes.toString().padStart(2, '0')}`;
+        indicator.appendChild(timeLabel);
+        
+        // Add to cell
+        hourCell.appendChild(indicator);
+    }
+}

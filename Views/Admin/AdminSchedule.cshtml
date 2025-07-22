@@ -1,69 +1,67 @@
 ﻿@model PRN_Final_Project.Service.Dto.AdminScheduleViewModel
-@using System.Linq
-@* 
-    Giả định bạn có một ViewModel để truyền dữ liệu từ Controller sang View.
-    Nó có thể trông như thế này:
-    public class AdminScheduleViewModel
-    {
-        public int UserId { get; set; }
-        public string UserRole { get; set; }
-        public int ClassId { get; set; }
-        public List<RoomViewModel> Rooms { get; set; }
-    }
-    public class RoomViewModel
-    {
-        public string RoomName { get; set; }
-        public bool Active { get; set; }
-    }
-
-@model PRN_Final_Project.Service.Dto.AdminScheduleViewModel *@
-
 @{
     ViewData["Title"] = "Manage Schedule";
-    var slotToIndex = Model.TimeSlots.Select((s, i) => new { s, i }).ToDictionary(x => x.s, x => x.i);
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/adminSchedule.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-}
+    <style>
+        /* CSS để giao diện trông giống trong ảnh */
+        .schedule-table {
+            table-layout: fixed;
+            border-collapse: collapse;
+            width: 100%;
+        }
 
-<div class="breadcrumb__area">
-    <div class="breadcrumb__wrapper mb-35" style="padding: 0px;">
-        <div class="breadcrumb__main" style="padding: 10px;">
-            <div class="breadcrumb__inner">
-                <div class="breadcrumb__icon">
-                    <i class="flaticon-home"></i>
-                </div>
-                <div class="breadcrumb__menu">
-                    <nav>
-                        <ul>
-                            <li><span><a asp-controller="Dashboard" asp-action="Index">Dashboard</a></span></li>
-                            <li class="active"><span>Manage Schedule</span></li>
-                        </ul>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+            .schedule-table th, .schedule-table td {
+                border: 1px solid #e2e8f0;
+                text-align: center;
+                padding: 8px;
+                height: 70px; /* Tăng chiều cao cho dễ nhìn */
+                vertical-align: top;
+            }
+
+        .room-column {
+            width: 120px;
+            font-weight: 500;
+            vertical-align: middle !important;
+        }
+
+        .schedule-filled-cell {
+            padding: 8px;
+            color: #2d3748;
+            font-size: 13px;
+            text-align: left;
+            border-radius: 4px; /* Bo góc nhẹ */
+            border-left: 5px solid rgba(0,0,0,0.2) !important; /* Thêm đường viền trái để nhấn mạnh */
+        }
+
+            .schedule-filled-cell div {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                line-height: 1.5;
+            }
+    </style>
+}
 
 <div class="container">
     <div class="nav-bar">
         <div class="nav-buttons">
-            <button class="nav-btn-1" id="prevDay">
-                <i class="flaticon-right-arrow-1"></i>
+            <button class="nav-btn-1" id="prevDay" title="Previous Day">
+                <i class="fas fa-chevron-right"></i>
             </button>
-            <button class="nav-btn" id="nextDay">
-                <i class="flaticon-right-arrow-1"></i>
+            <button class="nav-btn-1" id="nextDay" title="Next Day">
+                <i class="fas fa-chevron-left"></i>
             </button>
             <button class="nav-btn" id="todayBtn">Today</button>
-            <button class="nav-btn">Week</button>
-            <button class="nav-btn">Day</button>
         </div>
-        <div class="current-date">@Model.CurrentDate.ToString("dd/MM/yyyy")</div>
+        <div class="current-date" data-current-date="@Model.CurrentDate.ToString("yyyy-MM-dd")">
+            @Model.CurrentDate.ToString("dd/MM/yyyy")
+        </div>
         <div class="action-buttons">
-            <button class="btn btn-dark" id="generateScheduleBtn">Import Schedule</button>
+            <button class="btn btn-dark" id="importScheduleBtn">Import Schedule</button>
             <button class="btn btn-dark" id="downloadTemplateBtn">Download Template</button>
         </div>
     </div>
@@ -72,7 +70,7 @@
         <table class="schedule-table">
             <thead>
                 <tr>
-                    <th>Room / Time</th>
+                    <th class="room-column">Room / Time</th>
                     @foreach (var slot in Model.TimeSlots)
                     {
                         <th>@slot</th>
@@ -80,47 +78,55 @@
                 </tr>
             </thead>
             <tbody>
-                @if (Model.Rooms == null || Model.Rooms.Count == 0)
+                @if (Model.Rooms == null || !Model.Rooms.Any())
                 {
-                    <tr>
-                        <td colspan="@(Model.TimeSlots?.Count + 1 ?? 12)">No rooms found in database</td>
-                    </tr>
+                    <tr><td colspan="@(Model.TimeSlots.Count + 1)">No rooms found.</td></tr>
                 }
                 else
                 {
                     foreach (var room in Model.Rooms)
                     {
                         <tr>
-                            <td>@room.RoomName</td>
+                            <td class="room-column">@room.RoomName</td>
                             @{
                                 int slotIndex = 0;
                                 while (slotIndex < Model.TimeSlots.Count)
                                 {
-                                    var slot = Model.TimeSlots[slotIndex];
-                                    var cell = Model.ScheduleCells?.FirstOrDefault(c => c.RoomId == room.RoomId && c.TimeSlot == slot);
-                                    // Chỉ render lịch ở slot đầu tiên
-                                    if (cell != null && cell.TimeRange.StartsWith(slot))
+                                    var currentSlotString = Model.TimeSlots[slotIndex];
+
+                                    // Tìm lịch học bắt đầu tại slot này
+                                    var cellData = Model.ScheduleCells.FirstOrDefault(c =>
+                                    c.RoomId == room.RoomId &&
+                                    c.TimeSlot == currentSlotString
+                                    );
+
+                                    if (cellData != null)
                                     {
-                                        // Tính số slot mà lịch chiếm
-                                        var start = slotIndex;
-                                        int end = start + 1;
-                                        var cellStart = TimeSpan.Parse(slot + ":00");
-                                        var cellEnd = TimeSpan.Parse(cell.TimeRange.Substring(8, 5) + ":00");
-                                        while (end < Model.TimeSlots.Count && TimeSpan.Parse(Model.TimeSlots[end] + ":00") < cellEnd)
+                                        // Tính toán colspan dựa trên thời gian bắt đầu và kết thúc
+                                        var startTime = TimeSpan.Parse(cellData.TimeRange.AsSpan(0, 5));
+                                        var endTime = TimeSpan.Parse(cellData.TimeRange.AsSpan(8, 5));
+
+                                        int endSlotIndex = slotIndex;
+                                        while (endSlotIndex < Model.TimeSlots.Count && TimeSpan.Parse(Model.TimeSlots[endSlotIndex]) < endTime)
                                         {
-                                            end++;
+                                            endSlotIndex++;
                                         }
-                                        int colspan = end - start;
-                                        <td colspan="@colspan" style="background:@cell.Color">
-                                            <div><b>@cell.TimeRange</b></div>
-                                            <div>@cell.ClassName</div>
-                                            <div>@cell.Subject</div>
-                                            <div>@cell.Teacher</div>
+
+                                        int colspan = endSlotIndex - slotIndex;
+                                        if (colspan == 0) colspan = 1; // Lịch học phải chiếm ít nhất 1 slot
+
+                                        <td colspan="@colspan" class="schedule-filled-cell" style="background-color: @cellData.Color;">
+                                            <div><b>@cellData.TimeRange</b></div>
+                                            <div>@cellData.Subject</div>
+                                            <div>@cellData.ClassName</div>
+                                            <div>@cellData.Teacher</div>
                                         </td>
-                                        slotIndex = end;
+
+                                        slotIndex += colspan;
                                     }
                                     else
                                     {
+                                        // Ô trống
                                         <td></td>
                                         slotIndex++;
                                     }
@@ -134,6 +140,99 @@
     </div>
 </div>
 
+<!-- Modal Import Schedule -->
+<div id="importScheduleModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); align-items:center; justify-content:center;">
+    <div style="background:#fff; padding:32px; border-radius:8px; min-width:320px; max-width:90vw;">
+        <h4>Import Schedule Excel</h4>
+        <input type="file" id="importScheduleFile" accept=".xlsx,.xls" style="margin-bottom:16px;">
+        <div id="importScheduleStatus" style="color:red; margin-bottom:8px;"></div>
+        <button id="importScheduleSubmit" class="btn btn-dark">Import</button>
+        <button id="importScheduleCancel" class="btn btn-outline" style="margin-left:8px;">Cancel</button>
+    </div>
+</div>
+
 @section Scripts {
-    <script src="~/js/adminSchedule.js"></script>
+    <script>
+        // Script đơn giản để xử lý việc chuyển ngày
+        document.addEventListener('DOMContentLoaded', function () {
+            const dateElement = document.querySelector('.current-date');
+            const currentDate = new Date(dateElement.getAttribute('data-current-date'));
+
+            const navigateToDate = (date) => {
+                const yyyy = date.getFullYear();
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                // Chuyển hướng trang với tham số date mới
+                window.location.href = `/AdminSchedule?date=${yyyy}-${mm}-${dd}`;
+            };
+
+            document.getElementById('todayBtn').addEventListener('click', () => {
+                navigateToDate(new Date());
+            });
+
+            document.getElementById('nextDay').addEventListener('click', () => {
+                currentDate.setDate(currentDate.getDate() + 1);
+                navigateToDate(currentDate);
+            });
+
+            document.getElementById('prevDay').addEventListener('click', () => {
+                currentDate.setDate(currentDate.getDate() - 1);
+                navigateToDate(currentDate);
+            });
+
+            // Import Schedule popup logic
+            const importBtn = document.getElementById('importScheduleBtn');
+            const modal = document.getElementById('importScheduleModal');
+            const fileInput = document.getElementById('importScheduleFile');
+            const statusDiv = document.getElementById('importScheduleStatus');
+            const submitBtn = document.getElementById('importScheduleSubmit');
+            const cancelBtn = document.getElementById('importScheduleCancel');
+
+            importBtn.addEventListener('click', function () {
+                statusDiv.textContent = '';
+                statusDiv.style.color = 'red';
+                fileInput.value = '';
+                modal.style.display = 'flex';
+            });
+
+            cancelBtn.addEventListener('click', function () {
+                modal.style.display = 'none';
+            });
+
+            submitBtn.addEventListener('click', async function () {
+                if (!fileInput.files.length) {
+                    statusDiv.textContent = 'Please select an Excel file!';
+                    statusDiv.style.color = 'red';
+                    return;
+                }
+                statusDiv.textContent = 'Uploading...';
+                statusDiv.style.color = '#333';
+                submitBtn.disabled = true;
+
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+
+                try {
+                    const res = await fetch('/api/excel/scheduling/generate', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (!res.ok) {
+                        const err = await res.text();
+                        statusDiv.textContent = 'Import failed: ' + err;
+                        statusDiv.style.color = 'red';
+                        submitBtn.disabled = false;
+                        return;
+                    }
+                    statusDiv.style.color = 'green';
+                    statusDiv.textContent = 'Import successful! Reloading...';
+                    setTimeout(() => window.location.reload(), 1200);
+                } catch (e) {
+                    statusDiv.textContent = 'Error: ' + e.message;
+                    statusDiv.style.color = 'red';
+                    submitBtn.disabled = false;
+                }
+            });
+        });
+    </script>
 }

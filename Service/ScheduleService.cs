@@ -36,6 +36,8 @@ public class ScheduleService : IScheduleService
 
     public async Task<ScheduleGenerationResult> ImportAndGenerateSchedulesAsync(IFormFile file, DateOnly startDate)
     {
+        DateOnly newStartDate = new DateOnly(2025, 7, 21);
+        
         var result = new ScheduleGenerationResult();
         var importData = await ReadScheduleExcelAsync(file);
         var errors = await ValidateImportDataAsync(importData);
@@ -43,16 +45,9 @@ public class ScheduleService : IScheduleService
 
         var allDtos = new List<ScheduleDto>();
 
-        var allScheduledSlots = new List<(DateOnly Date, TimeOnly StartTime, TimeOnly EndTime, int RoomId)>();
-
-        var existingSchedules = await _scheduleRepository.GetSchedulesInRange(startDate, startDate.AddDays(70));
-        foreach (var existingSchedule in existingSchedules)
-        {
-            allScheduledSlots.Add((existingSchedule.start_date, existingSchedule.start_time, existingSchedule.end_time, existingSchedule.room_id));
-        }
         foreach (var dto in importData)
         {
-            var schedules = GenerateCodeClassSchedules(dto, startDate);
+            var schedules = GenerateCodeClassSchedules(dto, newStartDate);
             foreach (var schedule in schedules)
             {
                 try
@@ -80,8 +75,33 @@ public class ScheduleService : IScheduleService
         }
         result.GeneratedSchedules = allDtos;
         result.TotalSchedulesCreated = allDtos.Count;
-        result.WeeksGenerated = 10;
+        result.WeeksGenerated = 5; 
         return result;
+    }
+
+    public async Task<List<ScheduleImportDto>> PreviewExcelDataAsync(IFormFile file)
+    {
+        return await ReadScheduleExcelAsync(file);
+    }
+
+    public async Task<List<string>> ValidateImportDataAsync(List<ScheduleImportDto> importData)
+    {
+        var errors = new List<string>();
+        foreach (var data in importData)
+        {
+            var existingClass = await _classRepository.GetByIdAsync(data.ClassId);
+            if (existingClass == null)
+                errors.Add($"Class ID {data.ClassId} does not exist");
+            var existingSubject = await _subjectRepository.GetByIdAsync(data.SubjectId);
+            if (existingSubject == null)
+                errors.Add($"Subject ID {data.SubjectId} does not exist");
+            var existingMentor = await _userRepository.GetByIdAsync(data.MentorId);
+            if (existingMentor == null || existingMentor.role != "EMPLOYEE")
+                errors.Add($"Mentor ID {data.MentorId} does not exist or is not an Employee");
+            if (data.LessonsPerWeek <= 0 || data.LessonsPerWeek > 10)
+                errors.Add($"Lessons per week for class {data.ClassId} must be between 1 and 10");
+        }
+        return errors;
     }
 
     private async Task<List<ScheduleImportDto>> ReadScheduleExcelAsync(IFormFile file)
@@ -110,92 +130,209 @@ public class ScheduleService : IScheduleService
         return importData;
     }
 
-    private async Task<List<string>> ValidateImportDataAsync(List<ScheduleImportDto> importData)
-    {
-        var errors = new List<string>();
-        foreach (var data in importData)
-        {
-            var existingClass = await _classRepository.GetByIdAsync(data.ClassId);
-            if (existingClass == null)
-                errors.Add($"Class ID {data.ClassId} does not exist");
-            var existingSubject = await _subjectRepository.GetByIdAsync(data.SubjectId);
-            if (existingSubject == null)
-                errors.Add($"Subject ID {data.SubjectId} does not exist");
-            var existingMentor = await _userRepository.GetByIdAsync(data.MentorId);
-            if (existingMentor == null || existingMentor.role != "EMPLOYEE")
-                errors.Add($"Mentor ID {data.MentorId} does not exist or is not an Employee");
-            if (data.LessonsPerWeek <= 0 || data.LessonsPerWeek > 10)
-                errors.Add($"Lessons per week for class {data.ClassId} must be between 1 and 10");
-        }
-        return errors;
-    }
-
     private List<Schedule> GenerateCodeClassSchedules(ScheduleImportDto dto, DateOnly startDate)
     {
         var schedules = new List<Schedule>();
-        var daysOfWeek = new[] { 1, 2, 3, 4, 5 }; // Thứ 2-6
-        var slotDuration = TimeSpan.FromMinutes(150); // 2 tiếng 30 phút
+        var daysOfWeek = new[] { 1, 2, 3, 4, 5 }; 
+        var slotDuration = TimeSpan.FromMinutes(180); 
         var slotStartTimes = new[]
         {
-            new TimeOnly(8, 30), // Sáng
-            new TimeOnly(13, 30) // Chiều
+            new TimeOnly(8, 00), 
+            new TimeOnly(14, 00) 
         };
         var allRooms = _roomRepository.GetAllAsync().Result;
-        var scheduledRoomSlots = new List<(DateOnly, TimeOnly, TimeOnly, int)>(); // (ngày, start, end, roomId)
-        for (int week = 0; week < 10; week++)
+        
+
+        var existingSchedules = _scheduleRepository.GetSchedulesInRange(startDate, startDate.AddDays(34)).Result;
+        
+        var scheduledRoomSlots = new List<(DateOnly Date, TimeOnly StartTime, TimeOnly EndTime, int RoomId)>();
+        var scheduledMentorSlots = new List<(DateOnly Date, TimeOnly StartTime, TimeOnly EndTime, int MentorId)>();
+        var scheduledClassDays = new List<(int Week, int Day)>(); 
+        var scheduledClassSlots = new List<(DateOnly Date, int SlotIndex)>(); 
+        
+        foreach (var existingSchedule in existingSchedules)
         {
-            var weekStart = startDate.AddDays(week * 7);
-            int lessonsScheduledThisWeek = 0;
-            // Phân bổ đều các buổi trong tuần, ưu tiên từ thứ 2 đến thứ 6, sáng rồi chiều
-            foreach (var day in daysOfWeek)
+            scheduledRoomSlots.Add((existingSchedule.start_date, existingSchedule.start_time, existingSchedule.end_time, existingSchedule.room_id));
+            if (existingSchedule.mentor_id.HasValue)
             {
-                foreach (var slotStart in slotStartTimes)
+                scheduledMentorSlots.Add((existingSchedule.start_date, existingSchedule.start_time, existingSchedule.end_time, existingSchedule.mentor_id.Value));
+            }
+        }
+
+        for (int week = 0; week < 5; week++)
+        {
+            var weekStartDate = startDate.AddDays(week * 7);
+            int lessonsScheduledThisWeek = 0;
+            
+            if (dto.LessonsPerWeek > 2)
+            {
+                int spacing = Math.Max(1, 5 / dto.LessonsPerWeek);
+                
+                var possibleDays = new List<int>();
+                for (int i = 0; i < dto.LessonsPerWeek; i++)
+                {
+                    int day = 1 + (i * spacing);
+                    if (day <= 5) 
+                    {
+                        possibleDays.Add(day);
+                    }
+                }
+                
+                foreach (var day in possibleDays)
                 {
                     if (lessonsScheduledThisWeek >= dto.LessonsPerWeek)
                         break;
-                    var startTime = slotStart;
-                    var endTime = startTime.Add(slotDuration);
-                    var scheduleDate = weekStart.AddDays(day - 1);
-                    // Tìm phòng không bị trùng lịch
-                    int? availableRoomId = null;
-                    foreach (var room in allRooms)
+                    
+                    foreach (var slotIndex in new[] { 0, 1 })
                     {
-                        bool conflict = scheduledRoomSlots.Any(x => x.Item1 == scheduleDate && x.Item4 == room.id &&
-                            ((startTime < x.Item3 && endTime > x.Item2))); // overlap
-                        if (!conflict)
-                        {
-                            availableRoomId = room.id;
+                        if (lessonsScheduledThisWeek >= dto.LessonsPerWeek)
                             break;
+                        
+                        var slotStart = slotStartTimes[slotIndex];
+                        var startTime = slotStart;
+                        var endTime = startTime.Add(slotDuration);
+                        var scheduleDate = weekStartDate.AddDays(day - 1);
+                        
+ 
+                        bool hasMorningSession = scheduledClassSlots.Any(x => 
+                            x.Date == scheduleDate && x.SlotIndex == 0);
+                        
+                        if (slotIndex == 1 && hasMorningSession)
+                        {
+                            continue;
                         }
+                        
+                        int? availableRoomId = null;
+                        foreach (var room in allRooms)
+                        {
+                            bool roomConflict = scheduledRoomSlots.Any(x => 
+                                x.Date == scheduleDate && 
+                                x.RoomId == room.id &&
+                                ((startTime < x.EndTime && endTime > x.StartTime))); 
+                                
+                            bool mentorConflict = scheduledMentorSlots.Any(x => 
+                                x.Date == scheduleDate && 
+                                x.MentorId == dto.MentorId &&
+                                ((startTime < x.EndTime && endTime > x.StartTime))); 
+                                
+                            if (!roomConflict && !mentorConflict)
+                            {
+                                availableRoomId = room.id;
+                                break;
+                            }
+                        }
+                        
+                        if (availableRoomId == null)
+                        {
+                            continue;
+                        }
+                        
+                        var newSchedule = new Schedule
+                        {
+                            class_id = dto.ClassId,
+                            subject_id = dto.SubjectId,
+                            mentor_id = dto.MentorId,
+                            room_id = availableRoomId.Value,
+                            day_of_week = GetDayOfWeekString(day),
+                            start_time = startTime,
+                            end_time = endTime,
+                            start_date = scheduleDate,
+                            end_date = scheduleDate,
+                            created_at = DateTime.Now,
+                            is_active = true
+                        };
+                        
+                        schedules.Add(newSchedule);
+                        scheduledRoomSlots.Add((scheduleDate, startTime, endTime, availableRoomId.Value));
+                        scheduledMentorSlots.Add((scheduleDate, startTime, endTime, dto.MentorId));
+                        scheduledClassDays.Add((week, day));
+                        scheduledClassSlots.Add((scheduleDate, slotIndex));
+                        lessonsScheduledThisWeek++;
                     }
-                    if (availableRoomId == null)
-                    {
-                        // Không còn phòng trống cho slot này, bỏ qua slot này
-                        continue;
-                    }
-                    schedules.Add(new Schedule
-                    {
-                        class_id = dto.ClassId,
-                        subject_id = dto.SubjectId,
-                        mentor_id = dto.MentorId,
-                        room_id = availableRoomId.Value,
-                        day_of_week = GetDayOfWeekString(day),
-                        start_time = startTime,
-                        end_time = endTime,
-                        start_date = scheduleDate,
-                        end_date = scheduleDate,
-                        created_at = DateTime.Now,
-                        is_active = true
-                    });
-                    scheduledRoomSlots.Add((scheduleDate, startTime, endTime, availableRoomId.Value));
-                    lessonsScheduledThisWeek++;
+                }
+            }
+            else
+            {
+                foreach (var day in daysOfWeek)
+                {
                     if (lessonsScheduledThisWeek >= dto.LessonsPerWeek)
                         break;
+                    bool hasRecentSchedule = false;
+                    hasRecentSchedule = scheduledClassDays.Any(x => x.Week == week && Math.Abs(x.Day - day) < 3);
+                    
+                    if (hasRecentSchedule)
+                    {
+                        continue;
+                    }
+                    
+                    foreach (var slotIndex in new[] { 0, 1 }) 
+                    {
+                        if (lessonsScheduledThisWeek >= dto.LessonsPerWeek)
+                            break;
+                        
+                        var slotStart = slotStartTimes[slotIndex];
+                        var startTime = slotStart;
+                        var endTime = startTime.Add(slotDuration);
+                        var scheduleDate = weekStartDate.AddDays(day - 1);
+                      
+                        bool hasMorningSession = scheduledClassSlots.Any(x => 
+                            x.Date == scheduleDate && x.SlotIndex == 0);
+                        
+                        if (slotIndex == 1 && hasMorningSession)
+                        {
+                            continue;
+                        }
+                        
+                        int? availableRoomId = null;
+                        foreach (var room in allRooms)
+                        {
+                            bool roomConflict = scheduledRoomSlots.Any(x => 
+                                x.Date == scheduleDate && 
+                                x.RoomId == room.id &&
+                                ((startTime < x.EndTime && endTime > x.StartTime)));
+                            bool mentorConflict = scheduledMentorSlots.Any(x => 
+                                x.Date == scheduleDate && 
+                                x.MentorId == dto.MentorId &&
+                                ((startTime < x.EndTime && endTime > x.StartTime))); // overlap
+                                
+                            if (!roomConflict && !mentorConflict)
+                            {
+                                availableRoomId = room.id;
+                                break;
+                            }
+                        }
+                        
+                        if (availableRoomId == null)
+                        {
+                            continue;
+                        }
+                        
+                        var newSchedule = new Schedule
+                        {
+                            class_id = dto.ClassId,
+                            subject_id = dto.SubjectId,
+                            mentor_id = dto.MentorId,
+                            room_id = availableRoomId.Value,
+                            day_of_week = GetDayOfWeekString(day),
+                            start_time = startTime,
+                            end_time = endTime,
+                            start_date = scheduleDate,
+                            end_date = scheduleDate,
+                            created_at = DateTime.Now,
+                            is_active = true
+                        };
+                        
+                        schedules.Add(newSchedule);
+                        scheduledRoomSlots.Add((scheduleDate, startTime, endTime, availableRoomId.Value));
+                        scheduledMentorSlots.Add((scheduleDate, startTime, endTime, dto.MentorId));
+                        scheduledClassDays.Add((week, day));
+                        scheduledClassSlots.Add((scheduleDate, slotIndex));
+                        lessonsScheduledThisWeek++;
+                    }
                 }
-                if (lessonsScheduledThisWeek >= dto.LessonsPerWeek)
-                    break;
             }
         }
+        
         return schedules;
     }
 
@@ -281,36 +418,50 @@ public class ScheduleService : IScheduleService
     public async Task<List<ScheduleDisplayDto>> GetSchedulesForDisplayAsync(DateOnly? startDate = null, DateOnly? endDate = null)
     {
         var schedules = await _scheduleRepository.GetAllAsync();
+        Console.WriteLine($"Total schedules in database: {schedules.Count}");
 
-        // Filter by date range if provided
         if (startDate.HasValue && endDate.HasValue)
         {
-            schedules = schedules.Where(s => s.start_date >= startDate.Value && s.start_date <= endDate.Value).ToList();
+            schedules = schedules.Where(s =>
+                (s.start_date <= endDate.Value && s.end_date >= startDate.Value)
+            ).ToList();
+
+            Console.WriteLine($"Filtered schedules for date range {startDate} to {endDate}: {schedules.Count}");
         }
 
         var displayDtos = new List<ScheduleDisplayDto>();
 
         foreach (var schedule in schedules)
         {
-            var classEntity = await _classRepository.GetByIdAsync(schedule.class_id);
-            var subjectEntity = await _subjectRepository.GetByIdAsync(schedule.subject_id);
-            var roomEntity = await _roomRepository.GetByIdAsync(schedule.room_id);
-            var mentorEntity = schedule.mentor_id.HasValue ? await _userRepository.GetByIdAsync(schedule.mentor_id.Value) : null;
-
-            displayDtos.Add(new ScheduleDisplayDto
+            try
             {
-                Id = schedule.id,
-                ClassName = classEntity?.class_name ?? "Unknown Class",
-                SubjectName = subjectEntity?.subject_name ?? "Unknown Subject",
-                RoomName = roomEntity?.room_name ?? "Unknown Room",
-                MentorName = mentorEntity != null ? $"{mentorEntity.first_name} {mentorEntity.last_name}".Trim() : "Unknown Mentor",
-                DayOfWeek = schedule.day_of_week,
-                StartTime = schedule.start_time,
-                EndTime = schedule.end_time,
-                StartDate = schedule.start_date,
-                EndDate = schedule.end_date,
-                MentorId = schedule.mentor_id
-            });
+                var classEntity = await _classRepository.GetByIdAsync(schedule.class_id);
+                var subjectEntity = await _subjectRepository.GetByIdAsync(schedule.subject_id);
+                var roomEntity = await _roomRepository.GetByIdAsync(schedule.room_id);
+                var mentorEntity = schedule.mentor_id.HasValue ? await _userRepository.GetByIdAsync(schedule.mentor_id.Value) : null;
+                Console.WriteLine($"Processing schedule: ID={schedule.id}, Room={roomEntity?.room_name}, Day={schedule.day_of_week}, " +
+                                  $"Time={schedule.start_time}-{schedule.end_time}, Date={schedule.start_date}-{schedule.end_date}");
+
+                displayDtos.Add(new ScheduleDisplayDto
+                {
+                    Id = schedule.id,
+                    ClassName = classEntity?.class_name ?? "Unknown Class",
+                    SubjectName = subjectEntity?.subject_name ?? "Unknown Subject",
+                    RoomName = roomEntity?.room_name ?? "Unknown Room",
+                    RoomId = schedule.room_id,
+                    MentorName = mentorEntity != null ? $"{mentorEntity.first_name} {mentorEntity.last_name}".Trim() : "Unknown Mentor",
+                    DayOfWeek = schedule.day_of_week,
+                    StartTime = schedule.start_time,
+                    EndTime = schedule.end_time,
+                    StartDate = schedule.start_date,
+                    EndDate = schedule.end_date,
+                    MentorId = schedule.mentor_id
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error processing schedule ID {schedule.id}: {ex.Message}");
+            }
         }
 
         return displayDtos;
@@ -320,10 +471,8 @@ public class ScheduleService : IScheduleService
     {
         var schedules = await _scheduleRepository.GetAllAsync();
 
-        // Filter by mentor ID
         schedules = schedules.Where(s => s.mentor_id == mentorId).ToList();
 
-        // Filter by date range if provided
         if (startDate.HasValue && endDate.HasValue)
         {
             schedules = schedules.Where(s => s.start_date >= startDate.Value && s.start_date <= endDate.Value).ToList();
@@ -344,6 +493,7 @@ public class ScheduleService : IScheduleService
                 ClassName = classEntity?.class_name ?? "Unknown Class",
                 SubjectName = subjectEntity?.subject_name ?? "Unknown Subject",
                 RoomName = roomEntity?.room_name ?? "Unknown Room",
+                RoomId = schedule.room_id,
                 MentorName = mentorEntity != null ? $"{mentorEntity.first_name} {mentorEntity.last_name}".Trim() : "Unknown Mentor",
                 DayOfWeek = schedule.day_of_week,
                 StartTime = schedule.start_time,

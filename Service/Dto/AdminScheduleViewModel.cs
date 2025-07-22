@@ -8,6 +8,7 @@ namespace PRN_Final_Project.Service.Dto
         public List<string> TimeSlots { get; set; }
         public List<ScheduleCellViewModel> ScheduleCells { get; set; }
         public DateTime CurrentDate { get; set; }
+        public List<ScheduleDisplayDto> Schedules { get; set; }
     }
 
     public class RoomViewModel
@@ -24,6 +25,6 @@ namespace PRN_Final_Project.Service.Dto
         public string ClassName { get; set; }
         public string Teacher { get; set; }
         public string Color { get; set; }
-        public string TimeRange { get; set; } // VD: "09:00 - 12:00"
+        public string TimeRange { get; set; } 
     }
 }

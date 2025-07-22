@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // API endpoint
             const endpoint = `/api/scheduling/date/${formattedDate}`;
 
-            // Call API để lấy lịch
+            // Gọi API để lấy lịch
             const response = await fetch(endpoint, {
                 method: "GET",
                 headers: {
@@ -327,145 +327,110 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(`Failed to fetch schedules: ${response.status} ${response.statusText}`);
             }
 
-            // Xử lý dữ liệu JSON từ response
-            let scheduleData = await response.json();
+            const rawData = await response.json();
 
-            // Lưu lịch và render
-            schedules = scheduleData;
+            // Chuẩn hóa dữ liệu
+            schedules = rawData.map(item => {
+                const rawDay = item.dayOfWeek ?? item.DayOfWeek;
+                const dayNamesArr = ["SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"];
+                let dayStr = "";
+                if (typeof rawDay === "number") {
+                    dayStr = dayNamesArr[rawDay] ?? "";
+                } else if (rawDay) {
+                    dayStr = rawDay.toString().toUpperCase();
+                }
+
+                return {
+                    room: {
+                        roomName: item.roomName || item.RoomName || "Unknown Room",
+                        id: item.roomId || item.RoomId || null
+                    },
+                    classField: {
+                        className: item.className || item.ClassName || "Unknown Class",
+                        id: item.classId || item.ClassId || null
+                    },
+                    subject: {
+                        subjectName: item.subjectName || item.SubjectName || "Unknown Subject",
+                        id: item.subjectId || item.SubjectId || null
+                    },
+                    mentor: {
+                        userName: item.mentorName || item.MentorName || "Unknown",
+                        first_name: item.mentorFirstName || null,
+                        last_name: item.mentorLastName || null
+                    },
+                    dayOfWeek: dayStr,
+                    startTime: (item.startTime || item.StartTime || "").toString().substring(0,5),
+                    endTime: (item.endTime || item.EndTime || "").toString().substring(0,5)
+                };
+            });
+
             renderSchedules();
-
         } catch (error) {
             console.error("Error fetching schedules:", error);
-            // Nếu có lỗi, reset lại schedules
             schedules = [];
             renderSchedules();
         }
     }
 
-    // Hàm để render lịch lên bảng
-    function renderSchedules() {
-        // Xóa tất cả các lịch hiện tại
-        clearAllSchedules();
-
-        // Nếu không có lịch, dừng xử lý
-        if (!schedules || schedules.length === 0) {
-            updateColorLegend(); // Vẫn gọi để xóa chú thích nếu có
-            return;
-        }
-
-        const currentDay = currentDisplayDate.getDay() || 7;
-        const dayNames = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
-        const currentDayName = dayNames[currentDisplayDate.getDay()];
-
-
-        // Xử lý mỗi lịch
-        schedules.forEach(schedule => {
-            try {
-                // Kiểm tra xem lịch có phải ngày hiện tại không
-                if (schedule.dayOfWeek && schedule.dayOfWeek !== currentDayName) {
-                    return; // Bỏ qua nếu không phải ngày hiện tại
-                }
-
-                const roomName = schedule.room?.roomName || `Room ${schedule.room?.id}`;
-                const subjectName = schedule.subject?.subjectName || `Subject ${schedule.subject?.id}`;
-                const className = schedule.classField?.className || `Class ${schedule.classField?.id}`;
-
-                // Lấy thông tin thời gian
-                const startTime = schedule.startTime || "00:00";
-                const endTime = schedule.endTime || "00:00";
-
-                // Phân tích thời gian chi tiết
-                const [startHour, startMinute] = startTime.split(":").map(val => parseInt(val));
-                const [endHour, endMinute] = endTime.split(":").map(val => parseInt(val));
-
-                // Tìm phòng trong bảng lịch
-                const roomRows = document.querySelectorAll('.schedule-table tbody tr');
-                let roomRow = null;
-
-                roomRows.forEach(row => {
-                    const roomCell = row.querySelector('.room-column');
-                    if (roomCell && roomCell.textContent.trim() === roomName) {
-                        roomRow = row;
-                    }
-                });
-
-                if (!roomRow) {
-                    return;
-                }
-
-                // Tính toán vị trí và độ rộng của schedule item
-                const hourWidth = roomRow.querySelector('.schedule-cell').offsetWidth;
-                const minuteWidth = hourWidth / 60; // Độ rộng của 1 phút
-
-                // Đảm bảo thời gian nằm trong phạm vi 7:00 - 18:00
-                if (startHour < 7 || startHour >= 18 || endHour < 7 || endHour > 18) {
-                    return;
-                }
-
-                // Tính toán cột và vị trí trái của schedule item
-                const startColumn = startHour - 7 + 1; // +1 vì cột đầu tiên là tên phòng
-                const endColumn = endHour - 7 + 1;
-
-                // Nếu cùng 1 cột (cùng giờ)
-                if (startColumn === endColumn) {
-                    const cell = roomRow.querySelector(`.schedule-cell:nth-child(${startColumn + 1})`);
-                    if (!cell) return;
-
-                    // Tạo schedule item
-                    createScheduleItem(cell, schedule, startTime, endTime, className, subjectName);
-                } else {
-                    // Span nhiều giờ
-                    const startCell = roomRow.querySelector(`.schedule-cell:nth-child(${startColumn + 1})`);
-                    if (!startCell) return;
-
-                    // Tính độ rộng dựa trên giờ
-                    const durationHours = (endHour - startHour) + (endMinute - startMinute) / 60;
-                    const width = durationHours * hourWidth;
-
-                    // Tạo schedule item
-                    const scheduleItem = document.createElement('div');
-                    scheduleItem.className = 'schedule-item';
-                    scheduleItem.style.backgroundColor = getColorForClass(className, schedule.classField?.id);
-                    scheduleItem.style.color = '#333'; // Text color tối hơn 
-                    scheduleItem.style.padding = '4px';
-                    scheduleItem.style.borderRadius = '4px';
-                    scheduleItem.style.fontSize = '0.8rem';
-                    scheduleItem.style.height = 'calc(100% - 4px)';
-                    scheduleItem.style.position = 'absolute';
-                    scheduleItem.style.top = '2px';
-                    scheduleItem.style.left = `${startMinute * minuteWidth}px`;
-                    scheduleItem.style.width = `${width - 4}px`; // -4 for padding
-                    scheduleItem.style.overflow = 'hidden';
-                    scheduleItem.style.zIndex = '10';
-                    scheduleItem.style.fontWeight = '500';
-                    scheduleItem.style.border = '1px solid rgba(0,0,0,0.1)';
-                    scheduleItem.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
-
-                    // Format thời gian để chỉ hiển thị giờ và phút
-                    const formattedStartTime = formatTime(startTime);
-                    const formattedEndTime = formatTime(endTime);
-
-                    // Thêm nội dung vào schedule item
-                    scheduleItem.innerHTML = `
-                        <div class="schedule-time">${formattedStartTime} - ${formattedEndTime}</div>
-                        <div>${className}</div>
-                        <div>${subjectName}</div>
-                    `;
-
-                    // Thêm event cho schedule item
-                    scheduleItem.addEventListener('click', function() {
-                        showScheduleDetails(schedule);
-                    });
-
-                    // Thêm vào cell
-                    startCell.style.position = 'relative';
-                    startCell.appendChild(scheduleItem);
-                }
-            } catch (error) {
-                console.error("Error rendering schedule:", error);
-            }
+    // Hàm để xóa tất cả lịch hiện tại trong các cell
+    function clearAllSchedules() {
+        document.querySelectorAll('.schedule-cell').forEach(cell => {
+            cell.innerHTML = '';
         });
-        updateColorLegend();
+    }
+
+    // Hàm để render lịch lên bảng (chỉ render block lịch vào cell)
+    function renderSchedules() {
+        clearAllSchedules(); // Đảm bảo xóa block cũ trước khi render mới
+        if (!schedules || schedules.length === 0) return;
+        schedules.forEach(schedule => {
+            // Tìm đúng dòng phòng
+            const roomRows = document.querySelectorAll('.schedule-table tbody tr');
+            let roomRow = null;
+            roomRows.forEach(row => {
+                const roomCell = row.querySelector('.room-column');
+                if (roomCell && roomCell.textContent.trim() === (schedule.roomName || schedule.RoomName || "Big Data")) {
+                    roomRow = row;
+                }
+            });
+            if (!roomRow) return;
+            // Xác định slot bắt đầu
+            const startTime = (schedule.startTime || schedule.StartTime || "00:00");
+            const endTime = (schedule.endTime || schedule.EndTime || "00:00");
+            const [startHour, startMinute] = startTime.split(':').map(Number);
+            const [endHour, endMinute] = endTime.split(':').map(Number);
+            // Slot bắt đầu là cột (startHour - 7)
+            const startColIdx = startHour - 7;
+            if (startColIdx < 0 || startColIdx > 10) return;
+            const cell = roomRow.querySelectorAll('.schedule-cell')[startColIdx];
+            if (!cell) return;
+            // Tính toán vị trí và độ rộng block lịch
+            cell.style.position = 'relative';
+            const hourWidth = cell.offsetWidth;
+            const minuteWidth = hourWidth / 60;
+            const left = startMinute * minuteWidth;
+            const durationMinutes = (endHour - startHour) * 60 + (endMinute - startMinute);
+            const width = durationMinutes * minuteWidth;
+            // Tạo block lịch
+            const scheduleItem = document.createElement('div');
+            scheduleItem.className = 'schedule-item';
+            scheduleItem.style.position = 'absolute';
+            scheduleItem.style.left = `${left}px`;
+            scheduleItem.style.width = `${width}px`;
+            scheduleItem.style.top = '2px';
+            scheduleItem.style.height = 'calc(100% - 4px)';
+            scheduleItem.style.background = '#e3eaff';
+            scheduleItem.style.borderRadius = '4px';
+            scheduleItem.style.margin = '0';
+            scheduleItem.style.padding = '2px 4px';
+            scheduleItem.style.overflow = 'hidden';
+            scheduleItem.innerHTML = `
+                <div><b>${startTime} - ${endTime}</b></div>
+                <div>${schedule.className || schedule.ClassName || ''}</div>
+                <div>${schedule.subjectName || schedule.SubjectName || ''}</div>
+            `;
+            cell.appendChild(scheduleItem);
+        });
     }
 
     function formatTime(timeString) {
@@ -522,14 +487,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Thêm vào cell
         cell.appendChild(scheduleItem);
-    }
-
-    // Hàm để xóa tất cả lịch hiện tại
-    function clearAllSchedules() {
-        const scheduleCells = document.querySelectorAll('.schedule-cell');
-        scheduleCells.forEach(cell => {
-            cell.innerHTML = '';
-        });
     }
 
     // Hàm để hiển thị chi tiết lịch

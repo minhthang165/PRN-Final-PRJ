@@ -30,8 +30,13 @@ public class ScheduleRepository : IScheduleRepository
 
     public Task<List<Schedule>> GetAllAsync()
     {
-        // Assuming you want to return all schedules from the database
-        return Task.FromResult(_context.Schedules.ToList());
+        // Include related entities to avoid multiple database queries
+        return _context.Schedules
+            .Include(s => s._class)
+            .Include(s => s.subject)
+            .Include(s => s.room)
+            .Include(s => s.mentor)
+            .ToListAsync(); // Remove the is_active filter to get all schedules
     }
 
     public Task<Page<Schedule>> GetAllPagingAsync(string? searchKey = "", int page = 1, int pageSize = 10)
@@ -78,7 +83,7 @@ public class ScheduleRepository : IScheduleRepository
 
     public Task<List<Schedule>> GetSchedulesBySubjectIdAsync(int subjectId)
     {
-        return _context.Schedules.Where(s => s.subject_id ==  subjectId).ToListAsync();
+        return _context.Schedules.Where(s => s.subject_id == subjectId).ToListAsync();
     }
 
     public Task<List<Schedule>> GetSchedulesByUserIdAsync(int userId)
