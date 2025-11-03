@@ -19,9 +19,9 @@ namespace PRN_Final_Project.Controllers
             _userService = userService;
         }
 
-        public async Task<IActionResult> Index(string role = null, int page = 1, int pageSize = 10)
+        public IActionResult Index(string role = null, int page = 1, int pageSize = 10)
         {
-            // Get user ID from claims
+            // Get user ID and role from claims
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userRoleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
 
@@ -30,67 +30,20 @@ namespace PRN_Final_Project.Controllers
                 return RedirectToAction("Login", "Login");
             }
 
-            int userId = Convert.ToInt32(userIdClaim);
+            // Pass user information to the view for JavaScript to use
+            ViewData["UserId"] = userIdClaim;
+            ViewData["UserRole"] = userRoleClaim;
+            ViewData["PageSize"] = pageSize;
+            ViewData["CurrentPage"] = page;
 
-            // Check user role and return appropriate view
-            if (userRoleClaim == "ADMIN")
+            // Return appropriate view based on user role
+            return userRoleClaim switch
             {
-                try
-                {
-                    var employeeUsers = await _userService.GetAllPagingAsync("EMPLOYEE", page, pageSize);
-                    ViewData["userRoleList"] = employeeUsers;
-                    return View("~/Views/Admin/manage-class.cshtml");
-                }
-                catch (Exception ex)
-                {
-                    ViewData["error"] = "Class list is empty";
-                    return View("~/Views/Admin/Index.cshtml");
-                }
-            }
-            else if (userRoleClaim == "EMPLOYEE")
-            {
-                try
-                {
-                    var internUsers = await _userService.GetAllPagingAsync("INTERN", page, pageSize);
-                    var classes = await _classService.GetClassesByMentorId(userId);
-                    
-                    ViewData["internClassList"] = internUsers;
-                    ViewData["classroomList"] = classes;
-                    ViewData["mentorId"] = userId;
-                    
-                    return View("~/Views/Employee/manage-class.cshtml");
-                }
-                catch (Exception ex)
-                {
-                    ViewData["error"] = "Class list is empty";
-                    return View("~/Views/Employee/Index.cshtml");
-                }
-            }
-            else if (userRoleClaim == "INTERN")
-            {
-                try
-                {
-                    var user = await _userService.GetByIdAsync(userId);
-                    var internUsers = await _userService.GetAllPagingAsync("INTERN", page, pageSize);
-                    var classes = await _classService.GetClassesByMentorId(userId);
-                    
-                    ViewData["internClassList"] = internUsers;
-                    ViewData["classroomList"] = classes;
-                    ViewData["classId"] = user.class_id;
-                    ViewData["internId"] = userId;
-                    
-                    return View("~/Views/Intern/InternViewClass.cshtml");
-                }
-                catch (Exception ex)
-                {
-                    ViewData["error"] = "Class list is empty";
-                    return View("~/Views/Intern/Index.cshtml");
-                }
-            }
-            else
-            {
-                return View("~/Views/Shared/Error.cshtml");
-            }
+                "ADMIN" => View("~/Views/Admin/manage-class.cshtml"),
+                "EMPLOYEE" => View("~/Views/Employee/manage-class.cshtml"),
+                "INTERN" => View("~/Views/Intern/InternViewClass.cshtml"),
+                _ => View("~/Views/Shared/Error.cshtml")
+            };
         }
     }
 }
