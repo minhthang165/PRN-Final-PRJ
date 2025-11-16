@@ -1563,10 +1563,11 @@ async function submitComment() {
 
     const submitBtn = document.getElementById("submitCommentBtn")
     const originalBtnText = submitBtn.innerHTML
-
+            
     submitBtn.disabled = true
     submitBtn.innerHTML =
         '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...'
+
 
     try {
         let commentResult, markResult
@@ -1579,9 +1580,9 @@ async function submitComment() {
                 {
                     method: "PATCH",
                     headers: {
-                        "Content-Type": "text/plain",
+                        "Content-Type": "application/json",  // ← ĐÚNG
                     },
-                    body: comment,
+                    body: JSON.stringify({ comment: comment }),  // ← ĐÚNG - wrap trong object
                 },
             )
 

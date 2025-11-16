@@ -4,7 +4,6 @@
 
 <link rel="stylesheet" href="/css/manageClass.css">
 
-
 @Html.Partial("Sidebar/_AdminSidebar")
 <div class="app__slide-wrapper">
     <div class="breadcrumb__area">
@@ -249,5 +248,5 @@
 </div>
 
 @section Scripts {
-    <script src="/js/manageClass.js"></script>
+    <script src="/js/manageClass.js?v=@DateTime.Now.Ticks"></script>
 }

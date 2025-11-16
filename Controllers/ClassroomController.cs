@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 namespace PRN_Final_Project.Controllers
 {
     [Authorize]
+    [Route("Class")] // Add this route to match the URL
     public class ClassroomController : Controller
     {
         private readonly IClassService _classService;
@@ -19,7 +20,8 @@ namespace PRN_Final_Project.Controllers
             _userService = userService;
         }
 
-        public IActionResult Index(string role = null, int page = 1, int pageSize = 10)
+        [HttpGet]
+        public async Task<IActionResult> Index(string role = null, int page = 1, int pageSize = 10)
         {
             // Get user ID and role from claims
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -36,12 +38,46 @@ namespace PRN_Final_Project.Controllers
             ViewData["PageSize"] = pageSize;
             ViewData["CurrentPage"] = page;
 
+            // Load users with EMPLOYEE role for manager dropdown (for ADMIN only)
+            if (userRoleClaim == "ADMIN")
+            {
+                try
+                {
+                    var employees = await _userService.GetUsersByRoleAsync("EMPLOYEE");
+                    ViewBag.userRoleList = employees;
+                }
+                catch (Exception ex)
+                {
+                    // Log error and provide empty list
+                    ViewBag.userRoleList = new List<Business.Entities.user>();
+                }
+            }
+
+            // For INTERN role, fetch their class data
+            Business.Entities.Class classData = null;
+            if (userRoleClaim == "INTERN")
+            {
+                try
+                {
+                    if (int.TryParse(userIdClaim, out int userId))
+                    {
+                        classData = await _classService.GetClassByUserId(userId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log error but continue - the view will handle null model
+                    Console.WriteLine($"Error fetching class for intern: {ex.Message}");
+                }
+            }
+
             // Return appropriate view based on user role
             return userRoleClaim switch
             {
-                "ADMIN" => View("~/Views/Admin/manage-class.cshtml"),
+                "ADMIN" => View("~/Views/Admin/ManageClass.cshtml"),
                 "EMPLOYEE" => View("~/Views/Employee/manage-class.cshtml"),
-                "INTERN" => View("~/Views/Intern/InternViewClass.cshtml"),
+                "MANAGER" => View("~/Views/Employee/manage-class.cshtml"), // MANAGER uses the same view as EMPLOYEE
+                "INTERN" => View("~/Views/Intern/InternViewClass.cshtml", classData),
                 _ => View("~/Views/Shared/Error.cshtml")
             };
         }

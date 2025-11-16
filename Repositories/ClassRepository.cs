@@ -105,7 +105,8 @@ namespace PRN_Final_Project.Repositories
         public Task<List<Class>> GetClassesByMentorId(int userId)
         {
             var classes = _context.Classes
-                .Where(c => c.mentor_id == userId)
+                .Where(c => c.mentor_id == userId && c.is_active == true)
+                .Include(c => c.mentor)
                 .ToListAsync();
             return classes;
         }
@@ -118,7 +119,9 @@ namespace PRN_Final_Project.Repositories
                 throw new Exception("User not found or is not an active intern");
 
             return await _context.Classes
-                    .FirstOrDefaultAsync(c => c.id == user.class_id);
+                .Include(c => c.mentor)
+                .Include(c => c.conversation)
+                .FirstOrDefaultAsync(c => c.id == user.class_id);
         }
     }
 }

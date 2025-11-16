@@ -1,18 +1,208 @@
 // Hàm sử dụng UserModal
 document.addEventListener("DOMContentLoaded", function () {
+    // Prevent multiple initializations
+    if (window.manageClassInitialized) {
+        console.warn('manageClass.js already initialized!');
+        return;
+    }
+    window.manageClassInitialized = true;
+
     loadPage(0, 5);
     const searchInput = document.getElementById("searchInput");
     if (searchInput) {
         searchInput.addEventListener('keyup', filterTable);
     }
     // Bắt sự kiện click vào từng row (trừ nút action)
-    document.getElementById("table-content").addEventListener("click", function (event) {
-        let row = event.target.closest("tr");
-        if (!row || event.target.closest("td:last-child")) return;
+    const tableContent = document.getElementById("table-content");
+    if (tableContent) {
+        tableContent.addEventListener("click", function (event) {
+            let row = event.target.closest("tr");
+            if (!row || event.target.closest("td:last-child")) return;
 
-        openUserModal(row);
-    });
+            openUserModal(row);
+        });
+    }
+
+    // Handle new class form submission
+    const newClassFormSubmit = document.getElementById("newClassFormSubmit");
+    if (newClassFormSubmit) {
+        newClassFormSubmit.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            let className = document.getElementById("newClassName").value;
+            let numberOfIntern = document.getElementById("newNumberOfInterns").value;
+            let status = document.getElementById("newStatus").value;
+            let managerId = document.getElementById("newManager").value;
+
+            // Validate form
+            if (!className || !numberOfIntern || !status || !managerId) {
+                showToast("Please fill all required fields", "warning");
+                return;
+            }
+
+            // Disable button to prevent double submission
+            newClassFormSubmit.disabled = true;
+            const originalText = newClassFormSubmit.textContent;
+            newClassFormSubmit.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Creating...';
+
+            let conversationData = {
+                ConversationName: className + " - Group Chat",
+                ConversationAvatar: "assets/img/users/default-avatar.png",
+                Type: "Group"
+            };
+
+            // Bước 1: Tạo conversation
+            fetch(`/api/conversation/group/create`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(conversationData)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(text); });
+                    }
+                    return response.json();
+                })
+                .then(conversation => {
+                    console.log("Conversation created:", conversation);
+                    
+                    // Use conversation_id instead of id
+                    const conversationId = conversation.conversation_id;
+                    
+                    if (!conversationId) {
+                        throw new Error("Conversation ID not found in response");
+                    }
+                    
+                    let conversationUserData = {
+                        conversation_id: conversationId,
+                        user_id: parseInt(managerId),
+                        admin: true
+                    };
+
+                    return fetch(`/api/conversation-user/add-user`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(conversationUserData)
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.text().then(text => { throw new Error(text); });
+                            }
+                            return response.json();
+                        })
+                        .then(() => conversationId);
+                })
+                .then(conversationId => {
+                    // Fix: Use correct field names matching the Class entity
+                    let requestData = {
+                        class_name: className,
+                        number_of_interns: parseInt(numberOfIntern),
+                        mentor_id: parseInt(managerId),
+                        status: status,
+                        conversation_id: conversationId,
+                        is_active: true,
+                        created_at: new Date().toISOString()
+                    };
+
+                    return fetch(`/api/class`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(requestData)
+                    });
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(text); });
+                    }
+                    return response.json();
+                })
+                .then(newClass => {
+                    showToast("Created a new class successfully!", "success");
+                    let newClassModal = bootstrap.Modal.getInstance(document.getElementById("newClassModal"));
+                    newClassModal.hide();
+                    document.getElementById("newClassForm").reset();
+                    
+                    // Reload the page to show the new class
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                })
+                .catch(error => {
+                    console.error("Error creating class:", error);
+                    showToast("Error Create class: " + error.message, "error");
+                    
+                    // Re-enable button
+                    newClassFormSubmit.disabled = false;
+                    newClassFormSubmit.textContent = originalText;
+                });
+        });
+    }
+
+    // Handle edit class form submission
+    const editClassFormSubmit = document.getElementById("editClassFormSubmit");
+    if (editClassFormSubmit) {
+        editClassFormSubmit.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            let classId = document.getElementById("editClassId").value;
+            let className = document.getElementById("editClassName").value;
+            let numberOfInterns = document.getElementById("editNumberOfInterns").value;
+            let status = document.getElementById("editStatus").value;
+            let managerId = document.getElementById("editManager").value;
+
+            // Validate form
+            if (!className || !numberOfInterns || !status || !managerId) {
+                showToast("Please fill all required fields", "warning");
+                return;
+            }
+
+            // Disable button to prevent double submission
+            editClassFormSubmit.disabled = true;
+            const originalText = editClassFormSubmit.textContent;
+            editClassFormSubmit.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Updating...';
+
+            // Fix: Use correct field names matching the Class entity
+            let requestData = {
+                class_name: className,
+                number_of_interns: parseInt(numberOfInterns),
+                status: status,
+                mentor_id: parseInt(managerId)
+            };
+
+            fetch(`/api/class/update/${classId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestData)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(text); });
+                    }
+                    return response.json();
+                })
+                .then(updatedClass => {
+                    showToast("Class updated successfully!", "success");
+                    let editClassModal = bootstrap.Modal.getInstance(document.getElementById("editClassModal"));
+                    editClassModal.hide();
+                    
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                })
+                .catch(error => {
+                    console.error("Error updating class:", error);
+                    showToast("Error Update class: " + error.message, "warning");
+                    
+                    // Re-enable button
+                    editClassFormSubmit.disabled = false;
+                    editClassFormSubmit.textContent = originalText;
+                });
+        });
+    }
 });
+
 
 function openUserModal(row) {
     // Lấy dữ liệu từ hàng được nhấp
@@ -66,13 +256,20 @@ function loadUsers(classId) {
     const tableBody = document.getElementById("userTableBody");
     tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Loading users...</td></tr>';
 
-    fetch(`/api/Class/${classId}`)
+    fetch(`/api/user/classroom/${classId}`)
         .then(response => {
-            if (!response.ok) throw new Error(`Failed to fetch users: ${response.status}`);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Failed to fetch users: ${response.status} - ${text}`);
+                });
+            }
             return response.json();
         })
-        .then(users => {
-            displayUsers(users); // Đổ dữ liệu vào bảng
+        .then(data => {
+            // Xử lý trường hợp data có thể là object chứa array hoặc trực tiếp là array
+            let users = Array.isArray(data) ? data : (data.items || data.users || data.data || []);
+            
+            displayUsers(users);
         })
         .catch(error => {
             console.error("Error fetching users:", error);
@@ -82,20 +279,32 @@ function loadUsers(classId) {
 
 function displayUsers(users) {
     const tableBody = document.getElementById("userTableBody");
+    
+    // Validate input
+    if (!tableBody) {
+        console.error("userTableBody element not found");
+        return;
+    }
+    
+    // Clear existing content
     tableBody.innerHTML = "";
 
-    if (!users || users.length === 0) {
+    // Check if users is valid array
+    if (!Array.isArray(users) || users.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No Interns found in this class</td></tr>';
         return;
     }
 
+    // Render users
     users.forEach(user => {
+        if (!user) return; // Skip null/undefined users
+        
         const row = document.createElement("tr");
         row.innerHTML = `
-            <td>${user.first_name} ${user.last_name}</td>
-            <td>${user.email}</td>
-            <td>${user.phone_number}</td>
-            <td>${user.gender}</td>
+            <td>${user.first_name || ''} ${user.last_name || ''}</td>
+            <td>${user.email || 'N/A'}</td>
+            <td>${user.phone_number || 'N/A'}</td>
+            <td>${user.gender || 'N/A'}</td>
         `;
         tableBody.appendChild(row);
     });
@@ -242,170 +451,23 @@ document.addEventListener("click", function (event) {
     let addNewClassModal = new bootstrap.Modal(document.getElementById("newClassModal"));
     addNewClassModal.show();
 });
-document.getElementById("newClassForm").addEventListener("submit", function (event) {
-    event.preventDefault();
-    event.stopPropagation();
 
-    let className = document.getElementById("newClassName").value;
-    let numberOfIntern = document.getElementById("newNumberOfInterns").value;
-    let status = document.getElementById("newStatus").value;
-    let managerId = document.getElementById("newManager").value;
-
-    let conversationData = {
-        conversation_name: className + " - Group Chat",
-        conversation_avatar: "assets/img/users/default-avatar.png",
-        type: "Group"
-    };
-
-    // Bước 1: Tạo conversation
-    fetch(`/api/conversation/group/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(conversationData)
-    })
-        .then(response => {
-            if (!response.ok) {
-                return response.text().then(text => { throw new Error(text); });
-            }
-            return response.json();
-        })
-        .then(conversation => {
-            let conversationUserData = {
-                conversation_id: conversation.id,
-                user_id: managerId,
-                admin: true
-            };
-
-            return fetch(`/api/conversation-user/add-user`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(conversationUserData)
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => { throw new Error(text); });
-                    }
-                    return response.json();
-                })
-                .then(() => conversation.id);
-        })
-        .then(conversationId => {
-            let requestData = {
-                className: className,
-                numberOfIntern: numberOfIntern,
-                managerId: managerId,
-                status: status,
-                conversationId: conversationId
-            };
-
-            return fetch(`/api/class/create`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(requestData)
-            });
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.text().then(text => { throw new Error(text); });
-            }
-            return response.json();
-        })
-        .then(newClass => {
-            let row = document.getElementById(`class-${newClass.id}`);
-            if (row) {
-                row.children[0].textContent = newClass.className;
-                row.children[1].textContent = newClass.numberOfIntern;
-                row.children[2].setAttribute("data-manager-id", newClass.mentor.id);
-                row.children[2].textContent = newClass.manager.first_name + " " + newClass.manager.last_name;
-            }
-
-            showToast("Created a new class successfully!", "success");
-            let newClassModal = bootstrap.Modal.getInstance(document.getElementById("newClassModal"));
-            newClassModal.hide();
-            document.getElementById("newClassForm").reset();
-        })
-        .catch(error => showToast("Error Create class: " + error.message, "error"));
-});
-
-
-// Xử lý khi click vào nút Edit
+// Function to open edit modal
 document.addEventListener("click", function (event) {
-    let editIcon = event.target.closest(".edit-class");
-    if (!editIcon) return;
+    let editButton = event.target.closest(".edit-class-status");
+    if (!editButton) return;
+
     event.preventDefault();
-
-    let row = editIcon.closest("tr");
-    if (!row) return;
-
-    let classStatusElement = row.querySelector(".toggle-class-status");
-    if (!classStatusElement) {
-        showToast("Error: Class ID is missing.", "error");
-        return;
-    }
-
-    let classId = classStatusElement.getAttribute("data-id");
+    let classId = editButton.getAttribute("data-class-id");
     if (!classId) {
-        showToast("Error: Class ID is missing.", "error");
+        showModal("Error", "Missing class ID!");
         return;
     }
 
-    let className = row.children[0].textContent.trim();
-    let numberOfIntern = row.children[1].textContent.trim();
-    let status = row.children[3].textContent.trim();
-    let rowId = row.id;
-    let managerId = rowId.startsWith("manager-") ? rowId.split("-")[1] : null;
-
-    if (!managerId) {
-        showToast("Error: Class ID is missing.", "warning");
-        return;
-    }
-
-    document.getElementById("editClassId").value = classId;
-    document.getElementById("editClassName").value = className;
-    document.getElementById("editNumberOfInterns").value = numberOfIntern;
-    document.getElementById("editStatus").value = status;
-    document.getElementById("editManager").value = managerId;
-
-
-    let editModal = new bootstrap.Modal(document.getElementById("editClassModal"));
-    editModal.show();
+    // Open edit modal
+    openEditModal(classId);
 });
-document.getElementById("editClassForm").addEventListener("submit", function (event) {
-    event.preventDefault();
-    event.stopPropagation();
 
-    let classId = document.getElementById("editClassId").value;
-    let className = document.getElementById("editClassName").value;
-    let numberOfInterns = document.getElementById("editNumberOfInterns").value;
-    let status = document.getElementById("editStatus").value;
-    let managerId = document.getElementById("editManager").value;
-
-    let requestData = {
-        className: className,
-        numberOfIntern: numberOfInterns,
-        status: status,
-        managerId: managerId
-    };
-
-    fetch(`/api/class/update/${classId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestData)
-    })
-        .then(response => {
-            if (!response.ok) {
-                return response.text().then(text => { throw new Error(text); });
-            }
-            return response.json();
-        })
-
-        .then(updatedClass => {
-            showToast("Class updated successfully!", "success");
-            location.reload();
-        })
-        .catch(error => showToast("Error Update class: " + error.message, "warning"));
-
-});
 
 function changePageSize(select) {
     pageSize = parseInt(select.value);
@@ -413,39 +475,125 @@ function changePageSize(select) {
 }
 
 function loadPage(page, size) {
-    fetch(`/api/Class?paging=${page}&pageSize=${size}`)
-        .then(response => response.json())
-        .then(data => {
-            totalPages = data.totalPages;
-            currentPage = data.number;
-            pageSize = data.size;
-            console.log(data);
-            renderTable(data);
-            renderPagination();
+    fetch(`/api/Class`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
         })
-        .catch(error => console.error("Error fetching data:", error));
+        .then(data => {
+            console.log("Received data:", data);
+            
+            // Handle pagination on client side
+            if (Array.isArray(data)) {
+                totalPages = Math.ceil(data.length / size);
+                currentPage = page;
+                pageSize = size;
+                
+                // Get the slice of data for current page
+                const startIndex = page * size;
+                const endIndex = startIndex + size;
+                const pageData = data.slice(startIndex, endIndex);
+                
+                renderTable(pageData);
+                renderPagination();
+            } else {
+                console.error("Unexpected data format:", data);
+                showToast("Error loading classes", "error");
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching data:", error);
+            showToast("Error loading classes: " + error.message, "error");
+        });
 }
 
 function renderTable(classes) {
     let tableContent = document.getElementById("table-content");
     tableContent.innerHTML='';
-    tableContent.innerHTML = classes.map(c => `
-        <tr id="manager-${c.mentor.id}" data-class-id="${c.id}">
-            <td>${c.class_name}</td>
-            <td>${c.number_of_interns}</td>
-            <td>${c.mentor.first_name} ${c.mentor.last_name}</td>
-            <td>${c.status}</td>
-            <td>
-                <a href="#" class="toggle-class-status open-modal" data-id="${c.id}">
-                    <i class="${c.is_active ? 'flaticon-padlock active' : 'flaticon-padlock inactive'}" onclick="toggleActiveStatus(this, event)"></i>
-                </a>
-                <a href="#" class="edit-class-status">
-                    <i class="flaticon-edit edit-class" style="cursor: pointer; color: blue;"></i>
-                </a>
-            </td>
-        </tr>
-    `).join('');
+    tableContent.innerHTML = classes.map(c => {
+        // Handle null mentor safely
+        const mentorName = c.mentor 
+            ? `${c.mentor.first_name || ''} ${c.mentor.last_name || ''}`.trim() 
+            : 'N/A';
+        const mentorId = c.mentor ? c.mentor.id : 'unknown';
+        
+        return `
+            <tr id="manager-${mentorId}" data-class-id="${c.id}">
+                <td>${c.class_name || 'N/A'}</td>
+                <td>${c.number_of_interns || 0}</td>
+                <td>${mentorName}</td>
+                <td>${c.status || 'N/A'}</td>
+                <td>
+                    <a href="#" class="toggle-class-status open-modal" data-id="${c.id}">
+                        <i class="${c.is_active ? 'flaticon-padlock active' : 'flaticon-padlock inactive'}" onclick="toggleActiveStatus(this, event)"></i>
+                    </a>
+                    <a href="#" class="edit-class-status" data-class-id="${c.id}" onclick="openEditModal(${c.id}, event)">
+                        <i class="flaticon-edit edit-class" style="cursor: pointer; color: blue;"></i>
+                    </a>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
+
+// Add new function to open edit modal with data loading
+function openEditModal(classId, event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    console.log("Opening edit modal for class ID:", classId);
+    
+    // Show loading in form
+    const form = document.getElementById("editClassForm");
+    if (form) {
+        const inputs = form.querySelectorAll('input, select');
+        inputs.forEach(input => input.disabled = true);
+    }
+    
+    // Show modal
+    const editClassModal = new bootstrap.Modal(document.getElementById("editClassModal"));
+    editClassModal.show();
+    
+    // Fetch class data
+    fetch(`/api/Class/${classId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch class data');
+            }
+            return response.json();
+        })
+        .then(classData => {
+            console.log("Loaded class data:", classData);
+            
+            // Populate form fields
+            document.getElementById("editClassId").value = classData.id || '';
+            document.getElementById("editClassName").value = classData.class_name || '';
+            document.getElementById("editNumberOfInterns").value = classData.number_of_interns || 0;
+            document.getElementById("editStatus").value = classData.status || 'NOT_STARTED';
+            
+            // Set mentor/manager
+            if (classData.mentor_id) {
+                document.getElementById("editManager").value = classData.mentor_id;
+            }
+            
+            // Re-enable form
+            if (form) {
+                const inputs = form.querySelectorAll('input, select');
+                inputs.forEach(input => input.disabled = false);
+            }
+        })
+        .catch(error => {
+            console.error("Error loading class data:", error);
+            showToast("Error loading class data: " + error.message, "error");
+            editClassModal.hide();
+        });
+}
+
+// ...existing code...
 
 function renderPagination() {
     let pagination = document.getElementById("pagination-list");

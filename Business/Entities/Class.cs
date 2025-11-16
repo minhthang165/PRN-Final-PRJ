@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PRN_Final_Project.Business.Entities;
 
@@ -33,11 +35,18 @@ public partial class Class
 
     public int? conversation_id { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<Recruitment> Recruitments { get; set; } = new List<Recruitment>();
 
+    [JsonIgnore]
     public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
 
+    [JsonIgnore]
     public virtual ICollection<UserTask> UserTasks { get; set; } = new List<UserTask>();
 
-    public virtual user mentor { get; set; } = null!;
+    [ForeignKey("mentor_id")]
+    public virtual user? mentor { get; set; }
+
+    [ForeignKey("conversation_id")]
+    public virtual Conversation? conversation { get; set; }
 }
