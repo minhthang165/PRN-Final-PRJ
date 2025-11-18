@@ -40,19 +40,27 @@ public partial class user
 
     public bool? is_active { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
 
+    [JsonIgnore]
     public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
+    [JsonIgnore]
     public virtual ICollection<Conversation_user> Conversation_users { get; set; } = new List<Conversation_user>();
 
+    [JsonIgnore]
     public virtual ICollection<Notification_recipient> Notification_recipients { get; set; } = new List<Notification_recipient>();
 
+    [JsonIgnore]
     public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
 
+    [JsonIgnore]
     public virtual ICollection<UserFile> UserFiles { get; set; } = new List<UserFile>();
 
+    [JsonIgnore]
     public virtual ICollection<UserTask> UserTasks { get; set; } = new List<UserTask>();
+
     [JsonIgnore]
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 }

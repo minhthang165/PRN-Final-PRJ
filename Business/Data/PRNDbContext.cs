@@ -138,7 +138,8 @@ public partial class PRNDbContext : DbContext
 
         modelBuilder.Entity<Completed_Task>(entity =>
         {
-            entity.HasNoKey();
+            // Define composite primary key
+            entity.HasKey(e => new { e.task_id, e.user_id, e.class_id });
 
             entity.HasIndex(e => e.class_id, "FK_CompletedTasks_Class");
 

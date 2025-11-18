@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace PRN_Final_Project.Business.Entities;
 
@@ -39,7 +40,9 @@ public partial class Recruitment
 
     public bool? is_active { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<CV_Info> CV_Infos { get; set; } = new List<CV_Info>();
 
+    [JsonIgnore]
     public virtual Class _class { get; set; } = null!;
 }

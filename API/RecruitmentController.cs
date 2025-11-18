@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using PRN_Final_Project.API.Dto;
 using PRN_Final_Project.Business.Entities;
 using PRN_Final_Project.Service.Interface;
 
@@ -47,8 +48,28 @@ namespace PRN_Final_Project.API
 
         // POST: api/recruitment
         [HttpPost]
-        public async Task<ActionResult> Create([FromBody] Recruitment newRecruitment)
+        public async Task<ActionResult> Create([FromBody] CreateRecruitmentDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var newRecruitment = new Recruitment
+            {
+                name = dto.name,
+                position = dto.position,
+                experience_requirement = dto.experience_requirement,
+                language = dto.language,
+                min_GPA = dto.min_GPA,
+                total_slot = dto.total_slot,
+                description = dto.description,
+                end_time = dto.end_time,
+                class_id = dto.class_id,
+                created_at = DateTime.Now,
+                is_active = dto.is_active ?? true
+            };
+
             await _service.AddAsync(newRecruitment);
             return CreatedAtAction(nameof(GetById), new { id = newRecruitment.id }, newRecruitment);
         }

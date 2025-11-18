@@ -13,7 +13,8 @@ function populateClassroomSelect() {
             classrooms.forEach(classroom => {
                 const option = document.createElement('option');
                 option.value = classroom.id;
-                option.textContent = classroom.className || `Class ${classroom.id}`; // Hiển thị name hoặc id
+                // Use class_name to display the actual class name
+                option.textContent = classroom.class_name || `Class ${classroom.id}`;
                 classSelect.appendChild(option);
             });
         })
@@ -106,12 +107,35 @@ document.addEventListener('DOMContentLoaded', function () {
             formDataObj[key] = value;
         });
 
-        // Đảm bảo các field mặc định
-        formDataObj.experience = formDataObj.experience || "No experience required";
-        formDataObj.description = formDataObj.description || "No description provided";
+        // Validate classId first
+        if (!formDataObj.classId || formDataObj.classId === "") {
+            showToast("Please select a classroom", "error");
+            saveButton.disabled = false;
+            saveButton.innerHTML = 'Save';
+            return;
+        }
+
+        // Create the recruitment object with correct property names matching the backend entity
+        const recruitmentData = {
+            name: formDataObj.name,
+            position: formDataObj.position,
+            description: formDataObj.description || "No description provided",
+            experience_requirement: formDataObj.experienceRequirement || "No experience required",
+            language: formDataObj.language,
+            min_GPA: parseFloat(formDataObj.minGPA),
+            total_slot: parseInt(formDataObj.totalSlot),
+            end_time: formDataObj.endTime + "T00:00:00",
+            class_id: parseInt(formDataObj.classId),
+            is_active: true
+        };
 
         // Validate dữ liệu
-        const validationErrors = validateFormData(formDataObj);
+        const validationErrors = validateFormData({
+            minGPA: recruitmentData.min_GPA,
+            totalSlot: recruitmentData.total_slot,
+            endTime: recruitmentData.end_time
+        });
+        
         if (validationErrors.length > 0) {
             showToast("Validation errors: " + validationErrors.join(", "), "error");
             saveButton.disabled = false;
@@ -120,14 +144,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Log dữ liệu gửi đi
-        console.log('Sending data:', formDataObj);
+        console.log('Sending data:', JSON.stringify(recruitmentData, null, 2));
 
         fetch('/api/Recruitment', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(formDataObj)
+            body: JSON.stringify(recruitmentData)
         })
             .then(response => {
                 console.log('Response status:', response.status);
@@ -543,7 +567,7 @@ function createPagination(totalPages, currentPage) {
     nextLi.appendChild(nextLink);
     paginationList.appendChild(nextLi);
 
-    // Thêm phân trang vào container
+    // Thêm phân trang vao container
     paginationContainer.appendChild(paginationList);
 
     // Thêm vào DOM sau bảng
@@ -840,17 +864,17 @@ function openEditRecruitmentModal(element, event) {
             return response.json()
         })
         .then((recruitment) => {
-            // Populate the form fields
+            // Populate the form fields - use snake_case property names from API
             document.getElementById("editRecruitmentId").value = recruitment.id
             document.getElementById("editName").value = recruitment.name
             document.getElementById("editPosition").value = recruitment.position
-            document.getElementById("editExperienceRequirement").value = recruitment.experienceRequirement || ""
+            document.getElementById("editExperienceRequirement").value = recruitment.experience_requirement || ""
             document.getElementById("editLanguage").value = recruitment.language || ""
-            document.getElementById("editMinGPA").value = recruitment.minGPA
-            document.getElementById("editTotalSlot").value = recruitment.totalSlot
+            document.getElementById("editMinGPA").value = recruitment.min_GPA
+            document.getElementById("editTotalSlot").value = recruitment.total_slot
 
             // Format date for the date input (YYYY-MM-DD)
-            const endDate = new Date(recruitment.endTime)
+            const endDate = new Date(recruitment.end_time)
             const formattedDate = endDate.toISOString().split("T")[0]
             document.getElementById("editEndTime").value = formattedDate
 
@@ -868,16 +892,17 @@ function openEditRecruitmentModal(element, event) {
 function saveRecruitmentChanges() {
     const recruitmentId = document.getElementById("editRecruitmentId").value
 
-    // Create recruitment object from form data
+    // Create recruitment object from form data - use snake_case to match C# entity
     const recruitment = {
-        id: recruitmentId,
+        id: parseInt(recruitmentId),
         name: document.getElementById("editName").value,
         position: document.getElementById("editPosition").value,
-        experienceRequirement: document.getElementById("editExperienceRequirement").value,
+        experience_requirement: document.getElementById("editExperienceRequirement").value,
         language: document.getElementById("editLanguage").value,
-        minGPA: Number.parseFloat(document.getElementById("editMinGPA").value),
-        totalSlot: Number.parseInt(document.getElementById("editTotalSlot").value),
-        endTime: document.getElementById("editEndTime").value,
+        min_GPA: parseFloat(document.getElementById("editMinGPA").value),
+        total_slot: parseInt(document.getElementById("editTotalSlot").value),
+        end_time: document.getElementById("editEndTime").value + "T00:00:00",
+        updated_at: new Date().toISOString()
     }
 
     // Send update request

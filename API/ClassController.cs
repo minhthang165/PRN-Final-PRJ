@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using PRN_Final_Project.Business.Entities;
 using PRN_Final_Project.Service.Interface;
+using Microsoft.EntityFrameworkCore;
+using PRN_Final_Project.Business.Data;
 
 namespace PRN_Final_Project.API
 {
@@ -13,10 +15,12 @@ namespace PRN_Final_Project.API
     public class ClassController : ControllerBase
     {
         private readonly IClassService _classService;
+        private readonly PRNDbContext _context;
 
-        public ClassController(IClassService classService)
+        public ClassController(IClassService classService, PRNDbContext context)
         {
             _classService = classService;
+            _context = context;
         }
 
         // GET: api/class
@@ -68,6 +72,48 @@ namespace PRN_Final_Project.API
             return NoContent();
         }
 
+        // PATCH: api/class/update/5
+        [HttpPatch("update/{id}")]
+        public async Task<ActionResult> UpdatePartial(int id, [FromBody] Class updatedClass)
+        {
+            var existing = await _classService.GetByIdAsync(id);
+            if (existing == null)
+                return NotFound("Class not found");
+
+            // Update only the fields that are provided
+            if (!string.IsNullOrEmpty(updatedClass.class_name))
+                existing.class_name = updatedClass.class_name;
+            
+            if (updatedClass.number_of_interns.HasValue)
+                existing.number_of_interns = updatedClass.number_of_interns;
+            
+            if (!string.IsNullOrEmpty(updatedClass.status))
+                existing.status = updatedClass.status;
+            
+            if (updatedClass.mentor_id.HasValue)
+                existing.mentor_id = updatedClass.mentor_id;
+            
+            existing.updated_at = DateTime.Now;
+
+            await _classService.UpdateAsync(existing);
+            return Ok(existing);
+        }
+
+        // PATCH: api/class/setIsActiveTrue/5
+        [HttpPatch("setIsActiveTrue/{id}")]
+        public async Task<ActionResult> SetIsActiveTrue(int id)
+        {
+            var existing = await _classService.GetByIdAsync(id);
+            if (existing == null)
+                return NotFound("Class not found");
+
+            existing.is_active = true;
+            existing.updated_at = DateTime.Now;
+
+            await _classService.UpdateAsync(existing);
+            return Ok(existing);
+        }
+
         // DELETE: api/class/5
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
@@ -110,8 +156,21 @@ namespace PRN_Final_Project.API
         [HttpGet("mentor/{id}")]
         public async Task<ActionResult> GetClassByMentorId(int id)
         {
-            var result = await _classService.GetClassesByMentorId(id);
-            return Ok(result);
+            try
+            {
+                var result = await _classService.GetClassesByMentorId(id);
+                
+                if (result == null || !result.Any())
+                {
+                    return Ok(new List<Class>()); // Return empty list instead of NotFound
+                }
+                
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
         [HttpGet("user/{userId}")]
@@ -119,6 +178,36 @@ namespace PRN_Final_Project.API
         {
             var result = await _classService.GetClassByUserId(userId);
             return Ok(result);
+        }
+
+        [HttpGet("task/{classId}")]
+        public async Task<ActionResult> GetTasksByClassId(int classId)
+        {
+            try
+            {
+                var tasks = await _context.UserTasks
+                    .Where(t => t.class_id == classId && t.is_active == true)
+                    .OrderByDescending(t => t.created_at)
+                    .Select(t => new
+                    {
+                        id = t.id,
+                        classId = t.class_id,
+                        taskName = t.task_name,
+                        startTime = t.start_time,
+                        endTime = t.end_time,
+                        description = t.description,
+                        status = t.status,
+                        fileData = t.file,
+                        createdAt = t.created_at
+                    })
+                    .ToListAsync();
+
+                return Ok(tasks);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
     }
