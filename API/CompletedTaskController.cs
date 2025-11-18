@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -27,6 +27,15 @@ namespace PRN_Final_Project.API
         {
             try
             {
+                // Get the task to check deadline
+                var task = await _context.UserTasks
+                    .FirstOrDefaultAsync(t => t.id == taskId && t.class_id == classId);
+
+                if (task == null)
+                {
+                    return NotFound("Task not found");
+                }
+
                 // Get all students (interns) in the class
                 var students = await _context.users
                     .Where(u => u.class_id == classId && u.role == "INTERN" && u.is_active == true)
@@ -37,6 +46,9 @@ namespace PRN_Final_Project.API
                     return Ok(new List<object>());
                 }
 
+                // Check if task deadline has passed
+                bool isOverdue = task.end_time < DateTime.Now;
+
                 var result = new List<object>();
 
                 foreach (var student in students)
@@ -45,6 +57,25 @@ namespace PRN_Final_Project.API
                     var completedTask = await _context.Completed_Tasks
                         .Where(ct => ct.task_id == taskId && ct.user_id == student.id && ct.class_id == classId)
                         .FirstOrDefaultAsync();
+
+                    // Auto-grade overdue tasks without submission
+                    if (completedTask == null && isOverdue)
+                    {
+                        // Create a record with 0 mark and comment
+                        completedTask = new Completed_Task
+                        {
+                            task_id = taskId,
+                            user_id = student.id,
+                            class_id = classId,
+                            mark = 0,
+                            comment = "Không nộp bài đúng hạn",
+                            status = "OVERDUE",
+                            created_at = DateTime.Now,
+                            is_active = true
+                        };
+
+                        _context.Completed_Tasks.Add(completedTask);
+                    }
 
                     result.Add(new
                     {
@@ -68,7 +99,83 @@ namespace PRN_Final_Project.API
                     });
                 }
 
+                // Save all auto-graded tasks
+                if (isOverdue)
+                {
+                    await _context.SaveChangesAsync();
+                }
+
                 return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // POST: api/completed-tasks/auto-grade/{taskId}/{classId}
+        // Manually trigger auto-grading for overdue tasks
+        [HttpPost("auto-grade/{taskId}/{classId}")]
+        public async Task<ActionResult> AutoGradeOverdueTasks(int taskId, int classId)
+        {
+            try
+            {
+                // Get the task to check deadline
+                var task = await _context.UserTasks
+                    .FirstOrDefaultAsync(t => t.id == taskId && t.class_id == classId);
+
+                if (task == null)
+                {
+                    return NotFound("Task not found");
+                }
+
+                // Check if task deadline has passed
+                if (task.end_time >= DateTime.Now)
+                {
+                    return BadRequest("Task is not overdue yet. Auto-grading can only be applied to overdue tasks.");
+                }
+
+                // Get all students in the class
+                var students = await _context.users
+                    .Where(u => u.class_id == classId && u.role == "INTERN" && u.is_active == true)
+                    .ToListAsync();
+
+                int gradedCount = 0;
+
+                foreach (var student in students)
+                {
+                    // Check if student has submitted the task
+                    var existingSubmission = await _context.Completed_Tasks
+                        .FirstOrDefaultAsync(ct => ct.task_id == taskId && ct.user_id == student.id && ct.class_id == classId);
+
+                    // Only auto-grade if no submission exists
+                    if (existingSubmission == null)
+                    {
+                        var completedTask = new Completed_Task
+                        {
+                            task_id = taskId,
+                            user_id = student.id,
+                            class_id = classId,
+                            mark = 0,
+                            comment = "Không nộp bài đúng hạn",
+                            status = "OVERDUE",
+                            created_at = DateTime.Now,
+                            is_active = true
+                        };
+
+                        _context.Completed_Tasks.Add(completedTask);
+                        gradedCount++;
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    message = $"Auto-graded {gradedCount} overdue submissions successfully",
+                    gradedCount = gradedCount,
+                    totalStudents = students.Count
+                });
             }
             catch (Exception ex)
             {
