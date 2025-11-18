@@ -214,8 +214,6 @@ th {
     width: 80%;
     max-width: 900px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    max-height: 80vh; /* Giới hạn chiều cao modal */
-    overflow-y: auto; /* Cho phép scroll trong modal */
 }
 
 @keyframes modalopen {
@@ -662,53 +660,4 @@ button {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-}
-
-/* Modal Styles */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 9999;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.6);
-}
-
-.modal-content {
-    background-color: #ffffff;
-    margin: 5% auto;
-    padding: 30px;
-    border-radius: 16px;
-    width: 80%;
-    max-width: 900px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-/* Tạo khoảng cách cho phần Recruitment List */
-.flex-grow-1 {
-    margin-top: 30px !important; /* Tăng khoảng cách từ breadcrumb */
-    padding-top: 20px;
-    position: relative;
-    z-index: 1; /* Đảm bảo nằm dưới modal */
-}
-
-.flex-grow-1 h3 {
-    margin-bottom: 20px;
-}
-
-/* Card chứa table */
-.flex-grow-1 .card {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Ngăn scroll body khi modal mở */
-body.modal-open {
-    overflow: hidden;
 }
