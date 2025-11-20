@@ -31,7 +31,6 @@ namespace PRN_Final_Project.Service
         Chỉ trả về đối tượng JSON, không giải thích gì thêm.
         """;
 
-
             // 1. Tải nội dung file từ URL về dưới dạng byte array
             var fileBytes = await _httpClient.GetByteArrayAsync(fileUrl);
 
@@ -61,7 +60,8 @@ namespace PRN_Final_Project.Service
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Post,
-                RequestUri = new Uri($"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={_apiKey}"),
+                // Updated to use the stable v1 API instead of v1beta
+                RequestUri = new Uri($"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={_apiKey}"),
                 Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json")
             };
 
