@@ -282,7 +282,7 @@
                                 <input type="file" class="form-control" id="submission-file">
                             </div>
 
-                            <button type="submit" class="btn btn-outline-success" id="submit-task-btn">Submit
+                            <button type="button" class="btn btn-outline-success" id="submit-task-btn" onclick="submitTask(); return false;">Submit
                                 now</button>
                         </form>
                     </div>
@@ -311,93 +311,5 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-    @* <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            fetch(`/api/attendance/user/${document.getElementById("userId").value}/stats`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch attendance data');
-                    }
-                    return response.json();
-                })
-                .then(stats => {
-                    createAttendanceChart(stats.present, stats.absent);
-                });
-
-            function createAttendanceChart(presentCount, absentCount) {
-                const data = {
-                    labels: ['Present', 'Absent'],
-                    datasets: [{
-                        data: [presentCount, absentCount],
-                        backgroundColor: [
-                            'rgb(35,159,55)',
-                            'rgba(255,0,55,0.7)'
-                        ],
-                        borderColor: [
-                            'rgb(35,159,55)',
-                            'rgba(255,0,55,0.7)'
-                        ],
-                        borderWidth: 1
-                    }]
-                };
-
-                const config = {
-                    type: 'doughnut',
-                    data: data,
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '70%',
-                        plugins: {
-                            legend: {
-                                position: 'right',
-                                labels: {
-                                    font: {
-                                        size: 12
-                                    },
-                                    generateLabels: function(chart) {
-                                        const data = chart.data;
-                                        if (data.labels.length && data.datasets.length) {
-                                            return data.labels.map(function(label, i) {
-                                                const ds = data.datasets[0];
-                                                const value = ds.data[i];
-
-                                                return {
-                                                    text: `${label}: ${value}`,
-                                                    fillStyle: ds.backgroundColor[i],
-                                                    strokeStyle: ds.borderColor[i],
-                                                    lineWidth: ds.borderWidth,
-                                                    hidden: isNaN(ds.data[i]),
-                                                    index: i
-                                                };
-                                            });
-                                        }
-                                        return [];
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const label = context.label || '';
-                                        const value = context.raw || 0;
-                                        return `${label}: ${value}`;
-                                    }
-                                }
-                            }
-                        },
-                        animation: {
-                            animateRotate: true,
-                            animateScale: true
-                        }
-                    }
-                };
-                const ctx = document.getElementById('attendanceChart');
-                if (ctx) {
-                    new Chart(ctx, config);
-                }
-            }
-        });
-    </script> *@
-    <script src="/js/intern-classroom.js"></script>
+    <script src="/js/intern-classroom.js?v=@DateTime.Now.Ticks"></script>
 }
