@@ -162,25 +162,15 @@ async function uploadFile(event) {
     fileNameEl.textContent = `📂 Uploading: ${fileName}`;
 
     const formData = new FormData();
-    formData.append("file", file);
-    formData.append("Filetype", "CV");
-
-    if (userId && !isNaN(userId)) {
-        formData.append("userId", userId);
-    } else {
-        messageEl.textContent = "User ID not found!";
-        messageEl.className = "message-error";
-        messageEl.style.display = "block";
-        loadingEl.style.display = "none";
-        progressContainer.style.display = "none";
-        clearInterval(progressInterval);
-        return;
-    }
+    formData.append("cvFile", file);
 
     try {
-        const response = await fetch("/api/File", {
+        const response = await fetch("/Profile/UploadCv", {
             method: "POST",
-            body: formData
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         });
 
         if (!response.ok) {
@@ -191,22 +181,24 @@ async function uploadFile(event) {
         clearInterval(progressInterval);
 
         const data = await response.json();
-        let message = data.success ? " " + data.message : " " + data.message;
+        let message = data.success ? "✅ " + data.message : "❌ " + data.message;
         messageEl.textContent = message;
         messageEl.className = data.success ? "message-success" : "message-error";
         messageEl.style.display = "block";
 
-        if (data.success && data.data && data.data.url) {
+        if (data.success) {
             let fileUrl = data.data.url;
 
-            // Add new file to temporary list
+            // Add new file to the cv_list immediately
             if (cv_list.innerHTML.includes("No CV documents found")) {
                 cv_list.innerHTML = "";
             }
+
             let listItem = document.createElement("li");
             listItem.className = "cv-list-item";
             listItem.style.backgroundColor = "rgba(247, 148, 29, 0.1)";
             listItem.style.borderLeft = "4px solid var(--fpt-orange)";
+            listItem.dataset.fileId = data.data.id || '';
 
             let fileIcon = document.createElement("i");
             const fileExt = fileName.split('.').pop().toLowerCase();
@@ -215,7 +207,7 @@ async function uploadFile(event) {
                 fileIcon.style.color = "#e74c3c";
             } else if (['doc', 'docx'].includes(fileExt)) {
                 fileIcon.className = "fas fa-file-word file-icon";
-                fileIcon.style.color = "#ff923a";
+                fileIcon.style.color = "#3498db";
             } else {
                 fileIcon.className = "fas fa-file-alt file-icon";
             }
@@ -236,27 +228,51 @@ async function uploadFile(event) {
                 showPreview(fileUrl);
             };
 
+            let deleteButton = document.createElement("button");
+            deleteButton.className = "delete-button";
+            deleteButton.innerHTML = '<i class="fas fa-times"></i>';
+            deleteButton.onclick = (e) => {
+                e.preventDefault();
+                showDeleteConfirmation({
+                    id: data.data.id,
+                    display_name: fileName,
+                    url: fileUrl
+                });
+            };
+
             buttonContainer.appendChild(viewButton);
+            buttonContainer.appendChild(deleteButton);
             listItem.appendChild(fileIcon);
             listItem.appendChild(nameSpan);
             listItem.appendChild(buttonContainer);
 
+            // Insert at the top of the list
             if (cv_list.firstChild) {
                 cv_list.insertBefore(listItem, cv_list.firstChild);
             } else {
                 cv_list.appendChild(listItem);
             }
 
+            // Highlight animation
             setTimeout(() => {
                 listItem.style.transition = "background-color 1s ease";
                 listItem.style.backgroundColor = "";
+                listItem.style.borderLeft = "";
+            }, 2000);
+
+            // Reset form
+            fileInput.value = '';
+            fileNameEl.textContent = '';
+            fileNameEl.style.display = 'none';
+            document.getElementById('uploadButton').disabled = true;
+
+            // Refresh the complete CV list to ensure consistency
+            setTimeout(() => {
+                refreshCVList(userId);
             }, 1000);
-
-
-            await refreshCVList(userId);
         }
     } catch (error) {
-        messageEl.textContent = "Upload error: " + error.message;
+        messageEl.textContent = "❌ Upload error: " + error.message;
         messageEl.className = "message-error";
         messageEl.style.display = "block";
         clearInterval(progressInterval);
@@ -264,7 +280,6 @@ async function uploadFile(event) {
         loadingEl.style.display = "none";
         setTimeout(() => {
             progressContainer.style.display = "none";
-            fileNameEl.textContent = "";
         }, 500);
     }
 }
@@ -367,7 +382,7 @@ async function deleteFile(file) {
 
     try {
         // Replace with your actual delete API endpoint
-        const response = await fetch(`/file/fully-delete/${file.id}`, {
+        const response = await fetch(`/api/File/${file.id}`, {
             method: 'DELETE',
         });
 

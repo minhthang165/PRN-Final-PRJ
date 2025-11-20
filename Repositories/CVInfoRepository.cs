@@ -79,7 +79,7 @@ namespace PRN_Final_Project.Repositories
 
             if (existedCV != null)
             {
-                existedCV.is_active = false;
+                _context.CV_Infos.Remove(existedCV);
                 await _context.SaveChangesAsync();
             }
         }

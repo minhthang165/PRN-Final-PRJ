@@ -13,10 +13,12 @@ namespace PRN_Final_Project.Controllers
     public class LoginController : Controller
     {
         private readonly IUserService _userService;
+        private readonly IJwtService _jwtService;
 
-        public LoginController(IUserService userService)
+        public LoginController(IUserService userService, IJwtService jwtService)
         {
             _userService = userService;
+            _jwtService = jwtService;
         }
 
         //Start Google Login
@@ -85,24 +87,38 @@ namespace PRN_Final_Project.Controllers
                 Redirect("/logout");
             }
 
-            // Create your own claims
-            var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, existingUser.id.ToString()),
-        new Claim(ClaimTypes.Email, existingUser.email),
-        new Claim("Avatar", existingUser.avatar_path ?? "/assets/img/users/default-avatar.png"),
-        new Claim(ClaimTypes.Name, existingUser.first_name + " " + existingUser.last_name),
-        new Claim(ClaimTypes.Role, existingUser.role),
-    };
+            // Create claims for JWT token
+            var jwtClaims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, existingUser.id.ToString()),
+                new Claim(ClaimTypes.Email, existingUser.email),
+                new Claim(ClaimTypes.Name, existingUser.first_name + " " + existingUser.last_name),
+                new Claim(ClaimTypes.Role, existingUser.role),
+                new Claim("Avatar", existingUser.avatar_path ?? "/assets/img/users/default-avatar.png"),
+                new Claim("jti", Guid.NewGuid().ToString()) // JWT ID for uniqueness
+            };
 
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            // Generate JWT token
+            var jwtToken = _jwtService.GenerateToken(jwtClaims);
+
+            // Create claims for cookie authentication (including JWT token)
+            var cookieClaims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, existingUser.id.ToString()),
+                new Claim(ClaimTypes.Email, existingUser.email),
+                new Claim("Avatar", existingUser.avatar_path ?? "/assets/img/users/default-avatar.png"),
+                new Claim(ClaimTypes.Name, existingUser.first_name + " " + existingUser.last_name),
+                new Claim(ClaimTypes.Role, existingUser.role),
+                new Claim("JwtToken", jwtToken) // Add JWT token as a claim
+            };
+
+            var claimsIdentity = new ClaimsIdentity(cookieClaims, CookieAuthenticationDefaults.AuthenticationScheme);
 
             var authProperties = new AuthenticationProperties
             {
                 IsPersistent = true,
                 ExpiresUtc = DateTimeOffset.UtcNow.AddDays(2)
             };
-
 
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
