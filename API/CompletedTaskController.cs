@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -281,13 +283,18 @@ namespace PRN_Final_Project.API
             }
         }
 
-        // PATCH: api/completed-tasks/{taskId}/{userId}/{classId}/File
+        // PATCH: api/completed-tasks/{taskId}/{userId}/{classId}/file
         // Update submission file
-        [HttpPatch("{taskId}/{userId}/{classId}/File")]
-        public async Task<ActionResult> UpdateFile(int taskId, int userId, int classId, [FromBody] string fileUrl)
+        [HttpPatch("{taskId}/{userId}/{classId}/file")]
+        public async Task<ActionResult> UpdateFile(int taskId, int userId, int classId, [FromBody] FileUpdateDto fileDto)
         {
             try
             {
+                if (fileDto == null || string.IsNullOrWhiteSpace(fileDto.FileUrl))
+                {
+                    return BadRequest("File URL is required");
+                }
+
                 var submission = await _context.Completed_Tasks
                     .FirstOrDefaultAsync(ct => ct.task_id == taskId && ct.user_id == userId && ct.class_id == classId);
 
@@ -296,7 +303,7 @@ namespace PRN_Final_Project.API
                     return NotFound("Submission not found");
                 }
 
-                submission.file = fileUrl;
+                submission.file = fileDto.FileUrl.Trim();
                 submission.updated_at = DateTime.Now;
 
                 await _context.SaveChangesAsync();
@@ -404,23 +411,44 @@ namespace PRN_Final_Project.API
     // DTO for creating completed task
     public class CompletedTaskCreateDto
     {
+        [JsonPropertyName("id")]
         public CompletedTaskIdDto Id { get; set; }
+        
+        [JsonPropertyName("file")]
         public string File { get; set; }
+        
+        [JsonPropertyName("status")]
         public string Status { get; set; }
+        
+        [JsonPropertyName("createdAt")]
         public DateTime? CreatedAt { get; set; }
+        
+        [JsonPropertyName("isActive")]
         public bool? IsActive { get; set; }
     }
 
     public class CompletedTaskIdDto
     {
+        [JsonPropertyName("taskId")]
         public int TaskId { get; set; }
+        
+        [JsonPropertyName("userId")]
         public int UserId { get; set; }
+        
+        [JsonPropertyName("classId")]
         public int ClassId { get; set; }
     }
 
     // DTO for comment update
     public class CommentDto
     {
+        [JsonPropertyName("comment")]
         public string Comment { get; set; }
+    }
+    
+    public class FileUpdateDto
+    {
+        [JsonPropertyName("fileUrl")]
+        public string FileUrl { get; set; }
     }
 }
