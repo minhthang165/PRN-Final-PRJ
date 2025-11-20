@@ -46,6 +46,10 @@ namespace PRN_Final_Project.Controllers
         {
             if (cvFile == null || cvFile.Length == 0)
             {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = "Please select a file to upload." });
+                }
                 ModelState.AddModelError("", "Please select a file to upload.");
                 return View("Index");
             }
@@ -55,14 +59,37 @@ namespace PRN_Final_Project.Controllers
                 UserFile file = await _fileService.UploadPdf(cvFile);
                 if (file == null)
                 {
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = false, message = "File upload failed." });
+                    }
                     ModelState.AddModelError("", "File upload failed.");
                     return View("Index");
+                }
+
+                // Return JSON response for AJAX requests
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { 
+                        success = true, 
+                        message = "File uploaded successfully!",
+                        data = new {
+                            id = file.id,
+                            display_name = file.display_name,
+                            url = file.path,
+                            path = file.path
+                        }
+                    });
                 }
 
                 return RedirectToAction("Index", "Profile");
             }
             catch (Exception ex)
             {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = ex.Message });
+                }
                 ModelState.AddModelError("", ex.Message);
                 return View("Index");
             }

@@ -115,11 +115,11 @@ namespace PRN_Final_Project.Repositories
 
         public async Task DeleteAsync(int id)
         {
-            var existedFile = await _context.Classes.FirstOrDefaultAsync(c => c.id == id);
+            var existedFile = await _context.UserFiles.FirstOrDefaultAsync(c => c.id == id);
 
             if (existedFile != null)
             {
-                existedFile.is_active = false;
+                _context.UserFiles.Remove(existedFile);
                 await _context.SaveChangesAsync();
             }
         }

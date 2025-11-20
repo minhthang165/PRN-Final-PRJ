@@ -482,6 +482,9 @@ function rejectCandidate(event, cvId) {
             if (row) {
                 row.remove();
             }
+            fetch(`/api/CVInfo/${cvId}`, {
+                method: 'DELETE'
+            })
     })
     .catch(error => {
         console.error('Error rejecting candidate:', error);
@@ -607,6 +610,9 @@ function approveCandidate(event, cvId) {
         if (row) {
             row.remove();
         }
+        fetch(`/api/CVInfo/${cvId}`, {
+            method: 'DELETE'
+        })
     })
     .catch(error => {
         console.error('Error approving candidate:', error);
