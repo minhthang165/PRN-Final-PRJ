@@ -2,9 +2,11 @@ using CloudinaryDotNet;
 using dotenv.net;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
+using Microsoft.IdentityModel.Tokens;
 using PRN_Final_Project.Business.Data;
 using PRN_Final_Project.Hubs;
 using PRN_Final_Project.Repositories;
@@ -12,6 +14,7 @@ using PRN_Final_Project.Repositories.Interface;
 using PRN_Final_Project.Service;
 using PRN_Final_Project.Service.Interface;
 using StackExchange.Redis;
+using System.Text;
 using System.Text.Json.Serialization;
 using VNPAY.NET;
 
@@ -55,6 +58,9 @@ builder.Configuration["Gemini:ApiKey"] = Environment.GetEnvironmentVariable("GEM
 Cloudinary cloudinary = new Cloudinary(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
 cloudinary.Api.Secure = true;
 builder.Services.AddSingleton(cloudinary);
+
+// Inject JWT service
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 // Inject service and repository
 builder.Services.AddScoped<EmailService>();
@@ -115,24 +121,43 @@ builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 
-// Add services to the container.
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+// Add authentication services
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+})
+.AddCookie(options =>
+{
+    options.LoginPath = "/Home/Index";
+    options.AccessDeniedPath = "/Home/AccessDenied";
+    options.Cookie.Name = "PRN-Final.AuthCookie";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+})
+.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.LoginPath = "/Home/Index";
-        options.AccessDeniedPath = "/Home/AccessDenied";
-        options.Cookie.Name = "PRN-Final.AuthCookie";
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SameSite = SameSiteMode.Lax;
-    })
-    .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
-    {
-        options.ClientId = Environment.GetEnvironmentVariable("CLIENT_ID");
-        options.ClientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
-        options.CallbackPath = "/login/oauth2/code/google";
-        options.SaveTokens = true;
-        options.CorrelationCookie.SameSite = SameSiteMode.Lax;
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? string.Empty)),
+        ClockSkew = TimeSpan.Zero
+    };
+})
+.AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+{
+    options.ClientId = Environment.GetEnvironmentVariable("CLIENT_ID");
+    options.ClientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
+    options.CallbackPath = "/login/oauth2/code/google";
+    options.SaveTokens = true;
+    options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+});
+
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
