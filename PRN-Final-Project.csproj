@@ -25,6 +25,7 @@
     <PackageReference Include="RazorEngine.NetCore" Version="3.1.0" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Scripts\" />
     <Folder Include="wwwroot\microsoft\" />
     <Folder Include="Views\Intern\" />
   </ItemGroup>

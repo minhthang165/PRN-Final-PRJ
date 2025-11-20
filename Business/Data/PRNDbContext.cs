@@ -92,7 +92,7 @@ public partial class PRNDbContext : DbContext
             entity.Property(e => e.deleted_at).HasColumnType("datetime");
             entity.Property(e => e.education).HasMaxLength(255);
             entity.Property(e => e.gpa).HasPrecision(2, 1);
-            entity.Property(e => e.skill).HasMaxLength(255);
+            entity.Property(e => e.skill).HasMaxLength(1000);
             entity.Property(e => e.updated_at).HasColumnType("datetime");
 
             entity.HasOne(d => d.file).WithMany(p => p.CV_Infos)
