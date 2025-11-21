@@ -26,8 +26,6 @@ namespace PRN_Final_Project.Hubs
             }
         }
 
-
-
         // Send notification to recipients
         public async Task SendNotification(object notification)
         {
@@ -62,6 +60,49 @@ namespace PRN_Final_Project.Hubs
             {
                 await Clients.Group($"user_{recipient}").SendAsync("UserRemoved", payload);
             }
+        }
+
+        // NEW: Handle incoming calls
+        public async Task CreateCall(int callerId, int receiverId, int roomId)
+        {
+            Console.WriteLine($"Creating call: Caller {callerId} -> Receiver {receiverId} in Room {roomId}");
+
+            var callData = new
+            {
+                callerId = callerId.ToString(),
+                roomID = roomId.ToString()
+            };
+
+            // Send call notification to the receiver
+            await Clients.Group($"user_{receiverId}").SendAsync("IncomingCall", callData);
+            
+            Console.WriteLine($"✅ Sent call notification to receiver: {receiverId}");
+        }
+
+        // Handle call acceptance
+        public async Task AcceptCall(int callerId, int receiverId, int roomId)
+        {
+            var callAcceptedData = new
+            {
+                receiverId = receiverId.ToString(),
+                roomID = roomId.ToString(),
+                accepted = true
+            };
+
+            await Clients.Group($"user_{callerId}").SendAsync("CallAccepted", callAcceptedData);
+        }
+
+        // Handle call rejection
+        public async Task RejectCall(int callerId, int receiverId, int roomId)
+        {
+            var callRejectedData = new
+            {
+                receiverId = receiverId.ToString(),
+                roomID = roomId.ToString(),
+                rejected = true
+            };
+
+            await Clients.Group($"user_{callerId}").SendAsync("CallRejected", callRejectedData);
         }
     }
 }

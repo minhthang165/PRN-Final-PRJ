@@ -18,7 +18,7 @@
 
 <link rel="stylesheet" href="~/css/schedule.css" />
 <style>
-    /* Thêm CSS để đảm bảo sự kiện hiển thị đúng */
+    /* Calendar event colors based on subjects */
     .calendar-event {
         position: absolute;
         top: 0;
@@ -34,16 +34,77 @@
         z-index: 10;
         background-color: #93c5fd;
         border-left: 3px solid #3b82f6;
+        color: white;
+        font-weight: 500;
     }
     
-    /* Đảm bảo các ô lịch có position relative để có thể chứa các sự kiện absolute */
+    /* Subject-based color coding */
+    .calendar-event.korean {
+        background: linear-gradient(135deg, #ff6b6b, #ff5252);
+        border-left-color: #d32f2f;
+    }
+    
+    .calendar-event.japanese {
+        background: linear-gradient(135deg, #4ecdc4, #26a69a);
+        border-left-color: #00695c;
+    }
+    
+    .calendar-event.english {
+        background: linear-gradient(135deg, #45b7d1, #2196f3);
+        border-left-color: #1565c0;
+    }
+    
+    .calendar-event.programming,
+    .calendar-event.code {
+        background: linear-gradient(135deg, #96ceb4, #4caf50);
+        border-left-color: #2e7d32;
+    }
+    
+    .calendar-event.math,
+    .calendar-event.mathematics {
+        background: linear-gradient(135deg, #feca57, #ff9800);
+        border-left-color: #ef6c00;
+    }
+    
+    .calendar-event.science {
+        background: linear-gradient(135deg, #a8e6cf, #66bb6a);
+        border-left-color: #388e3c;
+    }
+    
+    .calendar-event.business {
+        background: linear-gradient(135deg, #dda0dd, #9c27b0);
+        border-left-color: #6a1b9a;
+    }
+    
+    .calendar-event.default {
+        background: linear-gradient(135deg, #8e9aaf, #607d8b);
+        border-left-color: #455a64;
+    }
+    
+    /* Calendar cell styling */
     .calendar-cell {
         border-bottom: 1px solid #f1f1f1;
         border-right: 1px solid #f1f1f1;
         position: relative;
         height: 80px;
     }
+    
+    .event-title {
+        font-weight: bold;
+        margin-bottom: 2px;
+        font-size: 14px;
+    }
+    
+    .event-details {
+        font-size: 12px;
+        opacity: 0.9;
+    }
+    
+    .event-details div {
+        margin-bottom: 1px;
+    }
 </style>
+
 @Html.Partial("Sidebar/_EmployeeSidebar")
 <div class="container-fluid mt-4">
     <div class="row mb-4">
@@ -119,13 +180,13 @@
             let currentWeekStart = '@Model.CurrentWeekStart.ToString("yyyy-MM-dd")';
             
             // Get the dates for the current week
-            const weekDates = [];
-            const startDate = new Date(currentWeekStart);
-            for (let i = 0; i < 5; i++) {
-                const date = new Date(startDate);
-                date.setDate(startDate.getDate() + i);
-                weekDates.push(date.toISOString().split('T')[0]);
-            }
+            // const weekDates = [];
+            // const startDate = new Date(currentWeekStart);
+            // for (let i = 0; i < 5; i++) {
+            //     const date = new Date(startDate);
+            //     date.setDate(startDate.getDate() + i);
+            //     weekDates.push(date.toISOString().split('T')[0]);
+            // }
             
             // Pass schedules data to JavaScript with explicit property mapping
             const rawScheduleData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Schedules));
@@ -148,6 +209,23 @@
                 };
             });
             
+            console.log('Processed schedule data:', scheduleData);
+            
+            // Function to get subject-based color class
+            function getSubjectColorClass(subjectName) {
+                if (!subjectName) return 'default';
+                
+                const subject = subjectName.toLowerCase();
+                if (subject.includes('korean')) return 'korean';
+                if (subject.includes('japanese')) return 'japanese';
+                if (subject.includes('english')) return 'english';
+                if (subject.includes('programming') || subject.includes('code') || subject.includes('coding')) return 'programming';
+                if (subject.includes('math') || subject.includes('mathematics')) return 'math';
+                if (subject.includes('science')) return 'science';
+                if (subject.includes('business')) return 'business';
+                return 'default';
+            }
+            
             // Function to navigate to a different week
             function navigateToWeek(date) {
                 window.location.href = `/Schedule?date=${date}`;
@@ -156,18 +234,17 @@
             // Event handlers for navigation buttons
             document.getElementById('prev-week').addEventListener('click', function() {
                 const date = new Date(currentWeekStart);
-                date.setDate(date.getDate() - 7); // Go back 7 days
+                date.setDate(date.getDate() - 7);
                 navigateToWeek(date.toISOString().split('T')[0]);
             });
             
             document.getElementById('next-week').addEventListener('click', function() {
                 const date = new Date(currentWeekStart);
-                date.setDate(date.getDate() + 7); // Go forward 7 days
+                date.setDate(date.getDate() + 7);
                 navigateToWeek(date.toISOString().split('T')[0]);
             });
             
             document.getElementById('today-btn').addEventListener('click', function() {
-                // Navigate to today's date
                 navigateToWeek(new Date().toISOString().split('T')[0]);
             });
             
@@ -177,8 +254,11 @@
                 document.querySelectorAll('.calendar-event').forEach(el => el.remove());
                 
                 if (!scheduleData || scheduleData.length === 0) {
+                    console.log('No schedule data to render');
                     return;
                 }
+                
+                console.log('Rendering', scheduleData.length, 'schedules');
                 
                 // Process each schedule
                 scheduleData.forEach((schedule, index) => {
@@ -200,21 +280,11 @@
                         
                         // Get the day of week (0-4 for Monday-Friday)
                         const dayOfWeekMap = {
-                            'MONDAY': 0,
-                            'monday': 0,
-                            'Monday': 0,
-                            'TUESDAY': 1,
-                            'tuesday': 1,
-                            'Tuesday': 1,
-                            'WEDNESDAY': 2,
-                            'wednesday': 2,
-                            'Wednesday': 2,
-                            'THURSDAY': 3,
-                            'thursday': 3,
-                            'Thursday': 3,
-                            'FRIDAY': 4,
-                            'friday': 4,
-                            'Friday': 4
+                            'MONDAY': 0, 'monday': 0, 'Monday': 0,
+                            'TUESDAY': 1, 'tuesday': 1, 'Tuesday': 1,
+                            'WEDNESDAY': 2, 'wednesday': 2, 'Wednesday': 2,
+                            'THURSDAY': 3, 'thursday': 3, 'Thursday': 3,
+                            'FRIDAY': 4, 'friday': 4, 'Friday': 4
                         };
                         
                         // Try to determine day of week from multiple sources
@@ -230,7 +300,8 @@
                         }
                         
                         if (dayOfWeek === undefined || dayOfWeek === null || dayOfWeek > 4) {
-                            return; // Skip if not a weekday
+                            console.log('Skipping schedule - invalid day:', schedule);
+                            return;
                         }
                         
                         // Get the start and end hours
@@ -242,11 +313,7 @@
                                 const startTimeParts = schedule.startTime.split(':');
                                 startHour = parseInt(startTimeParts[0]);
                             } else if (typeof schedule.startTime === 'object') {
-                                if (schedule.startTime.hour !== undefined) {
-                                    startHour = schedule.startTime.hour;
-                                } else if (schedule.startTime.Hour !== undefined) {
-                                    startHour = schedule.startTime.Hour;
-                                }
+                                startHour = schedule.startTime.hour !== undefined ? schedule.startTime.hour : schedule.startTime.Hour;
                             }
                         }
                         
@@ -256,15 +323,12 @@
                                 const endTimeParts = schedule.endTime.split(':');
                                 endHour = parseInt(endTimeParts[0]);
                             } else if (typeof schedule.endTime === 'object') {
-                                if (schedule.endTime.hour !== undefined) {
-                                    endHour = schedule.endTime.hour;
-                                } else if (schedule.endTime.Hour !== undefined) {
-                                    endHour = schedule.endTime.Hour;
-                                }
+                                endHour = schedule.endTime.hour !== undefined ? schedule.endTime.hour : schedule.endTime.Hour;
                             }
                         }
                         
                         if (startHour === undefined || isNaN(startHour) || endHour === undefined || isNaN(endHour)) {
+                            console.log('Skipping schedule - invalid time:', schedule);
                             return;
                         }
                         
@@ -275,25 +339,21 @@
                         );
                         
                         // Find the cell for the start hour
-                        let startCell = null;
+                        let startCell = dayCells.find(cell => parseInt(cell.getAttribute('data-hour')) === startHour);
                         
-                        // First try: exact match on hour
-                        startCell = dayCells.find(cell => parseInt(cell.getAttribute('data-hour')) === startHour);
+                        if (!startCell && dayCells.length > 0) {
+                            // Find the closest hour that's visible in the calendar
+                            const sortedCells = dayCells.sort((a, b) => {
+                                const hourA = parseInt(a.getAttribute('data-hour'));
+                                const hourB = parseInt(b.getAttribute('data-hour'));
+                                return Math.abs(hourA - startHour) - Math.abs(hourB - startHour);
+                            });
+                            startCell = sortedCells[0];
+                        }
                         
                         if (!startCell) {
-                            // Find the closest hour that's visible in the calendar
-                            if (dayCells.length > 0) {
-                                // Sort cells by how close their hour is to the target hour
-                                const sortedCells = dayCells.sort((a, b) => {
-                                    const hourA = parseInt(a.getAttribute('data-hour'));
-                                    const hourB = parseInt(b.getAttribute('data-hour'));
-                                    return Math.abs(hourA - startHour) - Math.abs(hourB - startHour);
-                                });
-                                
-                                startCell = sortedCells[0];
-                            } else {
-                                return;
-                            }
+                            console.log('No suitable cell found for schedule:', schedule);
+                            return;
                         }
                         
                         // Calculate the event height based on duration
@@ -305,15 +365,9 @@
                         eventEl.className = 'calendar-event';
                         eventEl.id = `event-${schedule.id}`;
                         
-                        // Determine the class type for styling
-                        const subjectName = (schedule.subjectName || '').toLowerCase();
-                        if (subjectName.includes('korean')) {
-                            eventEl.classList.add('korean');
-                        } else if (subjectName.includes('japanese')) {
-                            eventEl.classList.add('japanese');
-                        } else if (subjectName.includes('code')) {
-                            eventEl.classList.add('code');
-                        }
+                        // Add subject-based color class
+                        const colorClass = getSubjectColorClass(schedule.subjectName);
+                        eventEl.classList.add(colorClass);
                         
                         // Format time for display
                         function formatTime(hour) {
@@ -329,13 +383,12 @@
                                 <div>Subject: ${schedule.subjectName || 'N/A'}</div>
                                 <div>Room: ${schedule.roomName || 'N/A'}</div>
                                 <div>Time: ${formatTime(startHour)} - ${formatTime(endHour)}</div>
+                                <div>Mentor: ${schedule.mentorName || 'N/A'}</div>
                             </div>
                         `;
                         
                         // Position the event
-                        eventEl.style.height = `${eventHeight}px`;
-                        eventEl.style.backgroundColor = '#93c5fd';
-                        eventEl.style.borderLeft = '3px solid #3b82f6';
+                        eventEl.style.height = `${Math.max(eventHeight, 60)}px`;
                         eventEl.style.position = 'absolute';
                         eventEl.style.top = '0';
                         eventEl.style.left = '0';
@@ -344,9 +397,10 @@
                         
                         // Add event to the cell
                         startCell.appendChild(eventEl);
+                        console.log('Added schedule event:', schedule);
                         
                     } catch (error) {
-                        console.error(`Error processing schedule ${index + 1}:`, error);
+                        console.error(`Error processing schedule ${index + 1}:`, error, schedule);
                     }
                 });
             }
@@ -355,4 +409,5 @@
             renderSchedules();
         });
     </script>
+    <script src="~/js/schedule.js"></script>
 }

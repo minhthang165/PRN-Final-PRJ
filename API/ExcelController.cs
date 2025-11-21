@@ -75,7 +75,7 @@ namespace PRN_Final_Project.API
                 return BadRequest("No file uploaded.");
 
             // Use July 14, 2025 as the reference date
-            var startDate = new DateOnly(2025, 7, 14);
+            var startDate = new DateOnly(2025, 11, 14);
 
             var result = await _scheduleService.ImportAndGenerateSchedulesAsync(file, startDate);
             if (result.Errors.Count > 0)

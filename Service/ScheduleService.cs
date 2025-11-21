@@ -36,7 +36,7 @@ public class ScheduleService : IScheduleService
 
     public async Task<ScheduleGenerationResult> ImportAndGenerateSchedulesAsync(IFormFile file, DateOnly startDate)
     {
-        DateOnly newStartDate = new DateOnly(2025, 7, 21);
+        DateOnly newStartDate = new DateOnly(2025, 11, 14);
         
         var result = new ScheduleGenerationResult();
         var importData = await ReadScheduleExcelAsync(file);
@@ -512,5 +512,45 @@ public class ScheduleService : IScheduleService
         public int DayOfWeek { get; set; }
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
+    }
+
+    public async Task<List<ScheduleDisplayDto>> GetSchedulesByClassIdAsync(int classId, DateOnly? startDate = null, DateOnly? endDate = null)
+    {
+        var schedules = await _scheduleRepository.GetAllAsync();
+
+        schedules = schedules.Where(s => s.class_id == classId).ToList();
+
+        if (startDate.HasValue && endDate.HasValue)
+        {
+            schedules = schedules.Where(s => s.start_date >= startDate.Value && s.start_date <= endDate.Value).ToList();
+        }
+
+        var displayDtos = new List<ScheduleDisplayDto>();
+
+        foreach (var schedule in schedules)
+        {
+            var classEntity = await _classRepository.GetByIdAsync(schedule.class_id);
+            var subjectEntity = await _subjectRepository.GetByIdAsync(schedule.subject_id);
+            var roomEntity = await _roomRepository.GetByIdAsync(schedule.room_id);
+            var mentorEntity = schedule.mentor_id.HasValue ? await _userRepository.GetByIdAsync(schedule.mentor_id.Value) : null;
+
+            displayDtos.Add(new ScheduleDisplayDto
+            {
+                Id = schedule.id,
+                ClassName = classEntity?.class_name ?? "Unknown Class",
+                SubjectName = subjectEntity?.subject_name ?? "Unknown Subject",
+                RoomName = roomEntity?.room_name ?? "Unknown Room",
+                RoomId = schedule.room_id,
+                MentorName = mentorEntity != null ? $"{mentorEntity.first_name} {mentorEntity.last_name}".Trim() : "Unknown Mentor",
+                DayOfWeek = schedule.day_of_week,
+                StartTime = schedule.start_time,
+                EndTime = schedule.end_time,
+                StartDate = schedule.start_date,
+                EndDate = schedule.end_date,
+                MentorId = schedule.mentor_id
+            });
+        }
+
+        return displayDtos;
     }
 }
