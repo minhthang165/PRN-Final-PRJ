@@ -63,7 +63,7 @@ namespace PRN_Final_Project.API
             await _userService.AddAsync(employee);
             return CreatedAtAction(nameof(GetById), new { id = employee.id }, employee);
         }
-
+            
         // PUT: api/user/update/5
         [HttpPut("update")]
         public async Task<ActionResult> Update([FromBody] user updatedUser)

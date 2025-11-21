@@ -105,37 +105,30 @@ namespace PRN_Final_Project.Repositories
             return candidates;
         }
 
-        public async Task ApproveCv(int cvId)
+        public async Task ApproveCv(int fileId)
         {
-            // 1. Tìm CV
-            CV_Info cv = await _context.CV_Infos
-                .FirstOrDefaultAsync(c => c.cvInfo_id == cvId);
-            if (cv == null)
-                throw new Exception("CV not found");
+            // 1. Join CV_Info and UserFile tables to get the CV through fileId
+            var cvWithFile = await _context.CV_Infos
+                .Include(cv => cv.file)
+                    .ThenInclude(f => f.submitter)
+                .Include(cv => cv.recruitment)
+                .FirstOrDefaultAsync(cv => cv.file_id == fileId && cv.is_active == true);
 
-            // 2. Lấy thông tin class từ recruiment
-            Recruitment recruitment = await _context.Recruitments
-                .FirstOrDefaultAsync(c => c.id == cv.recruitment_id);
-            if (recruitment == null)
-                throw new Exception("Recruitment not found");
+            if (cvWithFile == null)
+                throw new Exception("CV not found or already processed");
 
-            Class classes = _context.Classes
-                .FirstOrDefault(c => c.id == recruitment.class_id);
+            // 2. Lấy thông tin class từ recruitment
+            Class classes = await _context.Classes
+                .FirstOrDefaultAsync(c => c.id == cvWithFile.recruitment.class_id);
             if (classes == null)
                 throw new Exception("Class not found");
 
-            // 3. Lấy thông tin user từ file thông qua submitterId
-            UserFile file = await _context.UserFiles.
-                FirstOrDefaultAsync(c => c.id == cv.file_id);
-            if (file == null)
-                throw new Exception("File not found");
-
-            user user = await _context.users
-                .FirstOrDefaultAsync(c => c.id == file.submitter_id);
+            // 3. Lấy thông tin user từ file thông qua submitterId (already loaded via Include)
+            user user = cvWithFile.file.submitter;
             if (user == null)
                 throw new Exception("User not found");
 
-            // 4.Check user đã có trong lớp chưa
+            // 4. Check user đã có trong lớp chưa
             if (user.class_id != null)
             {
                 throw new Exception("User are in another class");
@@ -151,9 +144,10 @@ namespace PRN_Final_Project.Repositories
             classes.number_of_interns += 1;
 
             // 8. Đánh dấu cv đã đc approve (=> inActive = false)
-            cv.is_active = false;
+            cvWithFile.is_active = false;
+
             await _emailService.SendWelcomeEmailAsync(user.id);
-            Console.WriteLine("Before SaveChangesAsync: CV is_active = " + cv.is_active);
+            Console.WriteLine("Before SaveChangesAsync: CV is_active = " + cvWithFile.is_active);
             await _context.SaveChangesAsync();
         }
 

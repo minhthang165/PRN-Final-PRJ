@@ -222,6 +222,15 @@
     <audio id="new-notification" preload="auto">
         <source id="notification-source" type="audio/mpeg">
     </audio>
+
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        <input type="hidden" id="user_id" value="@(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("UserId")?.Value ?? "")" />
+    }
+    else
+    {
+        <input type="hidden" id="user_id" value="" />
+    }
     <script>
         const source = document.getElementById("notification-source");
         source.src = '/audio/notification.mp3';

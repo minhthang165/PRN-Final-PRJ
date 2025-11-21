@@ -141,9 +141,13 @@ document.addEventListener("DOMContentLoaded", () => {
     document.head.appendChild(styles)
 
     // Get userId from hidden input or data attribute
-    const userIdElement = document.getElementById("user_id") || document.querySelector("[data-user-id]");
-    const userId = userIdElement?.value || userIdElement?.getAttribute("data-user-id");
-
+    function getIdsFromPath() {
+        let pathSegments = window.location.pathname.split('/');
+        let userId = pathSegments[pathSegments.length - 1];
+        return { userId };
+    }
+    const { userId } = getIdsFromPath();
+    localStorage.setItem("userId", userId);
     if (!userId) {
         console.error("❌ User ID not found!");
         return;
